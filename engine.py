@@ -218,7 +218,7 @@ def tutor(pack, question, style):
         )
 
     return (
-        f"I could not find that exact idea inside the current Brain Brief for {pack['title']}. "
+        f"I could not find that exact idea inside the current Brain Brief, but we can still learn from the closest concept for {pack['title']}. "
         f"Please ask about one of these concepts: {', '.join(concept_names(pack)[:6])}. "
         f"For example: 'I do not understand {concept_names(pack)[0]}'."
     )

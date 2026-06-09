@@ -10,7 +10,7 @@ import streamlit as st
 from engine import build_pack, make_questions, grade, tutor, study_brief_markdown, concept_names, application_names
 from teacher import demo_teacher_data
 
-APP_VERSION = "13.5"
+APP_VERSION = "14.0"
 
 st.set_page_config(page_title="Preluma", page_icon="●", layout="wide")
 
@@ -159,6 +159,59 @@ html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
     color: #dbeafe;
     box-shadow: none;
 }
+.xp-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 14px 0 8px 0;
+}
+.xp-card {
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(15,23,42,.94), rgba(30,41,59,.82));
+    border: 1px solid rgba(148,163,184,.24);
+    box-shadow: 0 12px 28px rgba(2,6,23,.20);
+}
+.xp-num {
+    font-size: 24px;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1;
+}
+.xp-label {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #93c5fd;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+.fun-box {
+    padding: 16px 18px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(2,132,199,.18), rgba(124,58,237,.16));
+    border: 1px solid rgba(125,211,252,.24);
+    color: #e0f2fe;
+}
+.mission-note {
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: rgba(59,130,246,.12);
+    border: 1px solid rgba(96,165,250,.22);
+    color: #dbeafe;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+.topic-hint {
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    color: #cbd5e1;
+    font-size: 13px;
+    margin-top: 6px;
+}
 .footer-note {color:#94a3b8; font-size:13px;}
 .caption-soft {color:#cbd5e1; font-size:13px;}
 .campus-chip {
@@ -233,12 +286,21 @@ if page == "Student Mission":
         </div>
         <div class="hero-tag">Pre-class brain priming</div>
         <h1>Prepare before class. Understand more during class.</h1>
-        <p>Built with a Yunnan University learning context. Preluma gives students a concept-level Brain Brief, short quiz, Mistake Clinic, UltraTutor help, and smart class questions before the lecture starts.</p>
+        <p>Built with a Yunnan University learning context. Preluma turns boring pre-class preparation into a short, guided, and interactive learning mission.</p>
     </div>
     """, unsafe_allow_html=True)
 
     st.write("")
     st.markdown(" ".join([f"<span class='step'>{s}</span>" for s in ["Topic", "Brain Brief", "Quiz", "Mistake Clinic", "Tutor", "Class Questions", "Dashboard"]]), unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class='xp-grid'>
+        <div class='xp-card'><div class='xp-num'>4</div><div class='xp-label'>Quiz Checks</div></div>
+        <div class='xp-card'><div class='xp-num'>5</div><div class='xp-label'>Class Questions</div></div>
+        <div class='xp-card'><div class='xp-num'>1</div><div class='xp-label'>Mistake Clinic</div></div>
+        <div class='xp-card'><div class='xp-num'>XP</div><div class='xp-label'>Readiness Boost</div></div>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.write("")
     cA, cB, cC = st.columns(3)
@@ -249,15 +311,17 @@ if page == "Student Mission":
     st.write("")
     with st.container(border=True):
         st.markdown("### Mission Control")
+        st.markdown("<div class='mission-note'>Choose a topic, pick your study mood, and Preluma will generate a short learning mission before class.</div>", unsafe_allow_html=True)
         left, mid, right = st.columns([1.1, 1, 1])
         with left:
             student = st.text_input("Student", "Mim")
-            topic_options = ["Quantum Mechanics", "Machine Learning", "Python Programming", "Data Structures", "Artificial Intelligence", "Object Oriented Programming", "Neural Networks", "Linear Regression", "Database Systems", "Climate Change", "Custom topic"]
+            topic_options = ["Quantum Mechanics", "Machine Learning", "Python Programming", "Data Structures", "Artificial Intelligence", "Object Oriented Programming", "Neural Networks", "Convolutional Neural Network", "Natural Language Processing", "Statistics", "SQL", "Algorithms", "Linear Regression", "Database Systems", "Climate Change", "Urban Water Management", "Custom topic"]
             chosen = st.selectbox("Lecture topic", topic_options)
             if chosen == "Custom topic":
                 topic = st.text_input("Custom topic", "Natural Language Processing")
             else:
                 topic = chosen
+            st.markdown("<div class='topic-hint'>Tip: For demo, Quantum Mechanics or Machine Learning shows the strongest full flow.</div>", unsafe_allow_html=True)
             lecture_time = st.text_input("Lecture time", "Tomorrow 9 AM")
         with mid:
             mood = st.radio("Study mood", ["Let's go", "Calm focus", "Last minute survival"], captions=["High energy", "Focused", "Quick survival"])
@@ -342,11 +406,11 @@ if page == "Student Mission":
 
         st.markdown("### Mistake Clinic")
         if persona == "Roast Mode" and pct < 85:
-            st.warning("Not bad, but your notebook is still asking for backup. Fix the weak parts before class.")
+            st.warning("Good start, but the brain needs one more warm-up. Check the weak part, fix the confusion, and you will be class-ready.")
         elif pct >= 85:
-            st.success("Strong work. You are ready to participate in class.")
+            st.success("Strong work. You are lecture-ready and can ask better questions in class.")
         else:
-            st.info("Good start. Review the weak skills and you will improve.")
+            st.info("Good start. Review the weak skills below and your readiness will improve quickly.")
 
         for i, row in enumerate(res["rows"], 1):
             q = row["q"]
@@ -360,6 +424,7 @@ if page == "Student Mission":
                 st.caption("Evidence: " + q["evidence"])
 
         st.markdown("### UltraTutor")
+        st.markdown("<div class='fun-box'>Confused about a concept? Ask UltraTutor. It explains like a friendly senior before class.</div>", unsafe_allow_html=True)
         st.caption("Ask any confusing concept from the current Brain Brief. UltraTutor answers with a simple explanation, example, common mistake, and exam angle.")
         style = st.selectbox("Explanation style", ["Kid-simple", "Exam-focused", "Real-world", "Normal"])
         prompt_options = [
@@ -470,6 +535,7 @@ elif page == "Evidence Board":
     - Explain-like-I-am-5 support
     - Topic-aware UltraTutor
     - Smart class questions
+    - Readiness score and XP-style motivation
 
     ### M3: UI and Analytics
 
@@ -484,6 +550,24 @@ elif page == "Evidence Board":
     - Weak skill detection
     - Teacher analytics
     - Exported study brief
+    - Student engagement improvement through short interactive flow
+
+    ### Technology Stack
+
+    - Python
+    - Streamlit
+    - Plotly
+    - Rule-based NLP logic
+    - Concept-level data structure
+    - Teacher analytics dashboard
+
+    ### Innovation
+
+    - Not only a quiz app
+    - Converts passive students into lecture-ready learners
+    - Explains mistakes in simple language
+    - Gives smart questions before class
+    - Supports teachers with readiness overview
 
     ### Project Team
 
