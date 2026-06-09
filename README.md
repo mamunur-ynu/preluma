@@ -1,22 +1,5 @@
-# Preluma V13.2 Campus Bright
+# Preluma V13.5 Equal Team Design
 
-Light Up Before Class.
+Top-class equal team row design with no single highlighted member.
 
-This version keeps the Yunnan University campus hero background but improves image visibility with a brighter cinematic overlay and stronger text readability.
-
-## Upload to GitHub
-
-Upload these files to the same repo:
-
-- streamlit_app.py
-- engine.py
-- topics.py
-- teacher.py
-- requirements.txt
-- README.md
-
-Also keep:
-
-```text
-assets/ynu_campus.jpg
-```
+MAMUNUR RASHID | MD FAHIM | MD JIARUL ISLAM

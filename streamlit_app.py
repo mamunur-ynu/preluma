@@ -10,7 +10,7 @@ import streamlit as st
 from engine import build_pack, make_questions, grade, tutor, study_brief_markdown, concept_names, application_names
 from teacher import demo_teacher_data
 
-APP_VERSION = "13.2"
+APP_VERSION = "13.5"
 
 st.set_page_config(page_title="Preluma", page_icon="●", layout="wide")
 
@@ -97,6 +97,68 @@ html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
 .badge-green {padding:12px 15px; border-radius:15px; background:#dcfce7; color:#166534; font-weight:900;}
 .badge-yellow {padding:12px 15px; border-radius:15px; background:#fef3c7; color:#92400e; font-weight:900;}
 .badge-red {padding:12px 15px; border-radius:15px; background:#fee2e2; color:#991b1b; font-weight:900;}
+.team-box {
+    margin-top: 18px;
+    padding: 14px 12px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(15,23,42,.82) 0%, rgba(30,41,59,.78) 100%);
+    border: 1px solid rgba(148,163,184,.24);
+    box-shadow: 0 10px 24px rgba(2, 6, 23, .28);
+}
+.team-title {
+    color: #93c5fd;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+.team-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    align-items: stretch;
+}
+.team-chip {
+    text-align: center;
+    padding: 10px 8px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    color: #cbd5e1;
+    font-weight: 850;
+    font-size: 11px;
+    line-height: 1.3;
+    letter-spacing: .02em;
+}
+.team-chip.center {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    color: #cbd5e1;
+    box-shadow: none;
+}
+.team-strip {
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin: 14px 0 8px 0;
+}
+.member-pill {
+    padding: 12px 18px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.14);
+    color: #dbeafe;
+    font-weight: 850;
+    letter-spacing: .01em;
+}
+.member-pill.center {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.14);
+    color: #dbeafe;
+    box-shadow: none;
+}
 .footer-note {color:#94a3b8; font-size:13px;}
 .caption-soft {color:#cbd5e1; font-size:13px;}
 .campus-chip {
@@ -144,6 +206,16 @@ st.sidebar.caption("Light Up Before Class")
 page = st.sidebar.radio("Workspace", ["Student Mission", "Teacher Studio", "Evidence Board", "Demo Guide"])
 presentation_mode = st.sidebar.toggle("Presentation Mode", True)
 st.sidebar.caption("Stable concept-level lesson packs for smooth live demo.")
+st.sidebar.markdown("""
+<div class='team-box'>
+    <div class='team-title'>Project Team</div>
+    <div class='team-row'>
+        <div class='team-chip'>MAMUNUR RASHID</div>
+        <div class='team-chip'>MD FAHIM</div>
+        <div class='team-chip'>MD JIARUL ISLAM</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 st.sidebar.markdown("---")
 if st.sidebar.button("Reset session"):
     reset()
@@ -413,6 +485,14 @@ elif page == "Evidence Board":
     - Teacher analytics
     - Exported study brief
 
+    ### Project Team
+
+    <div class='team-strip'>
+        <div class='member-pill'>MAMUNUR RASHID</div>
+        <div class='member-pill'>MD FAHIM</div>
+        <div class='member-pill'>MD JIARUL ISLAM</div>
+    </div>
+
     ### Limitations
 
     - Current version uses curated and rule-based data.
@@ -437,4 +517,12 @@ else:
     ### Best final sentence
 
     Preluma does not only quiz students. It shows what they know, what they misunderstood, and what they should ask in class.
+
+    ### Project Team
+
+    <div class='team-strip'>
+        <div class='member-pill'>MAMUNUR RASHID</div>
+        <div class='member-pill'>MD FAHIM</div>
+        <div class='member-pill'>MD JIARUL ISLAM</div>
+    </div>
     """)
