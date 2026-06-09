@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-APP_VERSION = "15.4"
+APP_VERSION = "15.5"
 APP_NAME = "Preluma"
 TAGLINE = "Light Up Before Class"
 
@@ -168,8 +168,8 @@ html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
 [data-testid="stSidebar"] {background:#071021;}
 [data-testid="stSidebar"] * {color:#e5e7eb;}
 .hero {position:relative; padding:34px 36px; min-height:250px; border-radius:30px; overflow:hidden; border:1px solid rgba(125,211,252,.22); background:linear-gradient(135deg,#020617 0%,#111827 48%,#4c1d95 100%); box-shadow:0 28px 60px rgba(2,6,23,.4);}
-.hero-img {position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; opacity:.72; z-index:0;}
-.hero-overlay {position:absolute; inset:0; z-index:1; background:linear-gradient(90deg,rgba(2,6,23,.72) 0%,rgba(15,23,42,.42) 46%,rgba(88,28,135,.55) 100%),radial-gradient(circle at 20% 10%,rgba(14,165,233,.25),transparent 35%);}
+
+
 .hero-content {position:relative; z-index:2;}
 .brand-row {display:flex; align-items:center; gap:14px; margin-bottom:18px;}
 .logo-mark {width:42px;height:42px;border-radius:15px;background:linear-gradient(135deg,#38bdf8,#8b5cf6);box-shadow:0 12px 28px rgba(56,189,248,.22);}
@@ -198,9 +198,9 @@ st.sidebar.toggle("Presentation Mode", value=True)
 st.sidebar.caption("Stable concept-level packs for smooth live demo.")
 
 if CAMPUS_BG:
-    st.sidebar.caption("Campus image loaded as hero layer.")
+    st.sidebar.caption("Campus image loaded.")
 else:
-    st.sidebar.caption("Campus image not found. Please upload assets/ynu_campus.jpg.")
+    st.sidebar.caption("Campus image not found. Upload assets/ynu_campus.jpg.")
 
 st.sidebar.markdown("""
 <div class='clean-team'><div class='team-title'>Project Team</div><div class='team-list'>
@@ -216,11 +216,14 @@ if st.sidebar.button("Reset session"):
 st.sidebar.markdown(f"<span class='footer-note'>Version {APP_VERSION}</span>", unsafe_allow_html=True)
 
 def hero():
-    img_layer = f"<img class='hero-img' src='{CAMPUS_BG}' alt='Yunnan University campus'>" if CAMPUS_BG else ""
+    if CAMPUS_BG:
+        hero_bg = f"linear-gradient(90deg, rgba(2,6,23,.70) 0%, rgba(15,23,42,.44) 45%, rgba(88,28,135,.50) 100%), url('{CAMPUS_BG}')"
+        campus_status = "Campus image loaded."
+    else:
+        hero_bg = "linear-gradient(135deg, #020617 0%, #111827 48%, #4c1d95 100%)"
+        campus_status = "Campus image not found."
     st.markdown(f"""
-    <div class='hero'>
-        {img_layer}
-        <div class='hero-overlay'></div>
+    <div class='hero' style="background-image: {hero_bg};">
         <div class='hero-content'>
             <div class='brand-row'>
                 <div class='logo-mark'></div>

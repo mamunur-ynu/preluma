@@ -92,3 +92,8 @@ Campus image is now rendered as an HTML image layer inside the hero section inst
 ## V15.4 Verified Hero Fix
 
 Campus photo is rendered with a real HTML image layer: `.hero-img`, `.hero-overlay`, and `.hero-content`. This avoids Streamlit CSS background loading issues.
+
+
+## V15.5 Full Hero Fix
+
+The campus image is now applied directly as an inline `background-image` on the hero section. This fixes the previous issue where the image appeared only in the middle portion instead of covering the full hero.
