@@ -1,25 +1,40 @@
-# SmartPrep V7.1 Full
+# Preluma
 
-SmartPrep is a pre-class brain priming web app. It helps students prepare before lectures with a Brain Brief, quiz, mistake learning, Ask Me Tutor, concept map, class questions, student dashboard, and Teacher Studio.
+Light Up Before Class.
 
-## Run
+Preluma is a pre-class learning assistant that helps students enter lectures prepared, confident, and ready to ask better questions.
+
+## Core experience
+
+- Brain Brief
+- Pre-class Quiz
+- Mistake Clinic
+- Ask Me Tutor
+- Concept Map
+- Class Questions
+- Readiness Dashboard
+- Teacher Studio
+
+## Run locally
 
 ```bash
 pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
 
-## Mac Direct Launcher
+## Deploy
 
-Double-click `launch_smartprep.command` after giving permission once:
+Upload these files to GitHub and deploy with Streamlit Cloud:
 
-```bash
-chmod +x launch_smartprep.command
+- streamlit_app.py
+- engine.py
+- topics.py
+- teacher.py
+- requirements.txt
+- README.md
+
+Main file path:
+
+```text
+streamlit_app.py
 ```
-
-## Best demo
-
-Topic: Quantum Mechanics  
-Mood: Let's go  
-Personality: Roast Mode  
-Give one wrong answer intentionally, then show Mistake Learning and Ask Me Tutor.

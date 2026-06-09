@@ -11,29 +11,71 @@ def build_pack(topic):
         title = topic.strip().title() or "Machine Learning"
         data = {
             "title": title,
-            "hook": f"{title} becomes easier when you see the big picture first.",
-            "definition": f"{title} is an academic topic that can be understood through definition, concepts, examples, and applications.",
-            "simple": f"Think of {title} like a new game. First you learn the rules, then you practice examples.",
+            "hook": f"{title} becomes easier when the student sees the big picture first.",
+            "definition": f"{title} is an academic topic that can be understood through definition, core concepts, examples, applications, and questions.",
+            "simple": f"Think of {title} like a new game. First learn the basic rules, then practice with examples.",
             "concepts": ["definition", "keywords", "examples", "applications", "limitations", "questions"],
-            "misconceptions": [f"{title} is not only memorization.", f"{title} needs examples.", f"{title} becomes clearer through questions."],
+            "misconceptions": [
+                f"{title} is not only memorization.",
+                f"{title} needs examples to become clear.",
+                f"{title} becomes easier when students ask questions."
+            ],
             "applications": ["exam preparation", "project work", "class discussion", "real-world problem solving", "critical thinking"],
-            "facts": [f"{title} is easier when connected to examples.", f"{title} has real-world uses.", f"Questions help students understand {title} better."]
+            "facts": [
+                f"{title} is easier when connected to examples.",
+                f"{title} has real-world uses.",
+                f"Good questions help students understand {title} better."
+            ]
         }
+
     text = " ".join([data["definition"], data["hook"], " ".join(data["concepts"]), " ".join(data["applications"])])
     words = re.findall(r"[a-zA-Z][a-zA-Z\-]{2,}", text.lower())
     keywords = [w for w, _ in Counter([w for w in words if w not in STOPWORDS and len(w) > 3]).most_common(10)]
+
     pack = dict(data)
     pack["keywords"] = keywords
-    pack["confidence"] = 0.9 if key in TOPICS else 0.73
+    pack["confidence"] = 0.91 if key in TOPICS else 0.74
     pack["source"] = "Curated lesson pack"
     return pack
 
 def make_questions(pack):
     return [
-        {"q": f"What should you understand first about {pack['title']}?", "options": ["The core meaning of the topic", "Only random facts", "Only UI design", "Only copying notes"], "answer": "The core meaning of the topic", "skill": "Definition", "why": "Before going deep, a student needs the basic meaning of the topic.", "kid": f"Before playing a new game, you first learn what the game is. {pack['title']} works the same way.", "evidence": pack["definition"]},
-        {"q": f"Which one is a core concept in {pack['title']}?", "options": [pack["concepts"][0], pack["concepts"][1], "decoration", "attendance only"], "answer": pack["concepts"][0], "skill": "Core Concept", "why": f"{pack['concepts'][0]} is included in the Brain Brief as a core concept.", "kid": f"Think of {pack['title']} as a house. {pack['concepts'][0]} is one brick in the house.", "evidence": ", ".join(pack["concepts"])},
-        {"q": f"Where can {pack['title']} become useful?", "options": [pack["applications"][0], "Avoiding class questions", "Making learning useless", "Only memorizing without meaning"], "answer": pack["applications"][0], "skill": "Application", "why": "This option shows where the topic becomes useful beyond a definition.", "kid": "Application means where an idea helps in real life.", "evidence": ", ".join(pack["applications"])},
-        {"q": f"Which one is a misconception about {pack['title']}?", "options": [pack["misconceptions"][0], pack["definition"][:90], f"{pack['title']} can be discussed in class", f"{pack['title']} has examples"], "answer": pack["misconceptions"][0], "skill": "Misconception", "why": "A misconception is a wrong or incomplete idea that students often believe.", "kid": "A misconception is like thinking a shadow is a monster. Explanation helps you see it clearly.", "evidence": " ".join(pack["misconceptions"])}
+        {
+            "q": f"What should you understand first about {pack['title']}?",
+            "options": ["The core meaning of the topic", "Only random facts", "Only interface design", "Only copying notes"],
+            "answer": "The core meaning of the topic",
+            "skill": "Definition",
+            "why": "Before going deep, the student needs the basic meaning of the topic.",
+            "kid": f"Before playing a new game, you first learn what the game is. {pack['title']} works the same way.",
+            "evidence": pack["definition"]
+        },
+        {
+            "q": f"Which one is a core concept in {pack['title']}?",
+            "options": [pack["concepts"][0], pack["concepts"][1], "decoration", "attendance only"],
+            "answer": pack["concepts"][0],
+            "skill": "Core Concept",
+            "why": f"{pack['concepts'][0]} is included in the Brain Brief as a core concept.",
+            "kid": f"Think of {pack['title']} as a house. {pack['concepts'][0]} is one brick in that house.",
+            "evidence": ", ".join(pack["concepts"])
+        },
+        {
+            "q": f"Where can {pack['title']} become useful?",
+            "options": [pack["applications"][0], "Avoiding class questions", "Making learning useless", "Only memorizing without meaning"],
+            "answer": pack["applications"][0],
+            "skill": "Application",
+            "why": "This option shows where the topic becomes useful beyond a definition.",
+            "kid": "Application means where an idea helps in real life, not just inside the textbook.",
+            "evidence": ", ".join(pack["applications"])
+        },
+        {
+            "q": f"Which one is a misconception about {pack['title']}?",
+            "options": [pack["misconceptions"][0], pack["definition"][:90], f"{pack['title']} can be discussed in class", f"{pack['title']} has examples"],
+            "answer": pack["misconceptions"][0],
+            "skill": "Misconception",
+            "why": "A misconception is a wrong or incomplete idea that students often believe.",
+            "kid": "A misconception is like thinking a shadow is a monster. Explanation helps you see it clearly.",
+            "evidence": " ".join(pack["misconceptions"])
+        }
     ]
 
 def grade(questions, selected):
@@ -57,14 +99,17 @@ def tutor(pack, question, style):
             if style == "Kid-simple":
                 return f"{concept} is one piece of {pack['title']}. Imagine the topic is a puzzle. If you understand this piece, the full picture becomes easier."
             if style == "Exam-focused":
-                return f"For exam: define {concept}, explain its role in {pack['title']}, then give one example."
-            return f"{concept} helps explain how {pack['title']} works in real situations."
+                return f"For an exam answer: define {concept}, explain its role in {pack['title']}, then give one example."
+            if style == "Real-world":
+                return f"In real life, {concept} helps explain how {pack['title']} appears in practical situations."
+            return f"{concept} is a core part of {pack['title']}. It helps explain how the topic works."
+
     if "example" in q or "use" in q or "real" in q:
-        return f"Real uses of {pack['title']} include {', '.join(pack['applications'][:3])}."
+        return f"Real uses of {pack['title']} include {', '.join(pack['applications'][:3])}. These uses show why the topic matters outside the classroom."
     if "mistake" in q or "wrong" in q or "confus" in q:
         return "Common confusions: " + " ".join([f"{i+1}. {m}" for i, m in enumerate(pack["misconceptions"])])
     if style == "Exam-focused":
-        return f"For exam, write definition, core concepts, one misconception, and one application of {pack['title']}."
+        return f"For exam preparation, write the definition, mention core concepts, explain one misconception, and add one application of {pack['title']}."
     if style == "Real-world":
         return f"In real life, {pack['title']} connects to {', '.join(pack['applications'][:4])}."
     return pack["simple"]
