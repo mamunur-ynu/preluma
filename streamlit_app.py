@@ -10,7 +10,7 @@ import streamlit as st
 from engine import build_pack, make_questions, grade, tutor, study_brief_markdown, concept_names, application_names
 from teacher import demo_teacher_data
 
-APP_VERSION = "13.1"
+APP_VERSION = "13.2"
 
 st.set_page_config(page_title="Preluma", page_icon="●", layout="wide")
 
@@ -40,13 +40,13 @@ html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
     padding: 24px 30px;
     border-radius: 30px;
     background:
-        linear-gradient(90deg, rgba(3,7,18,.92) 0%, rgba(15,23,42,.82) 42%, rgba(46,16,101,.66) 100%),
+        linear-gradient(90deg, rgba(3,7,18,.78) 0%, rgba(15,23,42,.58) 45%, rgba(46,16,101,.42) 100%),
         url("__CAMPUS_BG__");
     background-size: cover;
     background-position: center;
     border: 1px solid rgba(255,255,255,.16);
     color: white;
-    box-shadow: 0 24px 85px rgba(0,0,0,.34);
+    box-shadow: 0 24px 90px rgba(0,0,0,.30);
 }
 .hero::after {
     content: "";
@@ -65,7 +65,7 @@ html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
 .logo-dot {width:34px; height:34px; border-radius:12px; background:linear-gradient(135deg,#38bdf8,#8b5cf6); box-shadow:0 0 28px rgba(56,189,248,.35);}
 .brand-name {font-size:18px; font-weight:900; letter-spacing:-.3px;}
 .hero h1 {font-size: 36px; line-height: 1.08; margin: 0 0 10px 0; letter-spacing: -1px;}
-.hero p {font-size: 15px; max-width: 790px; color: #dbeafe; line-height: 1.55;}
+.hero p {font-size: 15px; max-width: 790px; color: #eef6ff; line-height: 1.55; text-shadow: 0 2px 12px rgba(0,0,0,.38);}
 .hero-tag {
     display: inline-block; padding: 6px 12px; border-radius: 999px;
     background: rgba(56,189,248,.16); border: 1px solid rgba(56,189,248,.34);
