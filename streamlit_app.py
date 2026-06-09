@@ -1,5 +1,7 @@
 import json
 import random
+import base64
+from pathlib import Path
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -8,11 +10,23 @@ import streamlit as st
 from engine import build_pack, make_questions, grade, tutor, study_brief_markdown, concept_names, application_names
 from teacher import demo_teacher_data
 
-APP_VERSION = "12.0"
+APP_VERSION = "13.0"
 
 st.set_page_config(page_title="Preluma", page_icon="●", layout="wide")
 
-CSS = """
+def asset_to_data_uri(path):
+    file_path = Path(path)
+    if not file_path.exists():
+        return None
+    suffix = file_path.suffix.lower().replace(".", "")
+    mime = "jpeg" if suffix in ["jpg", "jpeg"] else "png"
+    encoded = base64.b64encode(file_path.read_bytes()).decode()
+    return f"data:image/{mime};base64,{encoded}"
+
+CAMPUS_BG = asset_to_data_uri("assets/ynu_campus.jpg")
+
+
+CSS = f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
 html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
@@ -21,20 +35,36 @@ html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
 [data-testid="stSidebar"] * {color: #e5e7eb;}
 [data-testid="stHeader"] {background: rgba(0,0,0,0);}
 .hero {
-    padding: 22px 30px;
-    border-radius: 28px;
+    position: relative;
+    overflow: hidden;
+    padding: 24px 30px;
+    border-radius: 30px;
     background:
-        radial-gradient(circle at 10% 0%, rgba(14,165,233,.34), transparent 31%),
-        radial-gradient(circle at 96% 100%, rgba(124,58,237,.34), transparent 36%),
-        linear-gradient(135deg, #050816 0%, #111827 58%, #2e1065 100%);
-    border: 1px solid rgba(255,255,255,.12);
+        linear-gradient(90deg, rgba(3,7,18,.92) 0%, rgba(15,23,42,.82) 42%, rgba(46,16,101,.66) 100%),
+        url("{CAMPUS_BG if CAMPUS_BG else ''}");
+    background-size: cover;
+    background-position: center;
+    border: 1px solid rgba(255,255,255,.16);
     color: white;
-    box-shadow: 0 22px 70px rgba(0,0,0,.30);
+    box-shadow: 0 24px 85px rgba(0,0,0,.34);
+}
+.hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 12% 6%, rgba(56,189,248,.28), transparent 30%),
+        radial-gradient(circle at 90% 95%, rgba(124,58,237,.28), transparent 34%);
+    pointer-events: none;
+}
+.hero > * {
+    position: relative;
+    z-index: 1;
 }
 .brand-row {display:flex; align-items:center; gap:12px; margin-bottom:12px;}
 .logo-dot {width:34px; height:34px; border-radius:12px; background:linear-gradient(135deg,#38bdf8,#8b5cf6); box-shadow:0 0 28px rgba(56,189,248,.35);}
 .brand-name {font-size:18px; font-weight:900; letter-spacing:-.3px;}
-.hero h1 {font-size: 34px; line-height: 1.08; margin: 0 0 10px 0; letter-spacing: -1px;}
+.hero h1 {font-size: 36px; line-height: 1.08; margin: 0 0 10px 0; letter-spacing: -1px;}
 .hero p {font-size: 15px; max-width: 790px; color: #dbeafe; line-height: 1.55;}
 .hero-tag {
     display: inline-block; padding: 6px 12px; border-radius: 999px;
@@ -68,7 +98,18 @@ html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
 .badge-yellow {padding:12px 15px; border-radius:15px; background:#fef3c7; color:#92400e; font-weight:900;}
 .badge-red {padding:12px 15px; border-radius:15px; background:#fee2e2; color:#991b1b; font-weight:900;}
 .footer-note {color:#94a3b8; font-size:13px;}
-.caption-soft {color:#94a3b8; font-size:13px;}
+.caption-soft {color:#cbd5e1; font-size:13px;}
+.campus-chip {
+    display:inline-block;
+    margin-left:8px;
+    padding:5px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.18);
+    color:#e0f2fe;
+    font-size:12px;
+    font-weight:800;
+}
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -114,12 +155,12 @@ if page == "Student Mission":
             <div class="logo-dot"></div>
             <div>
                 <div class="brand-name">Preluma</div>
-                <div class="caption-soft">Light Up Before Class</div>
+                <div class="caption-soft">Light Up Before Class <span class="campus-chip">Yunnan University</span></div>
             </div>
         </div>
         <div class="hero-tag">Pre-class brain priming</div>
         <h1>Prepare before class. Understand more during class.</h1>
-        <p>A concept-level study mission that gives students a Brain Brief, short quiz, Mistake Clinic, tutor help, and smart class questions before the lecture starts.</p>
+        <p>Built with a Yunnan University learning context. Preluma gives students a concept-level Brain Brief, short quiz, Mistake Clinic, UltraTutor help, and smart class questions before the lecture starts.</p>
     </div>
     """, unsafe_allow_html=True)
 
