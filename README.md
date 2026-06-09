@@ -97,3 +97,8 @@ Campus photo is rendered with a real HTML image layer: `.hero-img`, `.hero-overl
 ## V15.5 Full Hero Fix
 
 The campus image is now applied directly as an inline `background-image` on the hero section. This fixes the previous issue where the image appeared only in the middle portion instead of covering the full hero.
+
+
+## V15.6 Restore Hero
+
+This version fixes the cropped campus photo problem by using a no-crop hero image layer. The full campus photo is shown with a cinematic blurred background behind it, so the image looks cleaner and less cut.

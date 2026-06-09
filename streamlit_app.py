@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-APP_VERSION = "15.5"
+APP_VERSION = "15.6"
 APP_NAME = "Preluma"
 TAGLINE = "Light Up Before Class"
 
@@ -216,14 +216,16 @@ if st.sidebar.button("Reset session"):
 st.sidebar.markdown(f"<span class='footer-note'>Version {APP_VERSION}</span>", unsafe_allow_html=True)
 
 def hero():
+    image_layers = ""
     if CAMPUS_BG:
-        hero_bg = f"linear-gradient(90deg, rgba(2,6,23,.70) 0%, rgba(15,23,42,.44) 45%, rgba(88,28,135,.50) 100%), url('{CAMPUS_BG}')"
-        campus_status = "Campus image loaded."
-    else:
-        hero_bg = "linear-gradient(135deg, #020617 0%, #111827 48%, #4c1d95 100%)"
-        campus_status = "Campus image not found."
+        image_layers = f"""
+        <img class='hero-bg-blur' src='{CAMPUS_BG}' alt='Yunnan University campus background'>
+        <img class='hero-img' src='{CAMPUS_BG}' alt='Yunnan University campus'>
+        """
     st.markdown(f"""
-    <div class='hero' style="background-image: {hero_bg};">
+    <div class='hero'>
+        {image_layers}
+        <div class='hero-overlay'></div>
         <div class='hero-content'>
             <div class='brand-row'>
                 <div class='logo-mark'></div>
