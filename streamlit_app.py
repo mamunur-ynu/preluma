@@ -1,14 +1,40 @@
 import json
 import re
 from datetime import datetime
+from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-APP_VERSION = "15.0"
+APP_VERSION = "15.2"
 APP_NAME = "Preluma"
 TAGLINE = "Light Up Before Class"
+
+def _campus_bg_data_uri():
+    """Load campus photo safely for Streamlit Cloud and local demo."""
+    import base64
+    candidates = [
+        Path.cwd() / "assets" / "ynu_campus.jpg",
+        Path.cwd() / "ynu_campus.jpg",
+        Path(__file__).resolve().parent / "assets" / "ynu_campus.jpg",
+        Path(__file__).resolve().parent / "ynu_campus.jpg",
+    ]
+    for img_path in candidates:
+        try:
+            if img_path.exists():
+                encoded = base64.b64encode(img_path.read_bytes()).decode("utf-8")
+                return f"data:image/jpeg;base64,{encoded}"
+        except Exception:
+            pass
+    return ""
+
+CAMPUS_BG = _campus_bg_data_uri()
+HERO_BG_STYLE = (
+    f"linear-gradient(90deg, rgba(2,6,23,.70) 0%, rgba(15,23,42,.42) 44%, rgba(88,28,135,.54) 100%), url('{CAMPUS_BG}')"
+    if CAMPUS_BG
+    else "linear-gradient(135deg, #020617 0%, #111827 48%, #4c1d95 100%)"
+)
 
 TEAM = [
     ("MAMUNUR RASHID", "Product • UI • Integration"),
@@ -133,24 +159,24 @@ def tutor_answer(topic, question):
 
 st.set_page_config(page_title="Preluma Product Prototype", layout="wide", page_icon="✨")
 
-CSS = """
+CSS = f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
-html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
-.block-container {padding-top: 1rem; max-width: 1180px;}
-[data-testid="stSidebar"] {background:#071021;}
-[data-testid="stSidebar"] * {color:#e5e7eb;}
-.hero {position:relative; padding:34px 36px; min-height:250px; border-radius:30px; overflow:hidden; border:1px solid rgba(125,211,252,.22); background:linear-gradient(90deg,rgba(2,6,23,.9),rgba(15,23,42,.62),rgba(88,28,135,.73)),url('assets/ynu_campus.jpg'); background-size:cover; background-position:center; box-shadow:0 28px 60px rgba(2,6,23,.4);}
-.brand-row {display:flex; align-items:center; gap:14px; margin-bottom:18px;}
-.logo-mark {width:42px;height:42px;border-radius:15px;background:linear-gradient(135deg,#38bdf8,#8b5cf6);box-shadow:0 12px 28px rgba(56,189,248,.22);}
-.brand-title {font-weight:900;color:#fff;font-size:18px}.brand-sub{color:#dbeafe;font-size:13px;margin-top:2px}
-.badge,.uni-badge {display:inline-block;padding:8px 13px;border-radius:999px;font-weight:850;font-size:13px}.badge{background:rgba(14,165,233,.16);border:1px solid rgba(125,211,252,.35);color:#bae6fd}.uni-badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;margin-left:8px}
-.hero h1{font-size:40px;line-height:1.05;color:#fff;margin:30px 0 14px}.hero p{font-size:16px;max-width:850px;color:#e0f2fe;line-height:1.6}
-.step{display:inline-block;padding:10px 14px;margin:4px 5px 8px 0;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:900;font-size:13px}
-.clean-team{margin-top:18px;padding:16px;border-radius:22px;background:linear-gradient(135deg,rgba(15,23,42,.85),rgba(30,41,59,.75));border:1px solid rgba(148,163,184,.22)}.team-title{color:#93c5fd;font-size:12px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;margin-bottom:10px}.team-list{display:flex;flex-direction:column;gap:8px}.team-item{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09)}.team-name{font-weight:900;color:#fff;font-size:12px}.team-role{font-size:11px;color:#94a3b8;margin-top:2px}
-.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0 8px}.metric-card{padding:16px 18px;border-radius:20px;background:linear-gradient(135deg,rgba(15,23,42,.92),rgba(30,41,59,.8));border:1px solid rgba(148,163,184,.22)}.metric-number{font-size:25px;color:#fff;font-weight:900}.metric-label{font-size:12px;color:#93c5fd;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-top:5px}
-.flow-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:18px 0}.flow-card,.answer-card{padding:18px 20px;border-radius:22px;background:rgba(15,23,42,.72);border:1px solid rgba(148,163,184,.2)}.flow-card small,.answer-title{color:#93c5fd;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}.flow-card h3{color:#fff;margin:8px 0}.flow-card p,.answer-card p,.answer-card li{color:#e5e7eb;line-height:1.6}.answer-card{margin:12px 0}.answer-title{margin-bottom:8px}.notice,.warning{padding:13px 15px;border-radius:17px;line-height:1.55;margin-bottom:12px}.notice{background:rgba(59,130,246,.12);border:1px solid rgba(96,165,250,.24);color:#dbeafe}.warning{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);color:#fef3c7}.footer-note{color:#94a3b8;font-size:13px}
-@media(max-width:900px){.metric-row,.flow-grid{grid-template-columns:1fr}.hero{padding:24px 22px}.hero h1{font-size:30px}}
+html, body, [class*="css"] {{font-family: 'Inter', sans-serif;}}
+.block-container {{padding-top: 1rem; max-width: 1180px;}}
+[data-testid="stSidebar"] {{background:#071021;}}
+[data-testid="stSidebar"] * {{color:#e5e7eb;}}
+.hero {{position:relative; padding:34px 36px; min-height:250px; border-radius:30px; overflow:hidden; border:1px solid rgba(125,211,252,.22); background:linear-gradient(90deg,rgba(2,6,23,.9),rgba(15,23,42,.62),rgba(88,28,135,.73)),url('assets/ynu_campus.jpg'); background-size:cover; background-position:center; box-shadow:0 28px 60px rgba(2,6,23,.4);}}
+.brand-row {{display:flex; align-items:center; gap:14px; margin-bottom:18px;}}
+.logo-mark {{width:42px;height:42px;border-radius:15px;background:linear-gradient(135deg,#38bdf8,#8b5cf6);box-shadow:0 12px 28px rgba(56,189,248,.22);}}
+.brand-title {{font-weight:900;color:#fff;font-size:18px}}.brand-sub{{color:#dbeafe;font-size:13px;margin-top:2px}}
+.badge,.uni-badge {{display:inline-block;padding:8px 13px;border-radius:999px;font-weight:850;font-size:13px}}.badge{{background:rgba(14,165,233,.16);border:1px solid rgba(125,211,252,.35);color:#bae6fd}}.uni-badge{{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;margin-left:8px}}
+.hero h1{{font-size:40px;line-height:1.05;color:#fff;margin:30px 0 14px}}.hero p{{font-size:16px;max-width:850px;color:#e0f2fe;line-height:1.6}}
+.step{{display:inline-block;padding:10px 14px;margin:4px 5px 8px 0;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:900;font-size:13px}}
+.clean-team{{margin-top:18px;padding:16px;border-radius:22px;background:linear-gradient(135deg,rgba(15,23,42,.85),rgba(30,41,59,.75));border:1px solid rgba(148,163,184,.22)}}.team-title{{color:#93c5fd;font-size:12px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;margin-bottom:10px}}.team-list{{display:flex;flex-direction:column;gap:8px}}.team-item{{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09)}}.team-name{{font-weight:900;color:#fff;font-size:12px}}.team-role{{font-size:11px;color:#94a3b8;margin-top:2px}}
+.metric-row{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0 8px}}.metric-card{{padding:16px 18px;border-radius:20px;background:linear-gradient(135deg,rgba(15,23,42,.92),rgba(30,41,59,.8));border:1px solid rgba(148,163,184,.22)}}.metric-number{{font-size:25px;color:#fff;font-weight:900}}.metric-label{{font-size:12px;color:#93c5fd;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-top:5px}}
+.flow-grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:18px 0}}.flow-card,.answer-card{{padding:18px 20px;border-radius:22px;background:rgba(15,23,42,.72);border:1px solid rgba(148,163,184,.2)}}.flow-card small,.answer-title{{color:#93c5fd;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}}.flow-card h3{{color:#fff;margin:8px 0}}.flow-card p,.answer-card p,.answer-card li{{color:#e5e7eb;line-height:1.6}}.answer-card{{margin:12px 0}}.answer-title{{margin-bottom:8px}}.notice,.warning{{padding:13px 15px;border-radius:17px;line-height:1.55;margin-bottom:12px}}.notice{{background:rgba(59,130,246,.12);border:1px solid rgba(96,165,250,.24);color:#dbeafe}}.warning{{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);color:#fef3c7}}.footer-note{{color:#94a3b8;font-size:13px}}
+@media(max-width:900px){{.metric-row,.flow-grid{{grid-template-columns:1fr}}.hero{{padding:24px 22px}}.hero h1{{font-size:30px}}
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -166,6 +192,12 @@ st.sidebar.caption(TAGLINE)
 page = st.sidebar.radio("Workspace", ["Student Mission", "Teacher Studio", "Evidence Board", "Demo Guide", "Future Roadmap"])
 st.sidebar.toggle("Presentation Mode", value=True)
 st.sidebar.caption("Stable concept-level packs for smooth live demo.")
+
+if CAMPUS_BG:
+    st.sidebar.caption("Campus background loaded.")
+else:
+    st.sidebar.caption("Campus image not found. Upload assets/ynu_campus.jpg.")
+
 st.sidebar.markdown("""
 <div class='clean-team'><div class='team-title'>Project Team</div><div class='team-list'>
 <div class='team-item'><div class='team-name'>MAMUNUR RASHID</div><div class='team-role'>Product • UI • Integration</div></div>

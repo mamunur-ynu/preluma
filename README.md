@@ -71,3 +71,14 @@ This version clearly shows:
 - Evidence Board for academic justification
 - Future Roadmap for product-level thinking
 - Campus-branded professional UI
+
+
+## Campus image requirement
+
+For the Yunnan University background to appear, this exact file must exist in GitHub:
+
+```text
+assets/ynu_campus.jpg
+```
+
+If the app says "Campus image not found", upload the image again inside the `assets` folder.
