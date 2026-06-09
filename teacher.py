@@ -8,4 +8,6 @@ def demo_teacher_data():
         {"Student": "Rafi", "Topic": "Data Structures", "Readiness": 68, "Weak Skill": "Core Concept"},
         {"Student": "Nadia", "Topic": "Machine Learning", "Readiness": 84, "Weak Skill": "Definition"},
         {"Student": "Chen", "Topic": "Artificial Intelligence", "Readiness": 88, "Weak Skill": "None"},
+        {"Student": "Amin", "Topic": "Python Programming", "Readiness": 72, "Weak Skill": "Core Concept"},
+        {"Student": "Sara", "Topic": "Database Systems", "Readiness": 61, "Weak Skill": "Application"},
     ])

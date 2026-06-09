@@ -113,3 +113,30 @@ def tutor(pack, question, style):
     if style == "Real-world":
         return f"In real life, {pack['title']} connects to {', '.join(pack['applications'][:4])}."
     return pack["simple"]
+
+def study_brief_markdown(student, lecture_time, pack, result, questions_to_ask):
+    weak = ", ".join(result["weak"]) if result["weak"] else "No major weak area"
+    lines = [
+        "# Preluma Study Brief",
+        "",
+        f"Student: {student}",
+        f"Lecture: {pack['title']}",
+        f"Lecture time: {lecture_time}",
+        f"Readiness: {result['percentage']}%",
+        f"Score: {result['score']}/{result['total']}",
+        f"Weak area: {weak}",
+        "",
+        "## Brain Brief",
+        pack["definition"],
+        "",
+        "## Explain Like I Am 5",
+        pack["simple"],
+        "",
+        "## Core Concepts",
+    ]
+    for concept in pack["concepts"]:
+        lines.append(f"- {concept}")
+    lines.extend(["", "## Smart Questions to Ask in Class"])
+    for i, question in enumerate(questions_to_ask, 1):
+        lines.append(f"{i}. {question}")
+    return "\n".join(lines)

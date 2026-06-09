@@ -5,10 +5,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from engine import build_pack, make_questions, grade, tutor
+from engine import build_pack, make_questions, grade, tutor, study_brief_markdown
 from teacher import demo_teacher_data
+from topics import TOPICS
 
-APP_VERSION = "8.0"
+APP_VERSION = "9.0"
 
 st.set_page_config(page_title="Preluma", page_icon="●", layout="wide")
 
@@ -16,26 +17,26 @@ CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
-.block-container {padding-top: 1.1rem; max-width: 1160px;}
+.block-container {padding-top: .8rem; max-width: 1160px;}
 [data-testid="stSidebar"] {background: #080d1c;}
 [data-testid="stSidebar"] * {color: #e5e7eb;}
 .hero {
-    padding: 30px 34px;
-    border-radius: 30px;
+    padding: 24px 32px;
+    border-radius: 28px;
     background:
-        radial-gradient(circle at top left, rgba(14,165,233,.35), transparent 32%),
-        radial-gradient(circle at bottom right, rgba(124,58,237,.34), transparent 36%),
+        radial-gradient(circle at top left, rgba(14,165,233,.35), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(124,58,237,.34), transparent 34%),
         linear-gradient(135deg, #060914 0%, #111827 58%, #2e1065 100%);
     border: 1px solid rgba(255,255,255,.12);
     color: white;
-    box-shadow: 0 25px 85px rgba(0,0,0,.34);
+    box-shadow: 0 22px 70px rgba(0,0,0,.30);
 }
-.hero h1 {font-size: 44px; line-height: 1.05; margin: 0 0 12px 0; letter-spacing: -1.1px;}
-.hero p {font-size: 16px; max-width: 780px; color: #dbeafe; line-height: 1.65;}
+.hero h1 {font-size: 38px; line-height: 1.06; margin: 0 0 10px 0; letter-spacing: -1px;}
+.hero p {font-size: 15px; max-width: 780px; color: #dbeafe; line-height: 1.55;}
 .hero-tag {
-    display: inline-block; padding: 7px 13px; border-radius: 999px;
+    display: inline-block; padding: 6px 12px; border-radius: 999px;
     background: rgba(56,189,248,.16); border: 1px solid rgba(56,189,248,.34);
-    color: #bae6fd; font-weight: 800; margin-bottom: 13px;
+    color: #bae6fd; font-weight: 800; margin-bottom: 12px; font-size: 13px;
 }
 .step {
     display:inline-block; padding:7px 12px; margin:3px; border-radius:999px;
@@ -88,8 +89,8 @@ def radar_fig(values):
 st.sidebar.markdown("## Preluma")
 st.sidebar.caption("Light Up Before Class")
 page = st.sidebar.radio("Workspace", ["Student Mission", "Teacher Studio", "Evidence Board"])
-st.sidebar.toggle("Demo-safe mode", True)
-st.sidebar.caption("Stable mode for live presentation.")
+presentation_mode = st.sidebar.toggle("Presentation Mode", True)
+st.sidebar.caption("Uses stable curated lesson packs for smooth live demo.")
 st.sidebar.markdown("---")
 if st.sidebar.button("Reset session"):
     reset()
@@ -100,7 +101,7 @@ if page == "Student Mission":
     <div class="hero">
         <div class="hero-tag">Pre-class brain priming</div>
         <h1>Prepare before class. Understand more during class.</h1>
-        <p>Preluma gives every student a Brain Brief, short quiz, mistake clinic, tutor help, and smart questions before the lecture starts.</p>
+        <p>Preluma gives every student a Brain Brief, short quiz, Mistake Clinic, tutor help, and smart class questions before the lecture starts.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -110,10 +111,15 @@ if page == "Student Mission":
     st.write("")
     with st.container(border=True):
         st.markdown("### Start a pre-class mission")
-        left, mid, right = st.columns([1.15, 1, 1])
+        left, mid, right = st.columns([1.1, 1, 1])
         with left:
             student = st.text_input("Student", "Mim")
-            topic = st.text_input("Lecture topic", "Quantum Mechanics")
+            topic_options = ["Quantum Mechanics", "Machine Learning", "Artificial Intelligence", "Data Structures", "Python Programming", "Object Oriented Programming", "Neural Networks", "Linear Regression", "Database Systems", "Climate Change", "Custom topic"]
+            chosen = st.selectbox("Lecture topic", topic_options)
+            if chosen == "Custom topic":
+                topic = st.text_input("Custom topic", "Natural Language Processing")
+            else:
+                topic = chosen
             lecture_time = st.text_input("Lecture time", "Tomorrow 9 AM")
         with mid:
             mood = st.radio("Study mood", ["Let's go", "Calm focus", "Last minute survival"], captions=["High energy", "Focused", "Quick survival"])
@@ -204,7 +210,15 @@ if page == "Student Mission":
 
         st.markdown("### Ask Me Tutor")
         style = st.selectbox("Explanation style", ["Kid-simple", "Exam-focused", "Real-world", "Normal"])
-        ask = st.text_input("What did you not understand?", "I do not understand superposition")
+        suggested = st.radio(
+            "Quick help prompts",
+            ["I do not understand the main idea", "Give me an example", "What mistake do students make?", "How can this come in exam?", "Why should I care?", "Write my own question"],
+            horizontal=True
+        )
+        if suggested == "Write my own question":
+            ask = st.text_input("Your question", "I do not understand superposition")
+        else:
+            ask = suggested
         if st.button("Explain Clearly"):
             st.info(tutor(pack, ask, style))
 
@@ -250,7 +264,8 @@ if page == "Student Mission":
             "weak": res["weak"],
             "questions_to_ask": questions_to_ask
         }
-        st.download_button("Download Study Brief", json.dumps(export, indent=2), "preluma_study_brief.json", "application/json", use_container_width=True)
+        st.download_button("Download JSON Brief", json.dumps(export, indent=2), "preluma_study_brief.json", "application/json", use_container_width=True)
+        st.download_button("Download Study Brief", study_brief_markdown(student, lecture_time, pack, res, questions_to_ask), "preluma_study_brief.md", "text/markdown", use_container_width=True)
 
 elif page == "Teacher Studio":
     st.markdown("## Teacher Studio")
@@ -273,29 +288,47 @@ elif page == "Teacher Studio":
 else:
     st.markdown("## Evidence Board")
     st.markdown("""
-    **Why Preluma is more than a quiz app**
+    ### Problem
 
-    Preluma is designed as a complete pre-class learning workflow. It does not only ask questions. It gives students the basic map, tests readiness, explains mistakes, helps them ask better questions, and gives teachers a readiness view.
+    Students often enter lectures without preparation. This creates passive learning, weak retention, and low class participation.
 
-    **Product strengths**
+    ### Objective
 
-    - Product-style web experience
-    - Brain Brief before quiz
-    - Mistake Clinic after quiz
+    Preluma prepares students before class with a guided learning mission.
+
+    ### M1: Brain and Data
+
+    - Curated lesson packs
+    - Core concept extraction
+    - Misconception awareness
+    - Application-based learning
+
+    ### M2: Learning Features
+
+    - Brain Brief
+    - Pre-class Quiz
+    - Mistake Clinic
     - Explain-like-I-am-5 support
     - Ask Me Tutor
-    - Concept Map
+    - Smart class questions
+
+    ### M3: UI and Analytics
+
+    - Product-style web interface
+    - Readiness dashboard
     - Teacher Studio
     - Exportable study brief
-    - Deployment-ready website
 
-    **Suggested demo**
+    ### Limitations
 
-    1. Start Student Mission.
-    2. Use Quantum Mechanics.
-    3. Choose Roast Mode.
-    4. Give one wrong answer.
-    5. Show Mistake Clinic.
-    6. Ask: I do not understand superposition.
-    7. Show Teacher Studio.
+    - Current version uses curated and rule-based data.
+    - Future versions can add LLM-based generation and syllabus upload.
+
+    ### Future Work
+
+    - Student login
+    - Syllabus upload
+    - More topics
+    - Multilingual explanations
+    - Teacher assignment dashboard
     """)
