@@ -10,7 +10,7 @@ import streamlit as st
 from engine import build_pack, make_questions, grade, tutor, study_brief_markdown, concept_names, application_names
 from teacher import demo_teacher_data
 
-APP_VERSION = "13.0"
+APP_VERSION = "13.1"
 
 st.set_page_config(page_title="Preluma", page_icon="●", layout="wide")
 
@@ -26,7 +26,7 @@ def asset_to_data_uri(path):
 CAMPUS_BG = asset_to_data_uri("assets/ynu_campus.jpg")
 
 
-CSS = f"""
+CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
 html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
@@ -41,7 +41,7 @@ html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
     border-radius: 30px;
     background:
         linear-gradient(90deg, rgba(3,7,18,.92) 0%, rgba(15,23,42,.82) 42%, rgba(46,16,101,.66) 100%),
-        url("{CAMPUS_BG if CAMPUS_BG else ''}");
+        url("__CAMPUS_BG__");
     background-size: cover;
     background-position: center;
     border: 1px solid rgba(255,255,255,.16);
@@ -112,6 +112,7 @@ html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
 }
 </style>
 """
+CSS = CSS.replace("__CAMPUS_BG__", CAMPUS_BG if CAMPUS_BG else "")
 st.markdown(CSS, unsafe_allow_html=True)
 
 if "pack" not in st.session_state:
