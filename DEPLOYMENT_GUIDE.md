@@ -1,12 +1,31 @@
-# Deployment Guide
+# Preluma V15 Deployment Guide
+
+## Upload to GitHub
+
+Replace these files:
+
+- streamlit_app.py
+- requirements.txt
+- README.md
+- topics.py
+- engine.py
+- teacher.py
+
+Keep the existing assets folder:
+
+- assets/ynu_campus.jpg
+
+## Commit message
+
+Upgrade to Preluma V15 Product Prototype
 
 ## Streamlit Cloud
 
-1. Create a GitHub repository.
-2. Upload this folder.
-3. Go to Streamlit Community Cloud.
-4. Connect the repository.
-5. Main file path: `streamlit_app.py`.
-6. Deploy and share the website link.
+After committing to main branch, Streamlit Cloud should redeploy automatically.
 
-This makes the project feel like a real website instead of a local file.
+If it does not update:
+
+1. Open Streamlit Cloud
+2. Click Manage app
+3. Click Reboot app
+4. Wait 1-3 minutes
