@@ -82,3 +82,13 @@ assets/ynu_campus.jpg
 ```
 
 If the app says "Campus image not found", upload the image again inside the `assets` folder.
+
+
+## V15.3 image layer fix
+
+Campus image is now rendered as an HTML image layer inside the hero section instead of relying only on CSS background-image. This is more reliable on Streamlit Cloud.
+
+
+## V15.4 Verified Hero Fix
+
+Campus photo is rendered with a real HTML image layer: `.hero-img`, `.hero-overlay`, and `.hero-content`. This avoids Streamlit CSS background loading issues.
