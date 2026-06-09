@@ -141,36 +141,87 @@ def best_concept_match(pack, question):
             best_score = score
     return best_name if best_score > 0 else None
 
+
 def tutor(pack, question, style):
     q = question.lower().strip()
     concept = best_concept_match(pack, q)
 
+    def format_answer(title, simple, definition, example, mistake, exam):
+        if style == "Kid-simple":
+            return (
+                f"Let’s make it very simple. {simple} "
+                f"Example: {example} "
+                f"Memory hook: remember it as one small puzzle piece of {pack['title']}. "
+                f"Common mistake: {mistake}"
+            )
+        if style == "Exam-focused":
+            return (
+                f"Exam-ready answer: {definition} "
+                f"Example: {example} "
+                f"Common mistake to avoid: {mistake} "
+                f"How to write in exam: {exam}"
+            )
+        if style == "Real-world":
+            return (
+                f"Real-world view: {example} "
+                f"This matters because it shows how {pack['title']} is useful beyond memorizing definitions. "
+                f"Key idea: {definition}"
+            )
+        return (
+            f"{title}: {definition} "
+            f"Simple idea: {simple} "
+            f"Example: {example} "
+            f"Common mistake: {mistake}"
+        )
+
     if concept:
         details = pack["concepts"][concept]
-        if style == "Kid-simple":
-            return f"{concept.title()}: {details['kid']} In simple words, {details['definition']} Example: {details['example']}"
-        if style == "Exam-focused":
-            return f"{concept.title()} exam answer: {details['definition']} Role in topic: it helps explain {pack['title']}. Example: {details['example']} Common mistake: {details['mistake']} Exam point: {details['exam']}"
-        if style == "Real-world":
-            return f"{concept.title()} in real context: {details['example']} This matters because it shows how {pack['title']} is used beyond memorizing definitions."
-        return f"{concept.title()}: {details['definition']} Example: {details['example']} Common mistake: {details['mistake']}"
+        return format_answer(
+            concept.title(),
+            details["kid"],
+            details["definition"],
+            details["example"],
+            details["mistake"],
+            details["exam"]
+        )
+
+    if "main" in q or "basic" in q or "idea" in q or "understand" in q:
+        first = concept_names(pack)[0]
+        details = pack["concepts"][first]
+        return (
+            f"Start with this simple idea: {pack['simple']} "
+            f"The first concept to learn is {first}. {details['kid']} "
+            f"Example: {details['example']}"
+        )
 
     if "example" in q or "use" in q or "real" in q:
         items = [f"{name}: {text}" for name, text in list(pack["applications"].items())[:3]]
-        return "Real uses from this Brain Brief: " + " ".join(items)
+        return "Here are simple real uses from this Brain Brief: " + " ".join(items)
 
     if "mistake" in q or "wrong" in q or "confus" in q:
-        return "Common confusions from this Brain Brief: " + " ".join([f"{i+1}. {m}" for i, m in enumerate(pack["misconceptions"])])
+        return "Common student confusions: " + " ".join([f"{i+1}. {m}" for i, m in enumerate(pack["misconceptions"])])
 
     if "exam" in q:
         first = concept_names(pack)[0]
-        return f"Exam focus for {pack['title']}: define the topic, explain {first}, give one application, and mention one misconception."
+        details = pack["concepts"][first]
+        return (
+            f"Exam focus for {pack['title']}: first define the topic, then explain {first}. "
+            f"Use this line: {details['exam']} "
+            f"Then add one application such as {application_names(pack)[0]}."
+        )
 
     if "why" in q or "care" in q:
         apps = ", ".join(application_names(pack)[:3])
-        return f"You should care about {pack['title']} because it connects classroom theory with real uses such as {apps}."
+        return (
+            f"You should care about {pack['title']} because it connects classroom theory with real uses such as {apps}. "
+            f"If you know the basic map before class, the lecture becomes much easier to follow."
+        )
 
-    return f"I could not find that exact idea inside the current Brain Brief for {pack['title']}. Try asking about one of these concepts: {', '.join(concept_names(pack)[:6])}."
+    return (
+        f"I could not find that exact idea inside the current Brain Brief for {pack['title']}. "
+        f"Please ask about one of these concepts: {', '.join(concept_names(pack)[:6])}. "
+        f"For example: 'I do not understand {concept_names(pack)[0]}'."
+    )
 
 def study_brief_markdown(student, lecture_time, pack, result, questions_to_ask):
     weak = ", ".join(result["weak"]) if result["weak"] else "No major weak area"

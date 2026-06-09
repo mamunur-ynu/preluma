@@ -8,7 +8,7 @@ import streamlit as st
 from engine import build_pack, make_questions, grade, tutor, study_brief_markdown, concept_names, application_names
 from teacher import demo_teacher_data
 
-APP_VERSION = "11.0"
+APP_VERSION = "12.0"
 
 st.set_page_config(page_title="Preluma", page_icon="●", layout="wide")
 
@@ -54,11 +54,16 @@ html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
     border: 1px solid rgba(255,255,255,.10);
 }
 .mini-card {
-    padding: 14px 16px; border-radius: 18px; background: rgba(248,250,252,.96);
-    border: 1px solid #e5e7eb; min-height: 100px;
+    padding: 16px 18px; border-radius: 20px;
+    background: linear-gradient(135deg, #111827 0%, #1e293b 100%);
+    color: #e5e7eb;
+    border: 1px solid rgba(148,163,184,.28);
+    min-height: 112px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.18);
 }
-.mini-title {color:#64748b; font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.08em;}
-.big-label {font-size: 17px; font-weight: 900; color: #0f172a; margin-top: 6px;}
+.mini-title {color:#93c5fd; font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.08em;}
+.big-label {font-size: 18px; font-weight: 900; color: #ffffff; margin-top: 6px;}
+.mini-body {color:#cbd5e1; font-size:14px; line-height:1.55; margin-top:10px;}
 .badge-green {padding:12px 15px; border-radius:15px; background:#dcfce7; color:#166534; font-weight:900;}
 .badge-yellow {padding:12px 15px; border-radius:15px; background:#fef3c7; color:#92400e; font-weight:900;}
 .badge-red {padding:12px 15px; border-radius:15px; background:#fee2e2; color:#991b1b; font-weight:900;}
@@ -123,9 +128,9 @@ if page == "Student Mission":
 
     st.write("")
     cA, cB, cC = st.columns(3)
-    cA.markdown("<div class='mini-card'><div class='mini-title'>Step 1</div><div class='big-label'>Prime the brain</div><br>Start with a compact Brain Brief before the lecture.</div>", unsafe_allow_html=True)
-    cB.markdown("<div class='mini-card'><div class='mini-title'>Step 2</div><div class='big-label'>Find weak spots</div><br>Use a short quiz to detect misunderstanding.</div>", unsafe_allow_html=True)
-    cC.markdown("<div class='mini-card'><div class='mini-title'>Step 3</div><div class='big-label'>Ask better questions</div><br>Leave with class-ready questions and a score.</div>", unsafe_allow_html=True)
+    cA.markdown("<div class='mini-card'><div class='mini-title'>Step 1</div><div class='big-label'>Prime the brain</div><div class='mini-body'>Start with a compact Brain Brief before the lecture.</div></div>", unsafe_allow_html=True)
+    cB.markdown("<div class='mini-card'><div class='mini-title'>Step 2</div><div class='big-label'>Find weak spots</div><div class='mini-body'>Use a short quiz to detect misunderstanding.</div></div>", unsafe_allow_html=True)
+    cC.markdown("<div class='mini-card'><div class='mini-title'>Step 3</div><div class='big-label'>Ask better questions</div><div class='mini-body'>Leave with class-ready questions and a score.</div></div>", unsafe_allow_html=True)
 
     st.write("")
     with st.container(border=True):
@@ -240,7 +245,8 @@ if page == "Student Mission":
                 st.info("Explain like I am 5: " + q["kid"])
                 st.caption("Evidence: " + q["evidence"])
 
-        st.markdown("### Ask Me Tutor")
+        st.markdown("### UltraTutor")
+        st.caption("Ask any confusing concept from the current Brain Brief. UltraTutor answers with a simple explanation, example, common mistake, and exam angle.")
         style = st.selectbox("Explanation style", ["Kid-simple", "Exam-focused", "Real-world", "Normal"])
         prompt_options = [
             f"I do not understand {concept_names(pack)[0]}",
@@ -348,7 +354,7 @@ elif page == "Evidence Board":
     - Pre-class Quiz
     - Mistake Clinic
     - Explain-like-I-am-5 support
-    - Topic-aware Ask Me Tutor
+    - Topic-aware UltraTutor
     - Smart class questions
 
     ### M3: UI and Analytics
@@ -382,7 +388,7 @@ else:
     4. Start the mission and show the Brain Brief.
     5. Answer one quiz question incorrectly.
     6. Show Mistake Clinic and kid-simple explanation.
-    7. Ask the tutor: `I do not understand superposition`.
+    7. Ask UltraTutor: `I do not understand superposition`.
     8. Show class questions.
     9. Open Teacher Studio and show readiness analytics.
 

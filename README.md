@@ -1,32 +1,23 @@
-# Preluma V11 ProClass
+# Preluma V12 UltraTutor
 
 Light Up Before Class.
 
 Preluma is a pre-class learning assistant that helps students enter lectures prepared, confident, and ready to ask better questions.
 
-## What makes V11 stronger
+## V12 upgrades
 
-- More polished product-style interface
-- Stronger Preluma brand identity
-- Compact premium landing section
+- Better contrast and cleaner UI cards
+- UltraTutor with baby-level explanation
+- Topic-aware answers with example, memory hook, common mistake, and exam line
 - Concept-level Brain Brief
-- Evidence-based quiz feedback
-- Mistake Clinic with kid-simple explanation
-- Topic-aware Ask Me Tutor
-- Current session can appear in Teacher Studio
-- Markdown and JSON study brief export
-- Evidence Board aligned with M1, M2, M3 project modules
-
-## Run
-
-```bash
-pip install -r requirements.txt
-streamlit run streamlit_app.py
-```
+- Mistake Clinic with evidence-based feedback
+- Teacher Studio
+- Demo Guide
+- Markdown and JSON exports
 
 ## Deploy
 
-Upload these root files to GitHub:
+Upload these root files to the same GitHub repo:
 
 - streamlit_app.py
 - engine.py
