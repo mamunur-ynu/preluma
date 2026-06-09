@@ -1,31 +1,11 @@
-# Preluma V15 Deployment Guide
+# Deploy Preluma V14.1 Stable Hero
 
-## Upload to GitHub
+Upload/replace the project files in GitHub and commit directly to main.
 
-Replace these files:
+Commit message:
 
-- streamlit_app.py
-- requirements.txt
-- README.md
-- topics.py
-- engine.py
-- teacher.py
+Restore stable campus hero design
 
-Keep the existing assets folder:
+Keep the file path:
 
-- assets/ynu_campus.jpg
-
-## Commit message
-
-Upgrade to Preluma V15 Product Prototype
-
-## Streamlit Cloud
-
-After committing to main branch, Streamlit Cloud should redeploy automatically.
-
-If it does not update:
-
-1. Open Streamlit Cloud
-2. Click Manage app
-3. Click Reboot app
-4. Wait 1-3 minutes
+assets/ynu_campus.jpg
