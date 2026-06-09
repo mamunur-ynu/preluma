@@ -5,9 +5,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from smartprep import APP_VERSION
-from smartprep.engine import build_pack, make_questions, grade, tutor
-from smartprep.teacher import demo_teacher_data
+APP_VERSION = "1.0.0"
+from engine import build_pack, make_questions, grade, tutor
+from teacher import demo_teacher_data
 
 st.set_page_config(page_title="SmartPrep Studio", layout="wide")
 
