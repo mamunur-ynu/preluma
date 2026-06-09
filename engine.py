@@ -1,6 +1,6 @@
 import re
 from collections import Counter
-from smartprep.topics import TOPICS
+from topics import TOPICS
 
 STOPWORDS = set("the and for that with from this have has are was were been will would could should about into than then them they their there where when which what also more most some such only other many each these those because while used known called based topic class lecture".split())
 
