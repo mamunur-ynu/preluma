@@ -5,11 +5,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from engine import build_pack, make_questions, grade, tutor, study_brief_markdown
+from engine import build_pack, make_questions, grade, tutor, study_brief_markdown, concept_names, application_names
 from teacher import demo_teacher_data
-from topics import TOPICS
 
-APP_VERSION = "9.0"
+APP_VERSION = "10.0"
 
 st.set_page_config(page_title="Preluma", page_icon="●", layout="wide")
 
@@ -78,19 +77,14 @@ def radar_fig(values):
     vals.append(vals[0])
     fig = go.Figure()
     fig.add_trace(go.Scatterpolar(r=vals, theta=labels, fill="toself"))
-    fig.update_layout(
-        polar=dict(radialaxis=dict(visible=True, range=[0, 100])),
-        showlegend=False,
-        height=330,
-        margin=dict(l=20, r=20, t=30, b=20),
-    )
+    fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])), showlegend=False, height=330, margin=dict(l=20, r=20, t=30, b=20))
     return fig
 
 st.sidebar.markdown("## Preluma")
 st.sidebar.caption("Light Up Before Class")
 page = st.sidebar.radio("Workspace", ["Student Mission", "Teacher Studio", "Evidence Board"])
 presentation_mode = st.sidebar.toggle("Presentation Mode", True)
-st.sidebar.caption("Uses stable curated lesson packs for smooth live demo.")
+st.sidebar.caption("Uses stable concept-level lesson packs for smooth live demo.")
 st.sidebar.markdown("---")
 if st.sidebar.button("Reset session"):
     reset()
@@ -101,7 +95,7 @@ if page == "Student Mission":
     <div class="hero">
         <div class="hero-tag">Pre-class brain priming</div>
         <h1>Prepare before class. Understand more during class.</h1>
-        <p>Preluma gives every student a Brain Brief, short quiz, Mistake Clinic, tutor help, and smart class questions before the lecture starts.</p>
+        <p>Preluma gives every student a concept-level Brain Brief, short quiz, Mistake Clinic, tutor help, and smart class questions before the lecture starts.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -114,7 +108,7 @@ if page == "Student Mission":
         left, mid, right = st.columns([1.1, 1, 1])
         with left:
             student = st.text_input("Student", "Mim")
-            topic_options = ["Quantum Mechanics", "Machine Learning", "Artificial Intelligence", "Data Structures", "Python Programming", "Object Oriented Programming", "Neural Networks", "Linear Regression", "Database Systems", "Climate Change", "Custom topic"]
+            topic_options = ["Quantum Mechanics", "Machine Learning", "Python Programming", "Data Structures", "Artificial Intelligence", "Object Oriented Programming", "Neural Networks", "Linear Regression", "Database Systems", "Climate Change", "Custom topic"]
             chosen = st.selectbox("Lecture topic", topic_options)
             if chosen == "Custom topic":
                 topic = st.text_input("Custom topic", "Natural Language Processing")
@@ -139,8 +133,8 @@ if page == "Student Mission":
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Topic", pack["title"])
         c2.metric("Confidence", f"{int(pack['confidence'] * 100)}%")
-        c3.metric("Concepts", len(pack["concepts"]))
-        c4.metric("Applications", len(pack["applications"]))
+        c3.metric("Concepts", len(concept_names(pack)))
+        c4.metric("Applications", len(application_names(pack)))
         st.caption(f"Source: {pack['source']}")
 
         a, b = st.columns([1.1, 0.9])
@@ -151,14 +145,21 @@ if page == "Student Mission":
         with b:
             st.markdown(f"<div class='dark-card'><div class='mini-title'>Why this matters</div><br>{pack['hook']}</div>", unsafe_allow_html=True)
 
-        t1, t2, t3, t4 = st.tabs(["Core ideas", "Misconceptions", "Applications", "Facts"])
-        t1.write(", ".join(pack["concepts"]))
+        t1, t2, t3, t4, t5 = st.tabs(["Concept Cards", "Misconceptions", "Applications", "Facts", "Keywords"])
+        for name, details in pack["concepts"].items():
+            with t1.expander(name.title()):
+                st.write(details["definition"])
+                st.info("Simple: " + details["kid"])
+                st.success("Example: " + details["example"])
+                st.warning("Common mistake: " + details["mistake"])
+                st.caption("Exam angle: " + details["exam"])
         for m in pack["misconceptions"]:
             t2.warning(m)
-        for app in pack["applications"]:
-            t3.success(app)
+        for name, text in pack["applications"].items():
+            t3.success(f"{name}: {text}")
         for fact in pack["facts"]:
             t4.info(fact)
+        t5.write(", ".join(pack["keywords"]))
 
         st.markdown("### Pre-class Quiz")
         selected = {}
@@ -216,7 +217,8 @@ if page == "Student Mission":
             horizontal=True
         )
         if suggested == "Write my own question":
-            ask = st.text_input("Your question", "I do not understand superposition")
+            default_question = f"I do not understand {concept_names(pack)[0]}"
+            ask = st.text_input("Your question", default_question)
         else:
             ask = suggested
         if st.button("Explain Clearly"):
@@ -224,7 +226,7 @@ if page == "Student Mission":
 
         st.markdown("### Concept Map")
         graph = "digraph { rankdir=LR; node [shape=box, style=rounded]; "
-        for concept in pack["concepts"][:6]:
+        for concept in concept_names(pack)[:6]:
             graph += f'"{pack["title"]}" -> "{concept}";'
         graph += f'"{pack["title"]}" -> "Quiz"; "Quiz" -> "Mistake Clinic"; "Mistake Clinic" -> "Lecture Readiness";'
         graph += "}"
@@ -298,10 +300,10 @@ else:
 
     ### M1: Brain and Data
 
-    - Curated lesson packs
-    - Core concept extraction
-    - Misconception awareness
+    - Curated concept-level lesson packs
+    - Concept cards with definition, example, mistake, and exam angle
     - Application-based learning
+    - Evidence-based quiz feedback
 
     ### M2: Learning Features
 
