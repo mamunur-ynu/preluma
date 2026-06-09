@@ -1,20 +1,32 @@
-# Preluma V10 DataSmart
+# Preluma V11 ProClass
 
-Preluma is a pre-class learning assistant that prepares students before lectures with a Brain Brief, quiz, mistake clinic, Ask Me Tutor, class questions, and teacher readiness dashboard.
+Light Up Before Class.
 
-## V10 DataSmart upgrade
+Preluma is a pre-class learning assistant that helps students enter lectures prepared, confident, and ready to ask better questions.
 
-- Stronger structured topic data
-- Concept-level explanations
+## What makes V11 stronger
+
+- More polished product-style interface
+- Stronger Preluma brand identity
+- Compact premium landing section
+- Concept-level Brain Brief
 - Evidence-based quiz feedback
-- Ask Me Tutor answers from current Brain Brief data
-- Honest fallback for unknown/custom topics
-- Markdown study brief export
-- Teacher Studio analytics
+- Mistake Clinic with kid-simple explanation
+- Topic-aware Ask Me Tutor
+- Current session can appear in Teacher Studio
+- Markdown and JSON study brief export
+- Evidence Board aligned with M1, M2, M3 project modules
 
-## Deploy on Streamlit Cloud
+## Run
 
-Upload these files to the existing GitHub repo:
+```bash
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
+
+## Deploy
+
+Upload these root files to GitHub:
 
 - streamlit_app.py
 - engine.py
