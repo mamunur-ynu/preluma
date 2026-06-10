@@ -39,3 +39,23 @@ Finalize Preluma V15 stable release
 python -m pytest -q
 streamlit run streamlit_app.py
 ```
+
+
+## V16 upload checklist
+
+Also upload:
+
+- wiki_fetcher.py
+
+Also ensure requirements.txt includes:
+
+- requests
+
+Smoke test:
+
+1. Choose Custom Topic
+2. Type a topic not in local database, such as Photosynthesis
+3. Keep "Use Wikipedia real data" checked
+4. Start mission
+5. Check source link appears in Brain Brief
+6. Ask Smart QnA a question
