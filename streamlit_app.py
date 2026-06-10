@@ -5,34 +5,12 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from engine import build_brain_brief, build_pack, grade, make_questions, tutor_sections
-from wiki_fetcher import smart_answer_from_pack
 from teacher import build_teacher_dataframe, class_average_readiness, readiness_label
 from topics import validate_topics
 
-APP_VERSION = "16.0 Real Data"; APP_NAME="Preluma"; TAGLINE="Light Up Before Class"
+APP_VERSION="15.0 Final Stable"; APP_NAME="Preluma"; TAGLINE="Light Up Before Class"
 TEAM_MEMBERS=[("MAMUNUR RASHID","Lead • UI • Integration"),("MD FAHIM","Engine • Quiz • Testing"),("MD JIARUL ISLAM","Topics • Data • Docs")]
-TOPIC_OPTIONS = [
-    "Quantum Mechanics",
-    "Machine Learning",
-    "Python Programming",
-    "Data Structures",
-    "Artificial Intelligence",
-    "Convolutional Neural Network",
-    "Natural Language Processing",
-    "Statistics",
-    "Urban Water Management",
-    "Database Management System",
-    "Software Engineering",
-    "Cybersecurity",
-    "Operating System",
-    "Computer Network",
-    "Linear Regression",
-    "Logistic Regression",
-    "Decision Tree",
-    "Neural Network",
-    "Cloud Computing",
-    "Custom Topic",
-]
+TOPIC_OPTIONS=["Quantum Mechanics","Machine Learning","Python Programming","Data Structures","Artificial Intelligence","Convolutional Neural Network","Natural Language Processing","Statistics","Urban Water Management","Custom Topic"]
 
 @st.cache_data(show_spinner=False)
 def asset_to_data_uri():
@@ -50,16 +28,6 @@ html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
 .hero{position:relative;padding:32px 36px;min-height:260px;border-radius:30px;overflow:hidden;border:1px solid rgba(125,211,252,.22);background-size:cover;background-position:center;box-shadow:0 28px 60px rgba(2,6,23,.40)}
 .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(2,6,23,.80) 0%,rgba(15,23,42,.54) 48%,rgba(88,28,135,.50) 100%),radial-gradient(circle at 20% 10%,rgba(14,165,233,.23),transparent 32%);z-index:1}.hero-content{position:relative;z-index:2}.brand-row{display:flex;align-items:center;gap:14px;margin-bottom:16px}.logo-mark{width:42px;height:42px;border-radius:15px;background:linear-gradient(135deg,#38bdf8,#8b5cf6);box-shadow:0 12px 28px rgba(56,189,248,.22)}.brand-title{font-weight:900;color:#fff;font-size:18px}.brand-sub{color:#dbeafe;font-size:13px;margin-top:2px}.badge{display:inline-block;padding:8px 13px;border-radius:999px;background:rgba(14,165,233,.16);border:1px solid rgba(125,211,252,.35);color:#bae6fd;font-weight:850;font-size:13px}.uni-badge{display:inline-block;padding:8px 13px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.24);color:#fff;font-weight:850;font-size:12px;margin-left:8px}.hero h1{font-size:38px;line-height:1.08;color:white;margin:28px 0 14px;max-width:920px;text-shadow:0 4px 22px rgba(0,0,0,.48)}.hero p{font-size:16px;max-width:850px;color:#e0f2fe;line-height:1.6;text-shadow:0 3px 16px rgba(0,0,0,.40)}
 .chip{display:inline-block;padding:10px 14px;margin:4px 6px 8px 0;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:900;font-size:13px}.team-box{padding:14px 15px;border-radius:22px;background:linear-gradient(135deg,rgba(15,23,42,.88),rgba(30,41,59,.78));border:1px solid rgba(148,163,184,.23);margin-top:16px}.team-title{color:#93c5fd;font-size:12px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;margin-bottom:10px}.team-line{padding:9px 0;border-bottom:1px solid rgba(148,163,184,.12)}.team-line:last-child{border-bottom:0}.team-name{font-weight:900;color:#fff;font-size:13px}.team-role{font-size:11px;color:#94a3b8;margin-top:2px}.card{padding:18px 20px;border-radius:22px;background:linear-gradient(135deg,rgba(15,23,42,.94),rgba(30,41,59,.82));border:1px solid rgba(125,211,252,.18)}.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}.metric-number{font-size:26px;color:#fff;font-weight:900}.metric-label{font-size:12px;color:#93c5fd;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-top:5px}.flow-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:16px 0}.flow-card small{color:#93c5fd;font-weight:900;letter-spacing:.08em}.flow-card h3{color:#fff;margin:8px 0 8px;font-size:21px}.flow-card p{color:#cbd5e1;line-height:1.55}.answer-card{padding:18px 20px;border-radius:22px;background:rgba(15,23,42,.72);border:1px solid rgba(148,163,184,.20);margin:12px 0}.answer-title{color:#93c5fd;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}.answer-card p,.answer-card li{color:#e5e7eb;font-size:15px;line-height:1.6}.notice{padding:13px 15px;border-radius:17px;background:rgba(59,130,246,.12);border:1px solid rgba(96,165,250,.24);color:#dbeafe;line-height:1.55;margin-bottom:12px}.prof-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0}.prof-card{padding:17px;border-radius:21px;background:linear-gradient(135deg,rgba(14,165,233,.13),rgba(124,58,237,.11));border:1px solid rgba(125,211,252,.22)}.prof-card h4{margin:0 0 8px;color:#fff;font-size:17px}.prof-card p{color:#cbd5e1;font-size:14px;line-height:1.55}@media(max-width:900px){.metric-grid,.flow-grid,.prof-grid{grid-template-columns:1fr}.hero{padding:24px 22px}.hero h1{font-size:30px}}
-
-.stButton > button {
-    border-radius: 14px !important;
-    font-weight: 900 !important;
-    min-height: 48px !important;
-    border: 1px solid rgba(125,211,252,.35) !important;
-    background: linear-gradient(135deg, rgba(37,99,235,.95), rgba(124,58,237,.92)) !important;
-    color: white !important;
-}
-
 </style>"""
 st.markdown(CSS, unsafe_allow_html=True)
 
@@ -71,7 +39,7 @@ def init_state(): st.session_state.setdefault("student","Mim"); st.session_state
 def sidebar():
     st.sidebar.markdown(f"## {APP_NAME}"); st.sidebar.caption(TAGLINE)
     page=st.sidebar.radio("Workspace",["Student Mission","Teacher Studio","Evidence Board","Demo Guide","Future Roadmap"])
-    presentation=st.sidebar.toggle("Presentation Mode", value=True); st.sidebar.caption("Python + Streamlit + Wikipedia real data upgrade.")
+    presentation=st.sidebar.toggle("Presentation Mode", value=True); st.sidebar.caption("Stable Python + Streamlit demo for final presentation.")
     st.sidebar.markdown("<div class='team-box'><div class='team-title'>Project Team</div>", unsafe_allow_html=True)
     for name,role in TEAM_MEMBERS: st.sidebar.markdown(f"<div class='team-line'><div class='team-name'>{name}</div><div class='team-role'>{role}</div></div>", unsafe_allow_html=True)
     st.sidebar.markdown("</div><hr>", unsafe_allow_html=True)
@@ -161,51 +129,13 @@ def teacher_studio():
     st.metric("Class Average Readiness", f"{class_average_readiness(df)}%"); st.write("Teacher value: the teacher can see who is ready, who is confused, and what topic needs a quick warm-up.")
 
 def evidence_board():
-    render_hero()
-    st.markdown("### Evidence Board")
-    st.markdown("""
-    <div class='prof-grid'>
-        <div class='prof-card'><h4>Clear Problem</h4><p>Students often enter lectures unprepared, which leads to passive learning and poor retention.</p></div>
-        <div class='prof-card'><h4>Python Implementation</h4><p>The project is built with Python, Streamlit, Pandas, Plotly, dictionaries, functions, forms, and session state.</p></div>
-        <div class='prof-card'><h4>Learning Workflow</h4><p>Preluma combines Brain Brief, quiz, Mistake Clinic, UltraTutor, class questions, and readiness score.</p></div>
-        <div class='prof-card'><h4>Data Structure Thinking</h4><p>Topic packs use nested dictionaries, aliases, schema validation, and normalized data flow.</p></div>
-        <div class='prof-card'><h4>Teacher Value</h4><p>Teacher Studio demonstrates analytics for readiness and weak skill detection.</p></div>
-        <div class='prof-card'><h4>Wikipedia Real Data</h4><p>Unknown topics can be fetched through the Wikipedia API using Python requests.</p></div>
-        <div class='prof-card'><h4>Smart QnA</h4><p>Questions are answered from curated topic data and fetched summary text, with examples and reliability notes.</p></div>
-        <div class='prof-card'><h4>Massive Topic Base</h4><p>Curated topics were expanded while unknown topics use a real-data fallback.</p></div>
-        <div class='prof-card'><h4>Future Potential</h4><p>The roadmap can grow into login, database, PDF notes, retrieval, and real AI tutor support.</p></div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("### Python Concepts Used")
-    concepts_df = pd.DataFrame({
-        "Concept": ["Functions", "Dictionaries", "Session State", "Forms", "DataFrame", "Charts", "File Export", "Testing", "Requests API", "Real Data Fallback"],
-        "Use in Project": [
-            "Separate app logic into reusable units",
-            "Store topic packs and concepts",
-            "Remember selected topic and quiz result",
-            "Submit mission and quiz safely",
-            "Build teacher analytics",
-            "Visualize readiness",
-            "Download study brief as JSON",
-            "Check app stability before demo",
-            "Fetch Wikipedia data using Python",
-            "Use curated data first, then real online data for unknown topics",
-        ],
-    })
-    st.dataframe(concepts_df, use_container_width=True)
-
-    errors = validate_topics()
-    if len(errors) > 0:
-        st.warning("Topic validation issues found:")
-        for issue in errors:
-            st.write(f"- {issue}")
-    else:
-        st.success("Topic data validation passed for curated demo packs.")
+    hero(); st.markdown("### Evidence Board"); st.markdown("""<div class='prof-grid'><div class='prof-card'><h4>Clear Problem</h4><p>Students often enter lectures unprepared, causing passive learning.</p></div><div class='prof-card'><h4>Python Implementation</h4><p>Built with Python, Streamlit, Pandas, Plotly, dictionaries, functions, forms, and session state.</p></div><div class='prof-card'><h4>Learning Workflow</h4><p>Brain Brief, quiz, Mistake Clinic, UltraTutor, class questions, and readiness score.</p></div><div class='prof-card'><h4>Data Structure Thinking</h4><p>Nested dictionaries, aliases, schema validation, and normalized data flow.</p></div><div class='prof-card'><h4>Teacher Value</h4><p>Teacher Studio demonstrates analytics for readiness and weak skill detection.</p></div><div class='prof-card'><h4>Future Potential</h4><p>Can grow into login, database, PDF notes, retrieval, and real AI tutor support.</p></div></div>""", unsafe_allow_html=True)
+    st.markdown("### Python Concepts Used"); st.dataframe(pd.DataFrame({"Concept":["Functions","Dictionaries","Session State","Forms","DataFrame","Charts","File Export","Testing"],"Use in Project":["Reusable units","Store topic packs","Remember selected topic and quiz result","Submit safely","Teacher analytics","Visualize readiness","Download JSON brief","Check stability"]}), use_container_width=True)
+    errors=validate_topics(); st.success("Topic data validation passed for curated demo packs.") if not errors else st.warning(errors)
 
 def demo_guide():
     hero(); st.markdown("### 3-Minute Demo Script")
-    for x in ["Say: Preluma is a Python-based pre-class learning assistant with curated topics and Wikipedia real-data fallback.","Show the problem: students attend lectures unprepared.","Select Quantum Mechanics or Machine Learning.","Click Start Pre-Class Mission.","Show Brain Brief with Wikipedia source link for unknown topics.","Take the quiz and show Mistake Clinic.","Ask Smart QnA any question and show answer + example.","Show Teacher Studio and Evidence Board."]: st.write("- "+x)
+    for x in ["Say: Preluma is a Python-based pre-class learning assistant.","Show the problem: students attend lectures unprepared.","Select Quantum Mechanics or Machine Learning.","Click Start Pre-Class Mission.","Show Brain Brief: tiny answer, simple explanation, example, common mistake.","Take the quiz and show Mistake Clinic.","Ask UltraTutor a confusing question.","Show Teacher Studio and Evidence Board."]: st.write("- "+x)
     st.success("Final line: Preluma does not replace teachers. It prepares students to understand teachers better.")
 
 def roadmap():
