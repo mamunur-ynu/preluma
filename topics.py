@@ -1,300 +1,69 @@
+ALIASES = {
+    "quantum": "quantum mechanics", "qm": "quantum mechanics",
+    "ml": "machine learning", "ai": "artificial intelligence",
+    "python": "python programming", "ds": "data structures",
+    "cnn": "convolutional neural network", "nlp": "natural language processing",
+    "stats": "statistics", "urban water": "urban water management",
+}
+
 TOPICS = {
     "quantum mechanics": {
-        "title": "Quantum Mechanics",
-        "hook": "Tiny particles do not follow the rules we see in everyday life.",
-        "definition": "Quantum mechanics explains how matter and energy behave at atomic and subatomic scales.",
-        "simple": "Very small things such as electrons do not act like tiny balls. They behave more like waves of possibility until we measure them.",
-        "concepts": {
-            "particle": {
-                "definition": "A particle is a tiny unit of matter or energy, such as an electron or photon.",
-                "kid": "A particle is like a tiny dot, but in quantum physics it can also behave in strange wave-like ways.",
-                "example": "An electron can be treated as a particle when it hits a detector.",
-                "mistake": "Students often think particles always behave like small solid balls.",
-                "exam": "Define particle and explain how quantum particles can also show wave behavior."
-            },
-            "wave": {
-                "definition": "A wave is a spreading pattern that can carry energy and show interference.",
-                "kid": "A wave is like ripples on water spreading out.",
-                "example": "Electron diffraction shows that electrons can behave like waves.",
-                "mistake": "Students often think only water or sound can be waves.",
-                "exam": "Explain wave behavior with an example such as interference or diffraction."
-            },
-            "superposition": {
-                "definition": "Superposition means a quantum system can exist in a combination of possible states before measurement.",
-                "kid": "Imagine a coin spinning in the air. Before it lands, it is not simply heads or tails. It has possibilities. Superposition is similar, but for tiny quantum systems.",
-                "example": "A quantum bit can be in a combination of 0 and 1 before it is measured.",
-                "mistake": "Superposition does not mean everyday objects literally do everything at once.",
-                "exam": "Define superposition and give one example such as a qubit being in a combination of 0 and 1."
-            },
-            "uncertainty": {
-                "definition": "Uncertainty means some pairs of properties, such as position and momentum, cannot both be known exactly at the same time.",
-                "kid": "It is like trying to know exactly where a fast tiny object is and exactly how fast it is moving at the same time. Quantum physics sets a limit.",
-                "example": "The more accurately position is known, the less accurately momentum can be known.",
-                "mistake": "Uncertainty is not just because instruments are weak; it is a built-in quantum limit.",
-                "exam": "Explain uncertainty as a fundamental limit, not only measurement error."
-            },
-            "measurement": {
-                "definition": "Measurement is the act of observing a quantum system, which can affect the state being measured.",
-                "kid": "Looking at a tiny quantum system can change what you find.",
-                "example": "Measuring a qubit gives one definite result from possible states.",
-                "mistake": "Students often think measurement is passive like looking at a normal object.",
-                "exam": "Explain why measurement is important in quantum mechanics."
-            },
-            "quantum state": {
-                "definition": "A quantum state describes all the information we can use to predict measurement results of a quantum system.",
-                "kid": "It is like a full information card for a tiny quantum object.",
-                "example": "The state of a qubit tells us the probabilities of getting 0 or 1.",
-                "mistake": "A quantum state is not always a fixed visible property.",
-                "exam": "Define quantum state and connect it with probability."
-            }
+        "title":"Quantum Mechanics",
+        "hook":"Tiny particles do not always behave like everyday objects, so we need a special rulebook.",
+        "definition":"Quantum mechanics is the branch of physics that explains how very small things such as electrons, photons, and atoms behave.",
+        "simple":"Think of a quantum particle like a tiny object that can be described by possibilities before we measure it.",
+        "facts":["Quantum mechanics studies matter and energy at very small scales.","Particles can show both particle-like and wave-like behavior.","Probability is used because outcomes are not always fixed before measurement."],
+        "concepts":{
+            "superposition":{"definition":"Superposition means a quantum system can be described as a combination of possible states before measurement.","kid":"It is like a spinning coin before it lands. We cannot call it only heads or only tails yet.","example":"An electron can be described as having different possible states until we measure it.","mistake":"It does not mean big everyday objects literally become many magical copies.","exam":"Mention possible states, measurement, and probability."},
+            "uncertainty":{"definition":"Uncertainty means some pairs of properties cannot both be known perfectly at the same time.","kid":"If you know one thing very clearly, another related thing becomes less clear.","example":"Knowing a tiny particle's position very accurately makes momentum less certain.","mistake":"It is not only because our instruments are bad.","exam":"Explain that uncertainty is a fundamental quantum limit."},
+            "wave particle duality":{"definition":"Wave-particle duality means tiny things can show both wave-like and particle-like behavior.","kid":"Sometimes it acts like a small ball, and sometimes it spreads like a wave.","example":"Light can behave like waves in interference and like particles in the photoelectric effect.","mistake":"It is not switching randomly like a human choosing clothes.","exam":"Use light or electron examples."}
         },
-        "applications": {
-            "semiconductors": "Quantum mechanics explains electron behavior in semiconductors, which are used in chips and electronics.",
-            "lasers": "Lasers work through quantum transitions between energy levels.",
-            "MRI": "MRI uses quantum properties of atomic nuclei in magnetic fields.",
-            "quantum computing": "Quantum computing uses superposition and measurement to process information differently.",
-            "chemical bonding": "Quantum mechanics explains how atoms bond through electron behavior."
-        },
-        "facts": [
-            "Modern electronics depend on quantum behavior inside semiconductors.",
-            "Lasers work because of quantum transitions between energy levels.",
-            "Quantum computing uses quantum states to process information differently."
-        ]
+        "applications":{"quantum computing":"Uses quantum states to process information.","semiconductors":"Modern electronics depend on quantum behavior.","lasers":"Laser technology depends on quantum transitions."},
+        "misconceptions":["Quantum mechanics is not just normal physics with smaller objects.","Superposition does not mean everything is magically everywhere in daily life.","Uncertainty is not only a measurement error; it is a basic limit."],
+        "class_questions":["Why do quantum systems need probability?","What exactly changes when measurement happens?","How is superposition used in quantum computing?","Why does light behave like both a wave and a particle?","Can uncertainty ever be removed completely?"]
     },
     "machine learning": {
-        "title": "Machine Learning",
-        "hook": "A computer can learn patterns from examples instead of being manually programmed for every rule.",
-        "definition": "Machine learning is a field of artificial intelligence where computers learn patterns from data.",
-        "simple": "It is like teaching a child to recognize cats by showing many cat pictures. The child learns the pattern from examples.",
-        "concepts": {
-            "data": {
-                "definition": "Data is the information used to train or test a machine learning model.",
-                "kid": "Data is like the examples you show to a student.",
-                "example": "House size and price data can train a price prediction model.",
-                "mistake": "More data is not always useful if it is noisy or biased.",
-                "exam": "Define data and explain why data quality matters."
-            },
-            "features": {
-                "definition": "Features are the input variables used by a model to make predictions.",
-                "kid": "Features are clues given to the computer.",
-                "example": "For house price prediction, size, location, and number of rooms can be features.",
-                "mistake": "Students often confuse raw data with useful features.",
-                "exam": "Give examples of features for a prediction task."
-            },
-            "model": {
-                "definition": "A model is the learned pattern or function used to make predictions.",
-                "kid": "A model is like the rule the computer learned from examples.",
-                "example": "A trained classifier can identify whether an email is spam.",
-                "mistake": "A model is not automatically correct; it must be tested.",
-                "exam": "Define model and explain training and testing."
-            },
-            "training": {
-                "definition": "Training is the process of helping a model learn patterns from data.",
-                "kid": "Training is practice time for the computer.",
-                "example": "A model trains on labeled images to recognize cats and dogs.",
-                "mistake": "Training accuracy alone does not prove the model is good.",
-                "exam": "Explain the difference between training and evaluation."
-            },
-            "prediction": {
-                "definition": "Prediction is the output a model gives for new input data.",
-                "kid": "Prediction is the computer's best guess after learning.",
-                "example": "A model predicts whether a patient may have diabetes.",
-                "mistake": "Prediction is not always certain; it can be wrong.",
-                "exam": "Define prediction with one real-world example."
-            },
-            "evaluation": {
-                "definition": "Evaluation measures how well a model performs, usually on data it did not train on.",
-                "kid": "Evaluation is like an exam for the model.",
-                "example": "Accuracy, precision, recall, and F1-score can evaluate a classifier.",
-                "mistake": "Testing on training data can make performance look better than reality.",
-                "exam": "Explain why test data is needed."
-            }
+        "title":"Machine Learning",
+        "hook":"Instead of writing every rule by hand, we let computers learn patterns from examples.",
+        "definition":"Machine learning is a field of AI where computers learn patterns from data and use them to make predictions or decisions.",
+        "simple":"It is like teaching a child by showing many examples instead of only giving written rules.",
+        "facts":["Machine learning uses data to train models.","A model learns relationships between features and outcomes.","Good testing is needed to check if the model works on new data."],
+        "concepts":{
+            "model":{"definition":"A model is the learned pattern or rule created from training data.","kid":"It is the computer's learned recipe for making a guess.","example":"A house price model may learn that size and location affect price.","mistake":"A model is not automatically intelligent or always correct.","exam":"Mention training, prediction, and evaluation."},
+            "training data":{"definition":"Training data is the set of examples used to teach a model.","kid":"It is the practice book for the computer.","example":"Images of cats and dogs can train a classifier.","mistake":"More data is not always better if the data is noisy or biased.","exam":"Explain examples, features, and labels."},
+            "overfitting":{"definition":"Overfitting happens when a model memorizes training data too much and performs poorly on new data.","kid":"It is like memorizing answers from one test but failing when questions change.","example":"A model gets 99% on training data but low accuracy on test data.","mistake":"High training accuracy alone does not prove a good model.","exam":"Mention generalization and test performance."}
         },
-        "applications": {
-            "recommendation systems": "Machine learning predicts what users may like based on past behavior.",
-            "medical diagnosis": "Machine learning can support doctors by identifying patterns in medical data.",
-            "fraud detection": "Models can detect unusual financial behavior.",
-            "translation": "Machine learning helps translate text between languages.",
-            "image recognition": "Models can classify objects in images."
-        },
-        "facts": [
-            "Evaluation is needed because a model can memorize instead of generalize.",
-            "Features are useful pieces of information given to a model.",
-            "Recommendation systems use machine learning to predict what users may like."
-        ]
+        "applications":{"medical prediction":"Models can help predict disease risk.","recommendation systems":"Apps recommend videos, songs, or products.","fraud detection":"Banks can detect unusual transactions."},
+        "misconceptions":["Machine learning is not magic; it depends on data quality.","High training accuracy does not guarantee real-world performance.","A model can be biased if the data is biased."],
+        "class_questions":["What is the difference between training and testing?","Why can overfitting be dangerous?","How do features affect model performance?","Why do we need evaluation metrics?","How can bias enter a machine learning system?"]
     },
     "python programming": {
-        "title": "Python Programming",
-        "hook": "Python helps students build real programs with simple, readable syntax.",
-        "definition": "Python programming means writing instructions in Python to solve problems or build applications.",
-        "simple": "Python is like giving clear step-by-step instructions to a computer in a language humans can read more easily.",
-        "concepts": {
-            "variables": {
-                "definition": "A variable stores a value that can be used later in a program.",
-                "kid": "A variable is like a labeled box where you keep something.",
-                "example": "age = 20 stores the value 20 in the variable age.",
-                "mistake": "Students sometimes think the variable name is the value itself.",
-                "exam": "Define variable and give one code example."
-            },
-            "data types": {
-                "definition": "Data types describe what kind of value is stored, such as integer, float, string, or boolean.",
-                "kid": "Data types tell what kind of thing is inside the box.",
-                "example": "'Hello' is a string, 10 is an integer, and True is a boolean.",
-                "mistake": "Students often mix numbers and strings by accident.",
-                "exam": "List common Python data types with examples."
-            },
-            "conditionals": {
-                "definition": "Conditionals let a program choose different actions using if, elif, and else.",
-                "kid": "It is like saying: if it rains, take an umbrella; otherwise, go normally.",
-                "example": "if score >= 50: print('Pass')",
-                "mistake": "Indentation errors are common in conditionals.",
-                "exam": "Write an if-else example."
-            },
-            "loops": {
-                "definition": "Loops repeat instructions multiple times.",
-                "kid": "A loop is like doing the same task again and again until you are done.",
-                "example": "for i in range(5): print(i)",
-                "mistake": "Infinite loops happen when a loop never stops.",
-                "exam": "Explain for loop and while loop."
-            },
-            "functions": {
-                "definition": "Functions are reusable blocks of code designed to perform a specific task.",
-                "kid": "A function is like a small machine. You give input, it does work, and it may return output.",
-                "example": "def add(a, b): return a + b",
-                "mistake": "Students sometimes forget to call the function after defining it.",
-                "exam": "Define a function and explain parameters and return value."
-            },
-            "modules": {
-                "definition": "Modules are files or libraries that contain reusable Python code.",
-                "kid": "A module is like a toolbox you can use in your program.",
-                "example": "import math allows use of math.sqrt().",
-                "mistake": "Students may import a module but not know how to use its functions.",
-                "exam": "Explain import with one example."
-            }
-        },
-        "applications": {
-            "automation": "Python can automate repetitive computer tasks.",
-            "data analysis": "Python can clean, analyze, and visualize data.",
-            "web apps": "Python can build web applications using frameworks.",
-            "machine learning": "Python is widely used in AI and machine learning projects.",
-            "scripting": "Python is useful for small scripts and quick tools."
-        },
-        "facts": [
-            "Python is widely used in AI, data science, automation, and education.",
-            "Functions help organize code into reusable blocks.",
-            "Debugging is a normal part of programming."
-        ]
+        "title":"Python Programming","hook":"Python helps us write instructions for computers in a clear and readable way.","definition":"Python is a high-level programming language used for web apps, data analysis, AI, automation, and education.","simple":"Python is like writing a clear recipe that a computer can follow step by step.","facts":["Python uses readable syntax.","Variables store values.","Functions help reuse code."],
+        "concepts":{"variable":{"definition":"A variable is a name that stores a value.","kid":"It is like a labeled box where we keep something.","example":"age = 20 stores the number 20 in the name age.","mistake":"The variable name is not the same as the value inside it.","exam":"Mention name, value, and memory."},"function":{"definition":"A function is a reusable block of code that performs a task.","kid":"It is like a small machine: give input, get output.","example":"A function can calculate average marks.","mistake":"Writing code once inside a function does not run it until you call it.","exam":"Mention input, process, output, and reuse."},"loop":{"definition":"A loop repeats a block of code.","kid":"It tells the computer to do the same action again and again.","example":"Printing all names in a list uses a loop.","mistake":"A loop without a stopping condition can run forever.","exam":"Mention repetition and control condition."}},
+        "applications":{"AI":"Python is widely used in machine learning.","automation":"Python can automate repetitive tasks.","data analysis":"Python can clean and analyze data."},
+        "misconceptions":["Python being easy to read does not mean logic is automatic.","If code runs once, it may still fail for other inputs.","Copying code without understanding does not build programming skill."],
+        "class_questions":["Why are functions useful?","How does a loop reduce repeated work?","What happens when a variable value changes?","Why is Python popular in AI?","How can we avoid errors in Python?"]
     },
     "data structures": {
-        "title": "Data Structures",
-        "hook": "The way data is organized can make a program fast, clean, and scalable.",
-        "definition": "Data structures are ways to organize and store data so programs can use it efficiently.",
-        "simple": "It is like choosing the right box for toys. Some boxes help you find things fast, some help you stack things, and some help you connect things.",
-        "concepts": {
-            "array": {
-                "definition": "An array stores elements in order, usually in contiguous memory.",
-                "kid": "An array is like a row of boxes where each box has a position number.",
-                "example": "A list of student marks can be stored in an array.",
-                "mistake": "Students often forget indexes usually start from 0.",
-                "exam": "Explain array indexing and access time."
-            },
-            "stack": {
-                "definition": "A stack is a data structure that follows last-in, first-out order.",
-                "kid": "A stack is like plates. The last plate placed on top is taken first.",
-                "example": "Undo operations can use a stack.",
-                "mistake": "Students confuse stack with queue order.",
-                "exam": "Explain push and pop operations."
-            },
-            "queue": {
-                "definition": "A queue follows first-in, first-out order.",
-                "kid": "A queue is like a line at a shop. The first person in line goes first.",
-                "example": "Printer tasks can be managed using a queue.",
-                "mistake": "Students confuse queue with stack.",
-                "exam": "Explain enqueue and dequeue operations."
-            },
-            "tree": {
-                "definition": "A tree stores data in a hierarchical structure with nodes and edges.",
-                "kid": "A tree is like a family tree with parents and children.",
-                "example": "File systems and decision trees use tree structures.",
-                "mistake": "Students sometimes think all graphs are trees.",
-                "exam": "Define root, parent, child, and leaf."
-            },
-            "graph": {
-                "definition": "A graph stores relationships using vertices and edges.",
-                "kid": "A graph is like cities connected by roads.",
-                "example": "Social networks and maps can be modeled as graphs.",
-                "mistake": "Students confuse graph charts with graph data structures.",
-                "exam": "Explain vertex and edge with an example."
-            },
-            "hash table": {
-                "definition": "A hash table stores key-value pairs and uses a hash function for fast lookup.",
-                "kid": "A hash table is like a smart locker system where a key tells you where to find the item.",
-                "example": "Dictionaries in Python are based on hash table ideas.",
-                "mistake": "Students forget collisions can happen.",
-                "exam": "Explain key-value storage and collision."
-            }
-        },
-        "applications": {
-            "databases": "Data structures help databases store and retrieve data efficiently.",
-            "maps": "Graphs can model roads and routes.",
-            "search engines": "Indexes and graphs help search engines find information.",
-            "compilers": "Stacks and trees are used in parsing and expression evaluation.",
-            "social networks": "Graphs represent users and relationships."
-        },
-        "facts": [
-            "Hash tables can make lookup very fast.",
-            "Graphs are useful for networks, maps, and relationships.",
-            "Stacks are used in undo systems and function calls."
-        ]
+        "title":"Data Structures","hook":"Programs become faster and cleaner when data is organized in the right way.","definition":"Data structures are ways of storing and organizing data so it can be used efficiently.","simple":"It is like choosing the right container: a shelf, a queue line, or a box.","facts":["Lists store ordered items.","Stacks follow last-in, first-out.","Queues follow first-in, first-out."],
+        "concepts":{"stack":{"definition":"A stack is a data structure where the last item added is removed first.","kid":"It is like a pile of plates: you take the top plate first.","example":"Undo operations often use a stack.","mistake":"A stack is not the same as a queue.","exam":"Mention LIFO: last in, first out."},"queue":{"definition":"A queue is a data structure where the first item added is removed first.","kid":"It is like waiting in line at a shop.","example":"Printer tasks can be handled using a queue.","mistake":"Queue order is not random.","exam":"Mention FIFO: first in, first out."},"tree":{"definition":"A tree is a hierarchical data structure with nodes and branches.","kid":"It is like a family tree with parents and children.","example":"Folders in a computer can be represented as a tree.","mistake":"A tree is not just a drawing; it stores relationships.","exam":"Mention root, nodes, children, and hierarchy."}},
+        "applications":{"search":"Data structures help find information quickly.","operating systems":"Queues and trees are used in system tasks.","databases":"Indexes use tree-like structures."},
+        "misconceptions":["There is no single best data structure for every problem.","Stack and queue order are not interchangeable.","A graph data structure is not the same as a chart."],
+        "class_questions":["When should we use a stack?","Why is a queue useful?","How does a tree organize hierarchy?","How do data structures affect speed?","Why does choosing the right structure matter?"]
     },
 }
 
-ALIASES = {
-    "oop": "object oriented programming",
-    "object-oriented programming": "object oriented programming",
-    "ml": "machine learning",
-    "ai": "artificial intelligence",
-    "python": "python programming",
-}
+def canonical_key(topic: str) -> str:
+    key = " ".join(str(topic).strip().lower().split())
+    return ALIASES.get(key, key)
 
-
-def add_topic(key, title, definition, concepts, applications):
-    TOPICS[key] = {
-        "title": title,
-        "hook": f"{title} becomes easier when the student sees the key concepts before class.",
-        "definition": definition,
-        "simple": f"Think of {title} as a map. First learn the main roads, then the details make more sense.",
-        "concepts": {c: {
-            "definition": f"{c.title()} is an important concept in {title}.",
-            "kid": f"{c.title()} is one piece of the {title} puzzle.",
-            "example": f"In {title}, {c} helps explain the topic clearly.",
-            "mistake": f"Students often memorize {c} without connecting it to examples.",
-            "exam": f"Define {c} and explain its role in {title}."
-        } for c in concepts},
-        "applications": {a: f"{title} is used in {a}." for a in applications},
-        "misconceptions": [
-            f"{title} is not only memorization.",
-            f"{title} needs examples and applications.",
-            f"{title} becomes clearer when students ask questions."
-        ],
-        "facts": [
-            f"{title} is easier when connected with examples.",
-            f"{title} has practical applications.",
-            f"Understanding core concepts improves performance in {title}."
-        ]
-    }
-
-add_topic("artificial intelligence", "Artificial Intelligence", "Artificial intelligence is the field of building systems that can learn, reason, understand language, perceive, or make decisions.", ["learning", "reasoning", "perception", "language", "decision-making", "automation"], ["chatbots", "robotics", "healthcare", "search engines", "education"])
-add_topic("object oriented programming", "Object Oriented Programming", "Object oriented programming is a programming style that uses classes and objects to structure software.", ["class", "object", "inheritance", "encapsulation", "polymorphism", "method"], ["software design", "game development", "GUI apps", "large systems", "simulation"])
-add_topic("neural networks", "Neural Networks", "Neural networks are machine learning models made of connected nodes that learn from data by adjusting weights.", ["neuron", "weight", "activation", "layer", "loss", "training"], ["image recognition", "speech recognition", "translation", "chatbots", "generative AI"])
-add_topic("linear regression", "Linear Regression", "Linear regression is a method used to model the relationship between input variables and a continuous output.", ["dependent variable", "independent variable", "slope", "intercept", "error", "prediction"], ["price prediction", "trend analysis", "forecasting", "research analysis", "risk estimation"])
-add_topic("database systems", "Database Systems", "A database system stores, manages, and retrieves organized data.", ["table", "record", "query", "primary key", "relationship", "SQL"], ["banking", "student records", "e-commerce", "hospital systems", "inventory"])
-add_topic("climate change", "Climate Change", "Climate change means long-term changes in temperature, rainfall, extreme weather, and global climate systems.", ["greenhouse gases", "global warming", "sea level rise", "fossil fuels", "extreme weather", "sustainability"], ["disaster planning", "coastal protection", "energy policy", "agriculture", "water management"])
-
-
-add_topic("convolutional neural network", "Convolutional Neural Network", "A convolutional neural network is a neural network designed to learn visual patterns from images using filters, feature maps, and pooling.", ["filter", "feature map", "convolution", "pooling", "activation", "classification"], ["image recognition", "medical imaging", "face detection", "self-driving cars", "quality inspection"])
-add_topic("natural language processing", "Natural Language Processing", "Natural language processing is a field of AI that helps computers understand, analyze, and generate human language.", ["tokenization", "embedding", "language model", "sentiment analysis", "translation", "text classification"], ["chatbots", "translation", "search engines", "text summarization", "voice assistants"])
-add_topic("statistics", "Statistics", "Statistics is the study of collecting, organizing, analyzing, and interpreting data.", ["mean", "median", "standard deviation", "probability", "confidence interval", "hypothesis test"], ["research", "surveys", "quality control", "business decisions", "public health"])
-add_topic("sql", "SQL", "SQL is a language used to store, query, update, and manage data in relational databases.", ["table", "query", "select", "where", "join", "primary key"], ["student records", "banking systems", "e-commerce", "inventory", "data analysis"])
-add_topic("algorithms", "Algorithms", "An algorithm is a step-by-step method used to solve a problem or complete a task.", ["input", "output", "steps", "complexity", "searching", "sorting"], ["search engines", "route planning", "recommendation systems", "data processing", "automation"])
-add_topic("urban water management", "Urban Water Management", "Urban water management focuses on planning, monitoring, and improving water supply, drainage, wastewater, and flood control in cities.", ["water supply", "drainage", "wastewater", "flood control", "sensors", "prediction"], ["smart cities", "flood warning", "water quality monitoring", "leak detection", "urban planning"])
+def validate_topics():
+    errors=[]
+    required=["title","hook","definition","simple","concepts","applications","misconceptions","class_questions"]
+    for key, topic in TOPICS.items():
+        for field in required:
+            if field not in topic or not topic[field]: errors.append(f"{key}: missing {field}")
+        for cname, concept in topic.get("concepts", {}).items():
+            for field in ["definition","kid","example","mistake","exam"]:
+                if field not in concept or not concept[field]: errors.append(f"{key}.{cname}: missing {field}")
+    return errors

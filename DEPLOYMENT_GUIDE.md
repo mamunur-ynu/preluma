@@ -1,11 +1,41 @@
-# Deploy Preluma V14.1 Stable Hero
+# Preluma Deployment Guide
 
-Upload/replace the project files in GitHub and commit directly to main.
+## Upload files
 
-Commit message:
+Replace these files in GitHub:
 
-Restore stable campus hero design
+- streamlit_app.py
+- engine.py
+- topics.py
+- teacher.py
+- requirements.txt
+- README.md
+- DEPLOYMENT_GUIDE.md
+- tests/test_engine.py
+- tests/test_topics.py
 
-Keep the file path:
+Keep:
 
-assets/ynu_campus.jpg
+- assets/ynu_campus.jpg
+
+## Commit message
+
+Finalize Preluma V15 stable release
+
+## Smoke check
+
+1. Home page loads
+2. Student Mission starts
+3. Brain Brief appears
+4. Quiz works
+5. Mistake Clinic appears
+6. UltraTutor works
+7. Teacher Studio opens
+8. Evidence Board opens
+
+## Local testing
+
+```bash
+python -m pytest -q
+streamlit run streamlit_app.py
+```

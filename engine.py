@@ -1,251 +1,64 @@
 import re
-from collections import Counter
-from topics import TOPICS, ALIASES
+from topics import TOPICS, canonical_key
 
-STOPWORDS = set("the and for that with from this have has are was were been will would could should about into than then them they their there where when which what also more most some such only other many each these those because while used known called based topic class lecture".split())
+SKILL_DEFINITION="Definition"; SKILL_CORE="Core Concept"; SKILL_APPLICATION="Application"; SKILL_MISCONCEPTION="Misconception"
+DEFAULT_CONCEPT={"definition":"This is the main idea of the topic.","kid":"Start with the simplest meaning first, then add examples.","example":"Connect the idea to a real-life situation.","mistake":"Do not memorize words without understanding meaning.","exam":"Explain definition, example, and common mistake."}
 
-def canonical_key(topic):
-    key = topic.strip().lower()
-    return ALIASES.get(key, key)
+def clean_text(text): return re.sub(r"\s+"," ",str(text).strip())
 
-def concept_names(pack):
-    return list(pack.get("concepts", {}).keys())
+def make_generic_fallback(title):
+    return {"title":title,"hook":f"{title} becomes easier when we break it into small ideas.","definition":f"{title} is an academic topic that can be understood through definition, examples, applications, and common mistakes.","simple":f"Think of {title} like building blocks: first one block, then another.","facts":[f"{title} has a main definition.",f"{title} becomes clearer through examples.",f"{title} can be discussed in class using smart questions."],"concepts":{"main idea":{"definition":f"The main idea of {title} is the first meaning a student should understand.","kid":f"{title} is easier when we explain it in tiny steps.","example":"A new topic is like a map: first see the big roads, then learn the details.","mistake":"Do not memorize without examples.","exam":"Give definition, simple example, and one common mistake."}},"applications":{"class learning":"Helps students prepare before lectures."},"misconceptions":[f"{title} is not only memorization.","A hard topic becomes easier with examples.","Good preparation means asking better questions in class."],"class_questions":[f"What is the simplest definition of {title}?",f"Where is {title} used in real life?",f"What is the most common mistake in {title}?",f"How can I explain {title} to a beginner?",f"What should I ask the teacher about {title}?"]}
 
-def application_names(pack):
-    return list(pack.get("applications", {}).keys())
-
-def build_pack(topic):
-    key = canonical_key(topic)
-    data = TOPICS.get(key)
-    if not data:
-        title = topic.strip().title() or "Machine Learning"
-        concepts = ["definition", "keywords", "examples", "applications", "limitations", "questions"]
-        data = {
-            "title": title,
-            "hook": f"{title} becomes easier when the student sees the big picture first.",
-            "definition": f"{title} is an academic topic that can be understood through definition, core concepts, examples, applications, and questions.",
-            "simple": f"Think of {title} like a new game. First learn the basic rules, then practice with examples.",
-            "concepts": {c: {
-                "definition": f"{c.title()} is an important part of {title}.",
-                "kid": f"{c.title()} is one small piece of the {title} puzzle.",
-                "example": f"In {title}, {c} helps students organize understanding.",
-                "mistake": f"Students often memorize {c} without connecting it to examples.",
-                "exam": f"Define {c} and explain its role in {title}."
-            } for c in concepts},
-            "misconceptions": [
-                f"{title} is not only memorization.",
-                f"{title} needs examples to become clear.",
-                f"{title} becomes easier when students ask questions."
-            ],
-            "applications": {
-                "exam preparation": f"{title} helps with exam preparation.",
-                "project work": f"{title} can support project work.",
-                "class discussion": f"{title} can improve class discussion.",
-                "real-world problem solving": f"{title} supports real-world problem solving.",
-                "critical thinking": f"{title} develops critical thinking."
-            },
-            "facts": [
-                f"{title} is easier when connected to examples.",
-                f"{title} has real-world uses.",
-                f"Good questions help students understand {title} better."
-            ]
-        }
-
-    text = " ".join([data["definition"], data["hook"], " ".join(concept_names(data)), " ".join(application_names(data))])
-    words = re.findall(r"[a-zA-Z][a-zA-Z\-]{2,}", text.lower())
-    keywords = [w for w, _ in Counter([w for w in words if w not in STOPWORDS and len(w) > 3]).most_common(10)]
-
-    pack = dict(data)
-    pack["keywords"] = keywords
-    pack["confidence"] = 0.93 if key in TOPICS else 0.72
-    pack["source"] = "Curated concept-level lesson pack" if key in TOPICS else "Generic fallback lesson pack"
-    pack["topic_key"] = key
+def ensure_pack_schema(data, requested_title):
+    pack=dict(data or {}); pack.setdefault("title", requested_title); pack.setdefault("hook", f"{requested_title} becomes easier when the student sees the big picture first."); pack.setdefault("definition", f"{requested_title} is an academic topic."); pack.setdefault("simple", f"Think of {requested_title} as a map: first learn the main roads, then the details make sense."); pack.setdefault("facts", []); pack.setdefault("concepts", {}); pack.setdefault("applications", {}); pack.setdefault("misconceptions", []); pack.setdefault("class_questions", [])
+    if not pack["concepts"]: pack["concepts"]={"main idea":dict(DEFAULT_CONCEPT)}
+    fixed={}
+    for name, c in pack["concepts"].items():
+        d=dict(DEFAULT_CONCEPT); d.update(c or {}); fixed[name]=d
+    pack["concepts"]=fixed
+    if not pack["facts"]: pack["facts"]=[f"{pack['title']} becomes easier when connected to examples.", f"{pack['title']} has academic value.", "Understanding the core idea improves class participation."]
+    if not pack["misconceptions"]:
+        lead=next(iter(pack["concepts"]), "the core idea")
+        pack["misconceptions"]=[f"{pack['title']} is not only memorization.", f"{lead.title()} should be connected to examples.", f"Students understand {pack['title']} better when they ask questions."]
+    if not pack["class_questions"]: pack["class_questions"]=[f"What is the simplest definition of {pack['title']}?", f"Where is {pack['title']} used?", "What is the most common mistake?", "How can I explain it simply?", "What should I ask in class?"]
     return pack
 
-def make_questions(pack):
-    concepts = concept_names(pack)
-    apps = application_names(pack)
-    c1 = concepts[0]
-    c2 = concepts[1] if len(concepts) > 1 else concepts[0]
-    app1 = apps[0]
-    misconception = pack["misconceptions"][0]
+def build_pack(topic):
+    requested=clean_text(topic) or "Machine Learning"; key=canonical_key(requested); data=TOPICS.get(key) or make_generic_fallback(requested.title()); return ensure_pack_schema(data, data.get("title", requested.title()))
 
-    return [
-        {
-            "q": f"What should you understand first about {pack['title']}?",
-            "options": ["The core meaning of the topic", "Only random facts", "Only interface design", "Only copying notes"],
-            "answer": "The core meaning of the topic",
-            "skill": "Definition",
-            "why": "Before going deep, the student needs the basic meaning of the topic.",
-            "kid": f"Before playing a new game, you first learn what the game is. {pack['title']} works the same way.",
-            "evidence": pack["definition"]
-        },
-        {
-            "q": f"Which one is a core concept in {pack['title']}?",
-            "options": [c1, c2, "decoration", "attendance only"],
-            "answer": c1,
-            "skill": "Core Concept",
-            "why": f"{c1} is included in the Brain Brief as a core concept.",
-            "kid": pack["concepts"][c1]["kid"],
-            "evidence": pack["concepts"][c1]["definition"]
-        },
-        {
-            "q": f"Where can {pack['title']} become useful?",
-            "options": [app1, "Avoiding class questions", "Making learning useless", "Only memorizing without meaning"],
-            "answer": app1,
-            "skill": "Application",
-            "why": pack["applications"][app1],
-            "kid": "Application means where an idea helps in real life, not just inside the textbook.",
-            "evidence": pack["applications"][app1]
-        },
-        {
-            "q": f"Which one is a misconception about {pack['title']}?",
-            "options": [misconception, pack["definition"][:90], f"{pack['title']} can be discussed in class", f"{pack['title']} has examples"],
-            "answer": misconception,
-            "skill": "Misconception",
-            "why": "A misconception is a wrong or incomplete idea that students often believe.",
-            "kid": "A misconception is like thinking a shadow is a monster. Explanation helps you see it clearly.",
-            "evidence": " ".join(pack["misconceptions"])
-        }
-    ]
-
-def grade(questions, selected):
-    rows = []
-    score = 0
-    weak = []
-    for i, q in enumerate(questions):
-        ans = selected.get(i, "")
-        ok = ans == q["answer"]
-        if ok:
-            score += 1
-        else:
-            weak.append(q["skill"])
-        rows.append({"q": q, "answer": ans, "ok": ok})
-    return {"score": score, "total": len(questions), "percentage": round(score / len(questions) * 100, 1), "rows": rows, "weak": weak}
+def _first_concept(pack):
+    name=next(iter(pack["concepts"])); return name, pack["concepts"][name]
 
 def best_concept_match(pack, question):
-    q = question.lower()
-    for name in concept_names(pack):
-        if name.lower() in q:
-            return name
-    # token overlap fallback
-    q_tokens = set(re.findall(r"[a-zA-Z][a-zA-Z\-]{2,}", q))
-    best_name = None
-    best_score = 0
-    for name, details in pack.get("concepts", {}).items():
-        text = " ".join([name, details["definition"], details["example"], details["mistake"]]).lower()
-        tokens = set(re.findall(r"[a-zA-Z][a-zA-Z\-]{2,}", text))
-        score = len(q_tokens & tokens)
-        if score > best_score:
-            best_name = name
-            best_score = score
-    return best_name if best_score > 0 else None
+    q=clean_text(question).lower()
+    for name,c in pack["concepts"].items():
+        if name.lower() in q: return name,c
+    for name,c in pack["concepts"].items():
+        if any(len(w)>3 and w in q for w in name.lower().split()): return name,c
+    return _first_concept(pack)
 
-
-def tutor(pack, question, style):
-    q = question.lower().strip()
-    concept = best_concept_match(pack, q)
-
-    def format_answer(title, simple, definition, example, mistake, exam):
-        if style == "Kid-simple":
-            return (
-                f"Let’s make it very simple. {simple} "
-                f"Example: {example} "
-                f"Memory hook: remember it as one small puzzle piece of {pack['title']}. "
-                f"Common mistake: {mistake}"
-            )
-        if style == "Exam-focused":
-            return (
-                f"Exam-ready answer: {definition} "
-                f"Example: {example} "
-                f"Common mistake to avoid: {mistake} "
-                f"How to write in exam: {exam}"
-            )
-        if style == "Real-world":
-            return (
-                f"Real-world view: {example} "
-                f"This matters because it shows how {pack['title']} is useful beyond memorizing definitions. "
-                f"Key idea: {definition}"
-            )
-        return (
-            f"{title}: {definition} "
-            f"Simple idea: {simple} "
-            f"Example: {example} "
-            f"Common mistake: {mistake}"
-        )
-
-    if concept:
-        details = pack["concepts"][concept]
-        return format_answer(
-            concept.title(),
-            details["kid"],
-            details["definition"],
-            details["example"],
-            details["mistake"],
-            details["exam"]
-        )
-
-    if "main" in q or "basic" in q or "idea" in q or "understand" in q:
-        first = concept_names(pack)[0]
-        details = pack["concepts"][first]
-        return (
-            f"Start with this simple idea: {pack['simple']} "
-            f"The first concept to learn is {first}. {details['kid']} "
-            f"Example: {details['example']}"
-        )
-
-    if "example" in q or "use" in q or "real" in q:
-        items = [f"{name}: {text}" for name, text in list(pack["applications"].items())[:3]]
-        return "Here are simple real uses from this Brain Brief: " + " ".join(items)
-
-    if "mistake" in q or "wrong" in q or "confus" in q:
-        return "Common student confusions: " + " ".join([f"{i+1}. {m}" for i, m in enumerate(pack["misconceptions"])])
-
-    if "exam" in q:
-        first = concept_names(pack)[0]
-        details = pack["concepts"][first]
-        return (
-            f"Exam focus for {pack['title']}: first define the topic, then explain {first}. "
-            f"Use this line: {details['exam']} "
-            f"Then add one application such as {application_names(pack)[0]}."
-        )
-
-    if "why" in q or "care" in q:
-        apps = ", ".join(application_names(pack)[:3])
-        return (
-            f"You should care about {pack['title']} because it connects classroom theory with real uses such as {apps}. "
-            f"If you know the basic map before class, the lecture becomes much easier to follow."
-        )
-
-    return (
-        f"I could not find that exact idea inside the current Brain Brief, but we can still learn from the closest concept for {pack['title']}. "
-        f"Please ask about one of these concepts: {', '.join(concept_names(pack)[:6])}. "
-        f"For example: 'I do not understand {concept_names(pack)[0]}'."
-    )
-
-def study_brief_markdown(student, lecture_time, pack, result, questions_to_ask):
-    weak = ", ".join(result["weak"]) if result["weak"] else "No major weak area"
-    lines = [
-        "# Preluma Study Brief",
-        "",
-        f"Student: {student}",
-        f"Lecture: {pack['title']}",
-        f"Lecture time: {lecture_time}",
-        f"Readiness: {result['percentage']}%",
-        f"Score: {result['score']}/{result['total']}",
-        f"Weak area: {weak}",
-        "",
-        "## Brain Brief",
-        pack["definition"],
-        "",
-        "## Explain Like I Am 5",
-        pack["simple"],
-        "",
-        "## Core Concepts",
+def make_questions(pack):
+    cname, c=_first_concept(pack); app=next(iter(pack["applications"])) if pack["applications"] else "real life"; mis=pack["misconceptions"][0]
+    return [
+        {"skill":SKILL_DEFINITION,"q":f"What is the best simple definition of {pack['title']}?","options":[pack["definition"],"A random activity with no rules","Only memorizing a word","A topic that cannot be explained"],"answer":pack["definition"],"why":"The definition explains the main meaning clearly."},
+        {"skill":SKILL_CORE,"q":f"Which concept is important in {pack['title']}?","options":[cname.title(),"Shoe Size","Cooking Oil","Random Guess"],"answer":cname.title(),"why":f"{cname.title()} is a core concept from this topic."},
+        {"skill":SKILL_APPLICATION,"q":f"Where can {pack['title']} be applied?","options":[app.title(),"Only in dreams","Nowhere useful","Only for decoration"],"answer":app.title(),"why":f"{app.title()} is a real application connected to the topic."},
+        {"skill":SKILL_MISCONCEPTION,"q":"Which statement is a common misunderstanding?","options":[mis,"Examples help learning","Class questions are useful","Definitions are important"],"answer":mis,"why":"This option describes a misconception students should avoid."},
     ]
-    for concept, details in pack["concepts"].items():
-        lines.append(f"- {concept}: {details['definition']}")
-    lines.extend(["", "## Smart Questions to Ask in Class"])
-    for i, question in enumerate(questions_to_ask, 1):
-        lines.append(f"{i}. {question}")
-    return "\n".join(lines)
+
+def grade(questions, answers):
+    details=[]; score=0; weak=[]
+    for i,q in enumerate(questions):
+        chosen=answers.get(i,""); correct=chosen==q["answer"]; score+=int(correct)
+        if not correct: weak.append(q["skill"])
+        details.append({"q":q["q"],"chosen":chosen,"answer":q["answer"],"correct":correct,"skill":q["skill"],"why":q["why"]})
+    total=len(questions); pct=round(score/total*100,1) if total else 0
+    return {"score":score,"total":total,"pct":pct,"weakest":weak[0] if weak else "None","details":details}
+
+def tutor_sections(pack, question, style="Normal Mode"):
+    cname,c=best_concept_match(pack, question)
+    return {"topic":pack["title"],"concept":cname.title(),"tiny_answer":c["definition"],"explain_simply":c["kid"],"real_life_example":c["example"],"common_mistake":c["mistake"],"hard_words_made_easy":f"{cname.title()} means: {c['kid']}","exam_angle":c["exam"],"memory_line":f"Remember {cname.title()} through this example: {c['example']}"}
+
+def build_brain_brief(pack):
+    cname,c=_first_concept(pack)
+    return {"title":pack["title"],"tiny_answer":pack["definition"],"simple":pack["simple"],"hook":pack["hook"],"key_concept":cname.title(),"concept_simple":c["kid"],"example":c["example"],"misconception":pack["misconceptions"][0],"facts":pack["facts"][:3],"class_questions":pack["class_questions"][:5]}
