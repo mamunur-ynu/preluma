@@ -1,5 +1,6 @@
 import re
 from topics import TOPICS, canonical_key
+from wiki_fetcher import build_wiki_topic_pack, smart_answer_from_pack
 
 SKILL_DEFINITION="Definition"; SKILL_CORE="Core Concept"; SKILL_APPLICATION="Application"; SKILL_MISCONCEPTION="Misconception"
 DEFAULT_CONCEPT={"definition":"This is the main idea of the topic.","kid":"Start with the simplest meaning first, then add examples.","example":"Connect the idea to a real-life situation.","mistake":"Do not memorize words without understanding meaning.","exam":"Explain definition, example, and common mistake."}

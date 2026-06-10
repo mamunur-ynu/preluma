@@ -67,3 +67,157 @@ def validate_topics():
             for field in ["definition","kid","example","mistake","exam"]:
                 if field not in concept or not concept[field]: errors.append(f"{key}.{cname}: missing {field}")
     return errors
+
+EXTRA_MASSIVE_TOPICS = {
+    "database management system": {
+        "title": "Database Management System",
+        "hook": "A DBMS helps store, organize, and retrieve data safely.",
+        "definition": "A database management system is software used to create, manage, and access databases.",
+        "simple": "It is like a smart digital filing cabinet.",
+        "facts": ["DBMS stores structured data.", "SQL is often used to query data.", "DBMS improves data security and consistency."],
+        "concepts": {
+            "table": {"definition": "A table stores data in rows and columns.", "kid": "It is like a spreadsheet.", "example": "A student table stores name, ID, and marks.", "mistake": "A table is not the whole database.", "exam": "Mention rows, columns, and records."},
+            "primary key": {"definition": "A primary key uniquely identifies each row.", "kid": "It is like a unique ID card.", "example": "Student ID can be a primary key.", "mistake": "Primary key should not repeat.", "exam": "Mention uniqueness."},
+            "query": {"definition": "A query asks the database for specific data.", "kid": "It is a question to the database.", "example": "SELECT name FROM students.", "mistake": "A query is not only for deleting data.", "exam": "Mention retrieving or manipulating data."}
+        },
+        "applications": {"banking": "Stores account records.", "university": "Stores student information.", "e-commerce": "Stores orders and products."},
+        "misconceptions": ["A DBMS is not just an Excel file.", "Data security matters.", "Good database design reduces errors."],
+        "class_questions": ["Why do we need DBMS?", "What is a primary key?", "How does SQL work?", "What is normalization?", "How does DBMS protect data?"]
+    },
+    "software engineering": {
+        "title": "Software Engineering",
+        "hook": "Good software needs planning, design, testing, and maintenance.",
+        "definition": "Software engineering is the systematic process of designing, building, testing, and maintaining software.",
+        "simple": "It is like building a house, but the house is an app or program.",
+        "facts": ["Requirements guide development.", "Testing reduces bugs.", "Maintenance keeps software useful."],
+        "concepts": {
+            "requirement": {"definition": "A requirement describes what the software should do.", "kid": "It is the wish list for the app.", "example": "A login feature is a requirement.", "mistake": "Unclear requirements cause wrong products.", "exam": "Mention user needs."},
+            "testing": {"definition": "Testing checks whether software works correctly.", "kid": "It is checking homework before submission.", "example": "Unit tests check small parts.", "mistake": "Testing cannot be skipped.", "exam": "Mention quality assurance."},
+            "maintenance": {"definition": "Maintenance updates and fixes software after release.", "kid": "It is taking care of the app after making it.", "example": "Fixing bugs after deployment.", "mistake": "Software work does not end after release.", "exam": "Mention bug fixes and updates."}
+        },
+        "applications": {"app development": "Build reliable apps.", "project management": "Plan team work.", "quality assurance": "Reduce software failure."},
+        "misconceptions": ["Coding is only one part.", "Testing is not optional.", "Documentation matters."],
+        "class_questions": ["What is software engineering?", "Why are requirements important?", "Why test software?", "What is maintenance?", "How do teams build software?"]
+    },
+    "cybersecurity": {
+        "title": "Cybersecurity",
+        "hook": "Cybersecurity protects systems, networks, and data from digital attacks.",
+        "definition": "Cybersecurity is the practice of protecting computers, networks, and data from unauthorized access or damage.",
+        "simple": "It is like locking doors for your digital life.",
+        "facts": ["Strong passwords help security.", "Phishing is a common attack.", "Encryption protects data."],
+        "concepts": {
+            "phishing": {"definition": "Phishing tricks users into giving sensitive information.", "kid": "A fake message tries to steal your password.", "example": "Fake bank emails.", "mistake": "Real-looking links can still be dangerous.", "exam": "Mention social engineering."},
+            "encryption": {"definition": "Encryption changes readable data into protected code.", "kid": "It turns a message into secret writing.", "example": "HTTPS uses encryption.", "mistake": "Encryption is not the same as deletion.", "exam": "Mention confidentiality."},
+            "malware": {"definition": "Malware is harmful software.", "kid": "It is a bad program that can damage or steal.", "example": "Viruses and ransomware.", "mistake": "Malware can come from unknown downloads.", "exam": "Mention malicious software."}
+        },
+        "applications": {"banking": "Protect financial data.", "healthcare": "Protect patient data.", "personal security": "Protect accounts."},
+        "misconceptions": ["Cybersecurity is not only antivirus.", "Humans can be weak points.", "No system is perfectly safe."],
+        "class_questions": ["What is phishing?", "Why use encryption?", "How does malware spread?", "How can users stay safe?", "Why is cybersecurity important?"]
+    },
+    "operating system": {
+        "title": "Operating System",
+        "hook": "An operating system manages hardware and software resources.",
+        "definition": "An operating system is system software that manages computer hardware, software resources, and services for programs.",
+        "simple": "It is the manager of the computer.",
+        "facts": ["OS manages memory.", "OS schedules processes.", "OS handles files and devices."],
+        "concepts": {
+            "process": {"definition": "A process is a running program.", "kid": "It is a program that is currently working.", "example": "A browser running on your computer.", "mistake": "A process is not the same as a file.", "exam": "Mention execution."},
+            "memory management": {"definition": "Memory management controls how programs use RAM.", "kid": "It gives working space to programs.", "example": "Allocating memory to apps.", "mistake": "RAM is limited.", "exam": "Mention allocation and protection."},
+            "file system": {"definition": "A file system organizes files on storage.", "kid": "It is the computer's folder system.", "example": "NTFS or ext4.", "mistake": "Files are not stored randomly.", "exam": "Mention organization and access."}
+        },
+        "applications": {"computers": "Run applications.", "phones": "Manage mobile apps.", "servers": "Control services."},
+        "misconceptions": ["OS is not only the desktop screen.", "Hardware needs OS control.", "Processes use resources."],
+        "class_questions": ["What does an OS do?", "What is a process?", "Why manage memory?", "How are files organized?", "What is scheduling?"]
+    },
+    "computer network": {
+        "title": "Computer Network",
+        "hook": "Networks allow computers to communicate and share resources.",
+        "definition": "A computer network is a group of connected devices that exchange data.",
+        "simple": "It is like roads connecting computers.",
+        "facts": ["Networks use protocols.", "IP addresses identify devices.", "Routers forward data."],
+        "concepts": {
+            "protocol": {"definition": "A protocol is a set of communication rules.", "kid": "It is the language rules computers follow.", "example": "HTTP is used for web communication.", "mistake": "Devices need common rules.", "exam": "Mention communication standard."},
+            "ip address": {"definition": "An IP address identifies a device on a network.", "kid": "It is like a house address for a computer.", "example": "192.168.1.1.", "mistake": "IP is not the same as website name.", "exam": "Mention identification."},
+            "router": {"definition": "A router forwards data between networks.", "kid": "It directs traffic.", "example": "Home Wi-Fi router.", "mistake": "Router is not just Wi-Fi.", "exam": "Mention packet forwarding."}
+        },
+        "applications": {"internet": "Connects global devices.", "office": "Shares files and printers.", "cloud": "Connects users to services."},
+        "misconceptions": ["Internet and network are related but not identical.", "Wi-Fi is not the whole network.", "Protocols are essential."],
+        "class_questions": ["What is a protocol?", "Why need IP addresses?", "What does a router do?", "How does data travel?", "What is LAN vs WAN?"]
+    },
+    "linear regression": {
+        "title": "Linear Regression",
+        "hook": "Linear regression predicts a value using a straight-line relationship.",
+        "definition": "Linear regression is a statistical method that models the relationship between input variables and a continuous output.",
+        "simple": "It draws a best-fit line to make predictions.",
+        "facts": ["It predicts continuous values.", "It uses slope and intercept.", "Error measures show fit quality."],
+        "concepts": {
+            "slope": {"definition": "Slope shows how much output changes when input changes.", "kid": "It tells how steep the line is.", "example": "More study hours may increase score.", "mistake": "Slope does not always prove causation.", "exam": "Mention rate of change."},
+            "intercept": {"definition": "Intercept is the predicted output when input is zero.", "kid": "Where the line starts.", "example": "Base score when study hours are zero.", "mistake": "Intercept may not always be meaningful.", "exam": "Mention y-axis crossing."},
+            "error": {"definition": "Error is the difference between actual and predicted values.", "kid": "How far the guess is from truth.", "example": "Predicted 80, actual 75.", "mistake": "Low error is good but not everything.", "exam": "Mention residual."}
+        },
+        "applications": {"price prediction": "Predict house prices.", "sales": "Forecast revenue.", "education": "Study score prediction."},
+        "misconceptions": ["Correlation is not causation.", "A straight line may not fit all data.", "Outliers can affect regression."],
+        "class_questions": ["What is slope?", "What is intercept?", "How is error measured?", "When is linear regression useful?", "What are limitations?"]
+    },
+    "logistic regression": {
+        "title": "Logistic Regression",
+        "hook": "Logistic regression predicts categories like yes/no or 0/1.",
+        "definition": "Logistic regression is a classification method used to estimate the probability of a binary outcome.",
+        "simple": "It predicts the chance of something being yes or no.",
+        "facts": ["It outputs probability.", "It is used for classification.", "Sigmoid function maps values between 0 and 1."],
+        "concepts": {
+            "sigmoid": {"definition": "Sigmoid maps any number to a value between 0 and 1.", "kid": "It turns a score into a probability.", "example": "Diabetes risk probability.", "mistake": "Probability is not always certainty.", "exam": "Mention 0 to 1 output."},
+            "classification": {"definition": "Classification predicts a category.", "kid": "It chooses a label.", "example": "Spam or not spam.", "mistake": "Classification is not predicting continuous price.", "exam": "Mention labels."},
+            "threshold": {"definition": "A threshold converts probability into class label.", "kid": "Above this line means yes.", "example": "If probability > 0.5, classify as 1.", "mistake": "Threshold can be adjusted.", "exam": "Mention decision boundary."}
+        },
+        "applications": {"medicine": "Disease risk prediction.", "email": "Spam detection.", "finance": "Fraud risk."},
+        "misconceptions": ["It is classification, not ordinary linear regression.", "Probability needs threshold.", "Model results need evaluation."],
+        "class_questions": ["Why use sigmoid?", "What is a threshold?", "What is binary classification?", "How evaluate the model?", "Where is it used?"]
+    },
+    "decision tree": {
+        "title": "Decision Tree",
+        "hook": "A decision tree makes decisions using a tree of questions.",
+        "definition": "A decision tree is a machine learning model that splits data using decision rules.",
+        "simple": "It is like a flowchart of yes/no questions.",
+        "facts": ["It can be used for classification and regression.", "Splits are based on features.", "Trees can overfit."],
+        "concepts": {
+            "node": {"definition": "A node is a decision point or result in a tree.", "kid": "It is one question box.", "example": "Is glucose high?", "mistake": "Not every node is final.", "exam": "Mention decision point."},
+            "leaf": {"definition": "A leaf is a final output node.", "kid": "It is the final answer box.", "example": "Diabetes: yes/no.", "mistake": "Leaf has no further split.", "exam": "Mention final prediction."},
+            "split": {"definition": "A split divides data based on a feature.", "kid": "It separates examples into groups.", "example": "Age > 40.", "mistake": "Bad splits reduce performance.", "exam": "Mention feature condition."}
+        },
+        "applications": {"medical screening": "Risk decision rules.", "banking": "Loan approval.", "education": "Student performance prediction."},
+        "misconceptions": ["Easy to read does not mean always accurate.", "Deep trees can overfit.", "Feature choice matters."],
+        "class_questions": ["What is a node?", "What is a leaf?", "How does a split work?", "Why can trees overfit?", "Where are decision trees used?"]
+    },
+    "neural network": {
+        "title": "Neural Network",
+        "hook": "Neural networks learn patterns using layers of connected units.",
+        "definition": "A neural network is a machine learning model made of connected layers that transform inputs into outputs.",
+        "simple": "It is like many small calculators working together to learn patterns.",
+        "facts": ["Neural networks use weights.", "Activation functions add non-linearity.", "Training adjusts weights."],
+        "concepts": {
+            "weight": {"definition": "A weight controls the strength of a connection.", "kid": "It says how important an input is.", "example": "Glucose may have strong weight in diabetes prediction.", "mistake": "Weights are learned, not guessed randomly forever.", "exam": "Mention learned parameter."},
+            "activation": {"definition": "An activation function decides how a neuron passes information.", "kid": "It helps the network choose what signal to send.", "example": "ReLU activation.", "mistake": "Without activation, deep layers lose power.", "exam": "Mention non-linearity."},
+            "training": {"definition": "Training adjusts weights using data.", "kid": "Practice makes the model better.", "example": "Using patient data to train a model.", "mistake": "Training too much can overfit.", "exam": "Mention loss and optimization."}
+        },
+        "applications": {"vision": "Image recognition.", "language": "Text models.", "medicine": "Risk prediction."},
+        "misconceptions": ["Neural networks are not human brains.", "More layers are not always better.", "They need data and evaluation."],
+        "class_questions": ["What are weights?", "Why use activation?", "How does training work?", "What is overfitting?", "Where are neural networks used?"]
+    },
+    "cloud computing": {
+        "title": "Cloud Computing",
+        "hook": "Cloud computing provides computing services over the internet.",
+        "definition": "Cloud computing delivers servers, storage, databases, networking, software, and analytics through the internet.",
+        "simple": "It is like renting computer power online.",
+        "facts": ["Cloud can reduce local hardware needs.", "Services can scale up or down.", "Security and cost must be managed."],
+        "concepts": {
+            "server": {"definition": "A server provides services or data to users.", "kid": "It is a computer that serves others.", "example": "A web server hosts a website.", "mistake": "Server does not mean only a big physical box.", "exam": "Mention service provider."},
+            "scalability": {"definition": "Scalability means handling more users or work.", "kid": "The system can grow when more people come.", "example": "Adding more cloud resources during exams.", "mistake": "Scaling can increase cost.", "exam": "Mention growth capacity."},
+            "storage": {"definition": "Cloud storage keeps data online.", "kid": "Files are saved on internet servers.", "example": "Google Drive.", "mistake": "Cloud storage still needs security.", "exam": "Mention remote data storage."}
+        },
+        "applications": {"web apps": "Host apps online.", "backup": "Store backup files.", "AI": "Train and deploy models."},
+        "misconceptions": ["Cloud is not magic; it uses real servers.", "Cloud can have security risks.", "Cost must be controlled."],
+        "class_questions": ["What is cloud computing?", "Why use cloud?", "What is scalability?", "What are risks?", "Where is it used?"]
+    },
+}
+TOPICS.update(EXTRA_MASSIVE_TOPICS)
