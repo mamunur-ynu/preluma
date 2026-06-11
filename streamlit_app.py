@@ -9,7 +9,7 @@ from wiki_fetcher import smart_answer_from_pack
 from teacher import build_teacher_dataframe, class_average_readiness, readiness_label
 from topics import validate_topics
 
-APP_VERSION = "16.3 Team Page Guaranteed"; APP_NAME="Preluma"; TAGLINE="Light Up Before Class"
+APP_VERSION = "16.4 Final Coach Verified"; APP_NAME="Preluma"; TAGLINE="Light Up Before Class"
 TEAM_MEMBERS = [
     ("MAMUNUR RASHID", "Core Development • UI/UX • Integration • Deployment"),
     ("MD FAHIM", "Feature Logic • Quiz Testing • Interaction Feedback"),
@@ -44,6 +44,16 @@ def asset_to_data_uri():
         if path.exists(): return "data:image/jpeg;base64," + base64.b64encode(path.read_bytes()).decode("ascii")
     return ""
 CAMPUS_BG=asset_to_data_uri()
+
+
+@st.cache_data(show_spinner=False)
+def team_photo_to_data_uri():
+    for path in [Path("assets/team_preluma.jpg"), Path("team_preluma.jpg")]:
+        if path.exists():
+            return "data:image/jpeg;base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+    return ""
+
+TEAM_PHOTO = team_photo_to_data_uri()
 st.set_page_config(page_title="Preluma", page_icon="✨", layout="wide")
 CSS="""
 <style>
@@ -212,20 +222,40 @@ def metrics_steps():
     st.markdown("""<div class='metric-grid'><div class='card'><div class='metric-number'>4</div><div class='metric-label'>Quiz Checks</div></div><div class='card'><div class='metric-number'>5</div><div class='metric-label'>Class Questions</div></div><div class='card'><div class='metric-number'>1</div><div class='metric-label'>Mistake Clinic</div></div><div class='card'><div class='metric-number'>0–100</div><div class='metric-label'>Readiness Score</div></div></div><div class='flow-grid'><div class='card flow-card'><small>STEP 1</small><h3>Prime the brain</h3><p>Start with a compact Brain Brief before the lecture.</p></div><div class='card flow-card'><small>STEP 2</small><h3>Find weak spots</h3><p>Use a short quiz to detect misunderstanding.</p></div><div class='card flow-card'><small>STEP 3</small><h3>Ask better questions</h3><p>Leave with class-ready questions and a readiness score.</p></div></div>""", unsafe_allow_html=True)
 
 def mission_control():
-    st.markdown("### Mission Control"); st.markdown("<div class='notice'>Choose a topic. Preluma will generate a simple pre-class learning mission in Python-powered Streamlit.</div>", unsafe_allow_html=True)
+    st.markdown("### Mission Control")
+    st.markdown("<div class='notice'>Choose a topic. Preluma will generate a simple pre-class learning mission using Python, Streamlit, curated data, and Wikipedia real-data fallback.</div>", unsafe_allow_html=True)
+
     with st.form("mission_form", border=True):
-        c1,c2,c3=st.columns([1.25,1,1])
+        c1, c2, c3 = st.columns([1.05, 1.25, 0.9])
         with c1:
-            student=st.text_input("Student", value=st.session_state.student)
-            topic_choice=st.selectbox("Lecture topic", TOPIC_OPTIONS, index=TOPIC_OPTIONS.index(st.session_state.topic) if st.session_state.topic in TOPIC_OPTIONS else 0)
-            topic=st.text_input("Custom topic", value="Entropy") if topic_choice=="Custom Topic" else topic_choice
-            lecture_time=st.text_input("Lecture time", value="Tomorrow 9 AM")
-        with c2: persona=st.radio("Feedback style", ["Normal Mode","Coach Mode","Roast Mode"], captions=["Direct","Supportive","Funny pressure"])
+            student = st.text_input("Student", value=st.session_state.student)
+            lecture_time = st.text_input("Lecture time", value="Tomorrow 9 AM")
+        with c2:
+            topic_choice = st.selectbox("Lecture topic", TOPIC_OPTIONS, index=TOPIC_OPTIONS.index(st.session_state.topic) if st.session_state.topic in TOPIC_OPTIONS else 0)
+            if topic_choice == "Custom Topic":
+                topic = st.text_input("Custom topic", value="Photosynthesis")
+            else:
+                topic = topic_choice
         with c3:
-            st.markdown("**Quick output**"); st.caption("Tiny answer"); st.caption("Simple explanation"); st.caption("Real example"); st.caption("Mistake correction"); st.caption("Class questions")
-        start=st.form_submit_button("Start Pre-Class Mission", use_container_width=True)
+            persona = st.selectbox("Feedback style", ["Normal Mode", "Coach Mode", "Roast Mode"], index=0)
+            use_wiki = st.checkbox("Wikipedia real data", value=True)
+            st.caption("Brain Brief • Quiz • Smart QnA")
+
+        start = st.form_submit_button("Start Pre-Class Mission", use_container_width=True)
+
     if start:
-        pack=build_pack(topic); st.session_state.student=student; st.session_state.topic=topic; st.session_state.persona=persona; st.session_state.pack=pack; st.session_state.brief=build_brain_brief(pack); st.session_state.questions=make_questions(pack); st.session_state.quiz_result=None; st.session_state.latest_session=None; st.rerun()
+        pack = build_pack(topic, use_wikipedia=use_wiki)
+        st.session_state.student = student
+        st.session_state.topic = topic
+        st.session_state.persona = persona
+        st.session_state.use_wiki = use_wiki
+        st.session_state.pack = pack
+        st.session_state.brief = build_brain_brief(pack)
+        st.session_state.questions = make_questions(pack)
+        st.session_state.quiz_result = None
+        st.session_state.latest_session = None
+        st.rerun()
+
 
 def brain_brief():
     if "brief" not in st.session_state: return
@@ -420,10 +450,19 @@ AI Upgrade: Course notes + retrieval + generated tutor answer + citations
 Future Product: Mobile app + teacher dashboard + class codes + notifications""", language="text")
 
 def main():
-    init_state(); page,presentation=sidebar()
-    if page=="Student Mission": student_mission(presentation)
-    elif page=="Teacher Studio": teacher_studio()
-    elif page=="Evidence Board": evidence_board()
-    elif page=="Demo Guide": demo_guide()
-    else: roadmap()
+    init_state()
+    page, presentation = sidebar()
+    if page == "Student Mission":
+        student_mission(presentation)
+    elif page == "Teacher Studio":
+        teacher_studio()
+    elif page == "Evidence Board":
+        evidence_board()
+    elif page == "Project Team":
+        project_team_page()
+    elif page == "Demo Guide":
+        demo_guide()
+    else:
+        roadmap()
+
 if __name__=="__main__": main()

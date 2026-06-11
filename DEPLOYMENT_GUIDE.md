@@ -90,3 +90,7 @@ Upload/replace:
 Then open sidebar and click:
 
 Project Team
+
+
+## V16.4 Final Coach Verified
+Verified before release: Project Team page route, TEAM_PHOTO loader, team image asset, compact Mission Control, feedback dropdown, and tests pass.
