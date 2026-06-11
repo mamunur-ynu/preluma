@@ -59,3 +59,20 @@ Smoke test:
 4. Start mission
 5. Check source link appears in Brain Brief
 6. Ask Smart QnA a question
+
+
+## V16.1 upload checklist
+
+Also upload:
+
+- assets/team_preluma.jpg
+
+Then open the app and check the new sidebar page:
+
+- Project Team
+
+
+## V16.2 upload note
+
+This version updates the Project Team page and workload wording.
+Upload streamlit_app.py and README.md at minimum.

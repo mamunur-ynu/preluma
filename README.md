@@ -19,7 +19,7 @@ No React, Node.js, or separate JavaScript frontend is required.
 
 ## Team
 
-- Mamunur Rashid — Lead, UI, Integration
+- Mamunur Rashid — Core Development, UI/UX, Integration, Deployment
 - MD Fahim — Engine, Quiz, Testing
 - MD Jiarul Islam — Topics, Data, Docs
 
@@ -90,3 +90,25 @@ Wikipedia is used as a public real-data preparation source, not as the final aca
 ### New dependency
 
 - requests
+
+
+## V16.1 Premium Team Interface
+
+Added a separate Project Team page with a premium group-photo hero, member contribution cards, work division table, and professor-facing summary.
+
+Required new asset:
+
+```text
+assets/team_preluma.jpg
+```
+
+
+## V16.2 Workload Fix
+
+Updated the team workload wording to clearly show the main/hard technical contribution without using sensitive words like "Lead".
+
+Final workload wording:
+
+- Mamunur Rashid — Core Development, UI/UX, System Integration, Deployment, Real-data Upgrade, Final Demo Flow
+- MD Fahim — Feature Logic, Quiz Testing, Interaction Feedback
+- MD Jiarul Islam — Topic Data, Documentation, Presentation Support
