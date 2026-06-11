@@ -2,17 +2,11 @@
 llm.py  –  Preluma V17
 Multi-provider LLM integration.
 Priority: Anthropic Claude → Groq → Gemini → local fallback.
-Set whichever API key(s) you have as environment variables:
-    ANTHROPIC_API_KEY
-    GROQ_API_KEY
-    GEMINI_API_KEY
 """
 
 import os
 import json
 import requests
-
-# ── Provider configs ────────────────────────────────────────────────────────
 
 _ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 _GROQ_URL      = "https://api.groq.com/openai/v1/chat/completions"
@@ -20,13 +14,11 @@ _GEMINI_URL    = "https://generativelanguage.googleapis.com/v1beta/models/gemini
 
 _ANTHROPIC_MODEL = "claude-sonnet-4-20250514"
 _GROQ_MODEL      = "llama-3.3-70b-versatile"
-
-_TIMEOUT = 20
-_MAX_TOKENS = 600
+_TIMEOUT         = 20
+_MAX_TOKENS      = 800
 
 
 def _key(name: str) -> str:
-    """Read API key from st.secrets first, then environment variable."""
     try:
         import streamlit as st
         val = st.secrets.get(name, "")
@@ -37,8 +29,6 @@ def _key(name: str) -> str:
     return os.environ.get(name, "").strip()
 
 
-# ── Provider call functions ─────────────────────────────────────────────────
-
 def _call_anthropic(system: str, user: str) -> str:
     key = _key("ANTHROPIC_API_KEY")
     if not key:
@@ -46,17 +36,9 @@ def _call_anthropic(system: str, user: str) -> str:
     try:
         resp = requests.post(
             _ANTHROPIC_URL,
-            headers={
-                "x-api-key": key,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-            },
-            json={
-                "model": _ANTHROPIC_MODEL,
-                "max_tokens": _MAX_TOKENS,
-                "system": system,
-                "messages": [{"role": "user", "content": user}],
-            },
+            headers={"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+            json={"model": _ANTHROPIC_MODEL, "max_tokens": _MAX_TOKENS, "system": system,
+                  "messages": [{"role": "user", "content": user}]},
             timeout=_TIMEOUT,
         )
         resp.raise_for_status()
@@ -75,18 +57,9 @@ def _call_groq(system: str, user: str) -> str:
     try:
         resp = requests.post(
             _GROQ_URL,
-            headers={
-                "Authorization": f"Bearer {key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": _GROQ_MODEL,
-                "max_tokens": _MAX_TOKENS,
-                "messages": [
-                    {"role": "system", "content": system},
-                    {"role": "user",   "content": user},
-                ],
-            },
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={"model": _GROQ_MODEL, "max_tokens": _MAX_TOKENS,
+                  "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]},
             timeout=_TIMEOUT,
         )
         resp.raise_for_status()
@@ -105,32 +78,22 @@ def _call_gemini(system: str, user: str) -> str:
             f"{_GEMINI_URL}?key={key}",
             headers={"Content-Type": "application/json"},
             json={
-                "contents": [
-                    {"role": "user", "parts": [{"text": f"{system}\n\n{user}"}]}
-                ],
-                "generationConfig": {"maxOutputTokens": _MAX_TOKENS, "temperature": 0.4},
+                "contents": [{"role": "user", "parts": [{"text": f"{system}\n\n{user}"}]}],
+                "generationConfig": {"maxOutputTokens": _MAX_TOKENS, "temperature": 0.5},
             },
             timeout=_TIMEOUT,
         )
         resp.raise_for_status()
-        return (
-            resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-        )
+        return resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
     except Exception:
         pass
     return ""
 
 
-# ── Active provider detection ───────────────────────────────────────────────
-
 def active_provider() -> str:
-    """Return the name of the first available provider, or 'none'."""
-    if _key("ANTHROPIC_API_KEY"):
-        return "Claude (Anthropic)"
-    if _key("GROQ_API_KEY"):
-        return "Groq (Llama 3.3)"
-    if _key("GEMINI_API_KEY"):
-        return "Gemini 1.5 Flash"
+    if _key("ANTHROPIC_API_KEY"): return "Claude (Anthropic)"
+    if _key("GROQ_API_KEY"):      return "Groq (Llama 3.3)"
+    if _key("GEMINI_API_KEY"):    return "Gemini 1.5 Flash"
     return "none"
 
 
@@ -139,7 +102,6 @@ def llm_available() -> bool:
 
 
 def _call_llm(system: str, user: str) -> str:
-    """Try providers in priority order; return first non-empty response."""
     for fn in (_call_anthropic, _call_groq, _call_gemini):
         result = fn(system, user)
         if result:
@@ -147,11 +109,8 @@ def _call_llm(system: str, user: str) -> str:
     return ""
 
 
-# ── JSON parse helper ───────────────────────────────────────────────────────
-
 def _parse_json(raw: str) -> dict | None:
     clean = raw.strip()
-    # Strip markdown fences if present
     if "```" in clean:
         parts = clean.split("```")
         for part in parts:
@@ -162,9 +121,7 @@ def _parse_json(raw: str) -> dict | None:
     try:
         return json.loads(clean)
     except Exception:
-        # Try to find first { ... } block
-        start = clean.find("{")
-        end   = clean.rfind("}")
+        start, end = clean.find("{"), clean.rfind("}")
         if start != -1 and end != -1:
             try:
                 return json.loads(clean[start:end+1])
@@ -173,43 +130,93 @@ def _parse_json(raw: str) -> dict | None:
     return None
 
 
-# ── Public API ──────────────────────────────────────────────────────────────
+def _detect_question_style(question: str) -> str:
+    q = question.lower()
+    if any(w in q for w in ["5 year", "5-year", "kid", "child", "simple", "easy", "beginner", "basic"]):
+        return "child"
+    if any(w in q for w in ["exam", "viva", "marks", "answer for", "write for", "definition"]):
+        return "exam"
+    if any(w in q for w in ["example", "real life", "real-life", "use case", "application"]):
+        return "example"
+    if any(w in q for w in ["difference", "vs", "compare", "versus", "between"]):
+        return "compare"
+    if any(w in q for w in ["why", "reason", "because", "how does", "how do"]):
+        return "deep"
+    return "normal"
+
 
 def llm_tutor(topic: str, question: str, style: str = "Normal Mode") -> dict | None:
-    """
-    Ask the LLM to answer a student question about a topic.
-    Returns a structured dict or None if no provider is available.
-    """
-    style_instructions = {
+    q_style = _detect_question_style(question)
+
+    explanation_style = {
+        "child": (
+            "The student wants a very simple explanation like they are 5 years old. "
+            "Use toy analogies, everyday objects, and the simplest possible words. "
+            "No jargon whatsoever. Make it feel like a bedtime story explanation."
+        ),
+        "exam": (
+            "The student needs an exam-ready answer. "
+            "Give a precise definition, key points in order, and exactly what to write in an exam or viva. "
+            "Be structured and academic."
+        ),
+        "example": (
+            "The student learns best through examples. "
+            "Lead with a vivid, concrete real-world example FIRST, then explain the concept from it. "
+            "Use at least two different examples."
+        ),
+        "compare": (
+            "The student wants a comparison. "
+            "Clearly explain how the two things are different and similar. "
+            "Use a short side-by-side style explanation."
+        ),
+        "deep": (
+            "The student wants to understand WHY and HOW something works. "
+            "Go deeper than the surface definition. Explain the mechanism, the reason, the cause. "
+            "Use analogies to make the reasoning clear."
+        ),
+        "normal": (
+            "Give a clear, direct, accurate explanation. "
+            "Start with the core idea, add one example, then cover the common mistake."
+        ),
+    }.get(q_style, "Give a clear and accurate explanation.")
+
+    persona_instruction = {
         "Coach Mode": (
-            "Be warm and encouraging. Start by acknowledging the student's question positively, "
-            "then give a clear and correct explanation."
+            "You are an encouraging coach. Start with a short motivating line, "
+            "then give the explanation. Make the student feel capable."
         ),
         "Roast Mode": (
-            "Use light, respectful humour to keep the student engaged, "
-            "but always give a correct and complete explanation."
+            "Use one clever, light joke about the question before explaining seriously. "
+            "Keep the humour respectful. The explanation itself must be fully correct and complete."
         ),
-    }.get(style, "Be clear, direct, and academic. No filler words.")
+    }.get(style, "Be clear, direct, and confident.")
 
-    system = (
-        "You are Preluma UltraTutor, an AI teaching assistant for university students. "
-        "You give short, structured, accurate answers to help students prepare for lectures. "
-        f"{style_instructions} "
-        "Do not use bullet symbols (* or -). Use plain prose or numbered lists only. "
-        "Keep the entire response under 220 words. "
-        "Always respond with ONLY a valid JSON object — no preamble, no markdown fences."
-    )
+    system = f"""You are Preluma UltraTutor — an expert AI teaching assistant for university students.
+
+Your job: read the student's question carefully and answer EXACTLY the way they need it.
+
+Explanation style for this question: {explanation_style}
+
+Persona: {persona_instruction}
+
+Rules:
+- Match your language complexity to what the student asked for
+- If they asked for simple: be VERY simple, use analogies and everyday objects
+- If they asked for exam style: be precise and structured
+- Never use bullet symbols (* or -)
+- Keep total response under 250 words
+- Always respond with ONLY a valid JSON object, no preamble, no markdown"""
 
     user = (
         f"Topic: {topic}\n"
         f"Student question: {question}\n\n"
-        "Respond with this exact JSON structure:\n"
-        '{"concept": "short concept name", '
-        '"tiny_answer": "one clear sentence answer", '
-        '"explain_simply": "2-3 sentences for a beginner", '
-        '"real_life_example": "one concrete real-world example", '
-        '"common_mistake": "one mistake students make", '
-        '"exam_angle": "what to say in an exam or viva"}'
+        "Respond with exactly this JSON structure:\n"
+        '{"concept": "short name of what you are explaining", '
+        '"tiny_answer": "one sharp sentence that directly answers the question", '
+        '"explain_simply": "explanation matched to how the student asked", '
+        '"real_life_example": "one concrete vivid real-world example", '
+        '"common_mistake": "one mistake students make about this", '
+        '"exam_angle": "what to say in an exam or viva about this"}'
     )
 
     raw = _call_llm(system, user)
@@ -218,83 +225,53 @@ def llm_tutor(topic: str, question: str, style: str = "Normal Mode") -> dict | N
 
     parsed = _parse_json(raw)
     if parsed:
-        required = {"concept", "tiny_answer", "explain_simply",
-                    "real_life_example", "common_mistake", "exam_angle"}
+        required = {"concept", "tiny_answer", "explain_simply", "real_life_example", "common_mistake", "exam_angle"}
         if required.issubset(parsed.keys()):
             return parsed
 
-    # Soft fallback: return raw text wrapped in structure
-    return {
-        "concept":         topic,
-        "tiny_answer":     raw[:280],
-        "explain_simply":  "",
-        "real_life_example": "",
-        "common_mistake":  "",
-        "exam_angle":      "",
-    }
+    return {"concept": topic, "tiny_answer": raw[:300], "explain_simply": "",
+            "real_life_example": "", "common_mistake": "", "exam_angle": ""}
 
 
-def llm_brain_brief(topic: str, definition: str, concepts: list[str]) -> dict | None:
-    """
-    Generate an enriched Brain Brief using the LLM.
-    concepts = list of concept names from the topic pack.
-    Returns dict with keys: hook, simple, example, misconception, study_tip.
-    """
+def llm_brain_brief(topic: str, definition: str, concepts: list) -> dict | None:
     system = (
         "You are Preluma, a pre-class learning assistant. "
         "Generate a short, engaging brain brief to help a student prepare for a lecture. "
         "Be concrete. Avoid vague academic language. "
         "Respond with ONLY a valid JSON object — no markdown, no preamble."
     )
-
     user = (
-        f"Topic: {topic}\n"
-        f"Definition: {definition}\n"
-        f"Key concepts: {', '.join(concepts)}\n\n"
-        "Generate a Brain Brief JSON:\n"
-        '{"hook": "one engaging sentence that makes the topic feel interesting", '
+        f"Topic: {topic}\nDefinition: {definition}\nKey concepts: {', '.join(concepts)}\n\n"
+        'Generate:\n{"hook": "one engaging sentence that makes the topic feel interesting and relevant", '
         '"simple": "explain the topic in 2 sentences a 15-year-old would understand", '
-        '"example": "one vivid real-life example", '
-        '"misconception": "one common wrong belief students have", '
-        '"study_tip": "one concrete action the student can take before class"}'
+        '"example": "one vivid real-life example that anyone can relate to", '
+        '"misconception": "one common wrong belief students have about this topic", '
+        '"study_tip": "one concrete action the student can take right now before class"}'
     )
-
     raw = _call_llm(system, user)
     if not raw:
         return None
-
     parsed = _parse_json(raw)
     if parsed and {"hook", "simple", "example", "misconception", "study_tip"}.issubset(parsed.keys()):
         return parsed
     return None
 
 
-def llm_class_questions(topic: str, definition: str, concepts: list[str]) -> list[str] | None:
-    """
-    Generate 5 smart class questions using the LLM.
-    Returns a list of question strings or None.
-    """
+def llm_class_questions(topic: str, definition: str, concepts: list) -> list | None:
     system = (
         "You are Preluma, a pre-class learning assistant. "
-        "Generate 5 smart questions a prepared student would ask a professor in class. "
-        "Questions should be specific, insightful, and show the student has done preparation. "
+        "Generate 5 smart questions a well-prepared student would ask a professor in class. "
+        "Questions should be specific, insightful, and show genuine preparation. "
         "Respond with ONLY a JSON array of 5 strings — no markdown, no preamble."
     )
-
     user = (
-        f"Topic: {topic}\n"
-        f"Definition: {definition}\n"
-        f"Key concepts: {', '.join(concepts)}\n\n"
+        f"Topic: {topic}\nDefinition: {definition}\nKey concepts: {', '.join(concepts)}\n\n"
         'Respond as: ["Question 1?", "Question 2?", "Question 3?", "Question 4?", "Question 5?"]'
     )
-
     raw = _call_llm(system, user)
     if not raw:
         return None
-
-    clean = raw.strip()
-    if "```" in clean:
-        clean = clean.replace("```json", "").replace("```", "").strip()
+    clean = raw.strip().replace("```json", "").replace("```", "").strip()
     try:
         result = json.loads(clean)
         if isinstance(result, list) and len(result) >= 3:
