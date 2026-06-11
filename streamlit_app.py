@@ -8,11 +8,12 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from engine import build_brain_brief, build_pack, grade, make_questions, tutor_sections
-from teacher import build_teacher_dataframe, class_average_readiness, readiness_label
+from teacher import build_teacher_dataframe, class_average_readiness, readiness_label, teacher_analytics, search_student
 from topics import TOPIC_OPTIONS, validate_topics
 from wiki_fetcher import smart_answer_from_pack
+from storage_core import append_student_row, next_record_id, read_recent_logs, timestamp
 
-APP_VERSION = "18.0 Premium Stable Final"
+APP_VERSION = "20.0 Compliance Elite"
 APP_NAME = "Preluma"
 TAGLINE = "Light Up Before Class"
 
@@ -186,6 +187,16 @@ h1, h2, h3 {letter-spacing: -0.02em;}
     .hero h1, .team-hero h1 {font-size: 30px;}
     .team-hero {min-height:340px;}
 }
+
+.rubric-grid {display:grid; grid-template-columns: repeat(2, 1fr); gap:14px; margin:16px 0;}
+.rubric-card {
+    padding:18px; border-radius:22px;
+    background:linear-gradient(135deg, rgba(34,197,94,.12), rgba(14,165,233,.10));
+    border:1px solid rgba(125,211,252,.22);
+}
+.rubric-card h4 {color:#fff; margin:0 0 8px; font-size:17px;}
+.rubric-card p {color:#cbd5e1; margin:0; line-height:1.55;}
+
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -207,7 +218,7 @@ def sidebar():
     st.sidebar.caption(TAGLINE)
     page = st.sidebar.radio(
         "Workspace",
-        ["Student Mission", "Teacher Studio", "Evidence Board", "Project Team", "Demo Guide", "Future Roadmap"],
+        ["Student Mission", "Teacher Studio", "Evidence Board", "Professor Defense", "Project Team", "Demo Guide", "Future Roadmap"],
     )
     presentation = st.sidebar.toggle("Presentation Mode", value=True)
     st.sidebar.info("Python + Streamlit project. Styling is inside Streamlit for presentation; core logic is Python.")
@@ -269,20 +280,43 @@ def mission_control():
     st.markdown("### Mission Control")
     st.markdown("<div class='notice'>Choose a topic. Preluma will generate a pre-class learning mission using Python, curated topic data, and optional Wikipedia real-data fallback.</div>", unsafe_allow_html=True)
 
+    preset = st.selectbox(
+        "Demo preset for presentation",
+        ["Manual Input", "AI Class Demo", "Python Exam Demo", "Statistics Viva Demo", "Urban Water Research Demo"],
+        index=0,
+    )
+
+    preset_data = {
+        "AI Class Demo": ("Zhou", "Neural Network", "Tomorrow 9 AM", "Coach Mode", "Deep Understanding"),
+        "Python Exam Demo": ("Mim", "Python Programming", "Tomorrow 9 AM", "Normal Mode", "Exam/Viva Mode"),
+        "Statistics Viva Demo": ("Jia", "Statistics", "Tomorrow 9 AM", "Coach Mode", "Exam/Viva Mode"),
+        "Urban Water Research Demo": ("Mamunur", "Urban Water Management", "Tomorrow 9 AM", "Normal Mode", "Deep Understanding"),
+    }
+
+    default_student = st.session_state.student
+    default_topic = st.session_state.topic
+    default_time = "Tomorrow 9 AM"
+    default_persona = st.session_state.persona
+    default_mode = "Fast Review"
+
+    if preset in preset_data:
+        default_student, default_topic, default_time, default_persona, default_mode = preset_data[preset]
+
     with st.form("mission_form", border=True):
         c1, c2, c3 = st.columns([1, 1.25, 1])
         with c1:
-            student = st.text_input("Student", value=st.session_state.student)
-            lecture_time = st.text_input("Lecture time", value="Tomorrow 9 AM")
+            student = st.text_input("Student", value=default_student)
+            lecture_time = st.text_input("Lecture time", value=default_time)
         with c2:
-            current_topic = st.session_state.topic if st.session_state.topic in TOPIC_OPTIONS else "Quantum Mechanics"
+            current_topic = default_topic if default_topic in TOPIC_OPTIONS else "Quantum Mechanics"
             topic_choice = st.selectbox("Lecture topic", TOPIC_OPTIONS, index=TOPIC_OPTIONS.index(current_topic))
             if topic_choice == "Custom Topic":
                 topic = st.text_input("Custom topic", value="Photosynthesis")
             else:
                 topic = topic_choice
         with c3:
-            persona = st.selectbox("Feedback style", ["Normal Mode", "Coach Mode", "Roast Mode"], index=0)
+            persona = st.selectbox("Feedback style", ["Normal Mode", "Coach Mode", "Roast Mode"], index=["Normal Mode", "Coach Mode", "Roast Mode"].index(default_persona) if default_persona in ["Normal Mode", "Coach Mode", "Roast Mode"] else 0)
+            learning_mode = st.selectbox("Learning mode", ["Fast Review", "Deep Understanding", "Exam/Viva Mode"], index=["Fast Review", "Deep Understanding", "Exam/Viva Mode"].index(default_mode))
             use_wiki = st.checkbox("Use Wikipedia real data", value=True)
             st.caption("Brain Brief • Quiz • Smart QnA")
         start = st.form_submit_button("Start Pre-Class Mission", use_container_width=True)
@@ -293,6 +327,7 @@ def mission_control():
             st.session_state.student = student
             st.session_state.topic = topic
             st.session_state.persona = persona
+            st.session_state.learning_mode = learning_mode
             st.session_state.use_wiki = use_wiki
             st.session_state.pack = pack
             st.session_state.brief = build_brain_brief(pack)
@@ -301,13 +336,13 @@ def mission_control():
             st.session_state.latest_session = None
         st.rerun()
 
-
 def brain_brief():
     if "brief" not in st.session_state:
         return
     b = st.session_state.brief
     pack = st.session_state.pack
     st.markdown("### Brain Brief")
+    st.caption(f"Learning mode: {st.session_state.get('learning_mode', 'Fast Review')}")
     st.markdown(f"""
     <div class='answer-card'><div class='answer-title'>Tiny answer</div><p>{b['tiny_answer']}</p></div>
     <div class='answer-card'><div class='answer-title'>Explain simply</div><p>{b['simple']}</p></div>
@@ -341,6 +376,18 @@ def quiz():
             "Readiness": result["pct"],
             "Weak Skill": result["weakest"],
         }
+        append_student_row({
+            "Record ID": next_record_id(),
+            "Student": st.session_state.student,
+            "Topic": st.session_state.pack["title"],
+            "Readiness": result["pct"],
+            "Weak Skill": result["weakest"],
+            "Quiz Score": result["score"],
+            "Quiz Total": result["total"],
+            "Lecture Time": "Streamlit session",
+            "Learning Mode": st.session_state.get("learning_mode", "Fast Review"),
+            "Created At": timestamp(),
+        })
         st.rerun()
 
 
@@ -411,6 +458,8 @@ def class_questions_and_download():
         "brief": st.session_state.brief,
         "class_questions": st.session_state.pack["class_questions"],
         "quiz_result": st.session_state.get("quiz_result"),
+        "learning_mode": st.session_state.get("learning_mode", "Fast Review"),
+        "demo_summary": "Preluma prepared a Brain Brief, quiz, Mistake Clinic, Smart QnA, and class questions.",
     }
     st.download_button(
         "Download Study Brief JSON",
@@ -437,13 +486,44 @@ def student_mission(presentation):
 def teacher_studio():
     hero()
     st.markdown("### Teacher Studio")
-    df = build_teacher_dataframe(st.session_state.get("latest_session"))
-    st.dataframe(df, use_container_width=True)
-    fig = px.bar(df, x="Student", y="Readiness", color="Weak Skill", title="Class Readiness")
-    fig.update_layout(yaxis_range=[0, 100], height=360)
-    st.plotly_chart(fig, use_container_width=True)
-    st.metric("Class Average Readiness", f"{class_average_readiness(df)}%")
-
+    st.markdown("<div class='notice'>Teacher Studio is now backed by pure Python analytics, manual Merge Sort, Binary Search, CSV persistence, and result.txt audit logging.</div>", unsafe_allow_html=True)
+    rows = build_teacher_dataframe(st.session_state.get("latest_session"))
+    analytics = teacher_analytics(rows)
+    summary = analytics["summary"]
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Class Average", f"{summary['class_average']}%")
+    c2.metric("Variance", summary["population_variance"])
+    c3.metric("Students Tracked", summary["students_tracked"])
+    c4.metric("Weak Skills", summary["unique_weak_skills"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["CSV Records", "Merge Sort Ranking", "Search Student", "Weak Skill Analytics", "Audit Log"])
+    with tab1:
+        st.caption("Loaded from data/students.csv using Python csv module.")
+        st.dataframe(rows, use_container_width=True)
+    with tab2:
+        st.caption(f"Manual Merge Sort by Readiness. elapsed_ns={analytics['sort_readiness_ns']}")
+        st.dataframe(analytics["sorted_by_readiness"], use_container_width=True)
+        fig = go.Figure()
+        fig.add_bar(x=[str(row.get("Student", "")) for row in analytics["sorted_by_readiness"]], y=[float(row.get("Readiness", 0.0)) for row in analytics["sorted_by_readiness"]])
+        fig.update_layout(title="Readiness Ranking by Manual Merge Sort", yaxis_range=[0, 100], height=360)
+        st.plotly_chart(fig, use_container_width=True)
+    with tab3:
+        target = st.text_input("Search student name", value="Mamunur")
+        if st.button("Run Linear Search + Binary Search", use_container_width=True):
+            result = search_student(rows, target)
+            st.write(f"Linear Search elapsed_ns: {result['linear_ns']}")
+            st.write(f"Binary Search elapsed_ns: {result['binary_ns']}")
+            st.write(f"Name-sort before Binary Search elapsed_ns: {result['sort_ns']}")
+            st.write("Binary Search result:")
+            st.dataframe(result["binary_result"], use_container_width=True)
+            st.write("Linear Search baseline result:")
+            st.dataframe(result["linear_result"], use_container_width=True)
+    with tab4:
+        st.caption("Weak skill counts generated by pure Python frequency loop.")
+        st.dataframe(analytics["weak_skill_frequency"], use_container_width=True)
+    with tab5:
+        st.caption("Latest result.txt audit log entries.")
+        for line in read_recent_logs(12):
+            st.code(line, language="text")
 
 def evidence_board():
     hero()
@@ -471,6 +551,49 @@ def evidence_board():
             st.write(f"- {issue}")
     else:
         st.success("Topic data validation passed.")
+
+
+def professor_defense():
+    hero()
+    st.markdown("### Professor Defense")
+    st.markdown("<div class='notice'>This page is designed for final presentation defense: problem, Python implementation, innovation, testing, and contribution are explained clearly.</div>", unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class='rubric-grid'>
+        <div class='rubric-card'><h4>1. Real Problem</h4><p>Students enter lectures unprepared, which reduces understanding, memory, and class participation.</p></div>
+        <div class='rubric-card'><h4>2. Python Solution</h4><p>Preluma uses Python Streamlit to create a pre-class mission: topic input, Brain Brief, quiz, Mistake Clinic, Smart QnA, and dashboard.</p></div>
+        <div class='rubric-card'><h4>3. Real Data</h4><p>For unknown topics, Python Requests can fetch Wikipedia summary as a real-data fallback.</p></div>
+        <div class='rubric-card'><h4>4. Teacher Value</h4><p>Teacher Studio shows readiness scores and weak-skill analytics before class.</p></div>
+        <div class='rubric-card'><h4>5. Testing Proof</h4><p>Regression tests verify topic schema, build_pack, quiz flow, tutor output, and Smart QnA.</p></div>
+        <div class='rubric-card'><h4>6. Future Product</h4><p>The project can grow into student accounts, teacher class codes, PDF notes, RAG retrieval, and mobile app support.</p></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### Architecture")
+    st.code(
+        "Student Input → Topic Router → Curated Topic Pack / Wikipedia Fallback → Brain Brief → Quiz → Mistake Clinic → Smart QnA → Teacher Analytics → Export",
+        language="text",
+    )
+
+    st.markdown("### 100/100 Rubric Target")
+    rubric = pd.DataFrame({
+        "Area": ["Problem Clarity", "Python Logic", "Data Handling", "Interactivity", "Testing", "UI/Presentation", "Team Contribution", "Future Potential"],
+        "What We Show": [
+            "Clear learning problem",
+            "Functions, modules, session state, quiz engine",
+            "Topic dictionaries, schema validation, Wikipedia fallback",
+            "Forms, quiz, QnA, download, dashboard",
+            "Pytest and regression tests",
+            "Premium Streamlit presentation",
+            "Workload table and Project Team page",
+            "Roadmap for real EdTech product",
+        ],
+        "Score Strategy": ["High", "High", "High", "High", "High", "High", "High", "High"],
+    })
+    st.dataframe(rubric, use_container_width=True)
+
+    st.markdown("### Defense Line")
+    st.success("Preluma is a Python Streamlit project. All core logic is Python: data processing, topic routing, quiz grading, Smart QnA, CSV persistence, manual Merge Sort, Binary Search, timing logs, teacher analytics, export, and testing. Styling is only for presentation inside the Streamlit app.")
 
 
 def project_team():
@@ -537,10 +660,18 @@ def roadmap():
     df = pd.DataFrame({
         "Phase": ["Current Python Demo", "Prototype", "AI Upgrade", "Real Product"],
         "Goal": ["Final project submission", "Student/teacher accounts", "RAG tutor with citations", "Mobile/web app"],
-        "Technology": ["Python + Streamlit", "Python + database", "Python + retrieval", "Python backend + app frontend"],
+        "Technology": ["Python + Streamlit", "Python + SQLite/database", "Python + retrieval + LLM API", "Python backend + mobile/web frontend"],
         "Status": ["Now", "Next", "Later", "Future"],
     })
     st.dataframe(df, use_container_width=True)
+
+    st.markdown("### Product Growth Plan")
+    roadmap_text = """Phase 1: Streamlit demo
+Phase 2: Save student history in database
+Phase 3: Upload teacher notes/PDF
+Phase 4: Retrieval-based tutor with citations
+Phase 5: Classroom analytics and mobile app"""
+    st.code(roadmap_text, language="text")
 
 
 def main():
@@ -552,6 +683,8 @@ def main():
         teacher_studio()
     elif page == "Evidence Board":
         evidence_board()
+    elif page == "Professor Defense":
+        professor_defense()
     elif page == "Project Team":
         project_team()
     elif page == "Demo Guide":

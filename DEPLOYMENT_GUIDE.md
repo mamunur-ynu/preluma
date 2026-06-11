@@ -1,15 +1,5 @@
-# Deploy Preluma V18 Premium Stable Final
+# Deploy Preluma V20 Compliance Elite
 
-Commit message:
+Commit message: Add pure Python algorithms persistence and audit logging
 
-Finalize premium stable Preluma demo
-
-After upload:
-1. Reboot Streamlit app.
-2. Test Student Mission.
-3. Start Pre-Class Mission.
-4. Check Brain Brief.
-5. Check Quiz.
-6. Check Smart QnA.
-7. Check Project Team.
-8. Check Evidence Board.
+After upload: complete one quiz, open Teacher Studio, show CSV Records, Merge Sort Ranking, Search Student, and Audit Log.
