@@ -9,7 +9,7 @@ from wiki_fetcher import smart_answer_from_pack
 from teacher import build_teacher_dataframe, class_average_readiness, readiness_label
 from topics import validate_topics
 
-APP_VERSION = "16.2 Workload Fix"; APP_NAME="Preluma"; TAGLINE="Light Up Before Class"
+APP_VERSION = "16.3 Team Page Guaranteed"; APP_NAME="Preluma"; TAGLINE="Light Up Before Class"
 TEAM_MEMBERS = [
     ("MAMUNUR RASHID", "Core Development • UI/UX • Integration • Deployment"),
     ("MD FAHIM", "Feature Logic • Quiz Testing • Interaction Feedback"),
@@ -193,7 +193,7 @@ def init_state(): st.session_state.setdefault("student","Mim"); st.session_state
 
 def sidebar():
     st.sidebar.markdown(f"## {APP_NAME}"); st.sidebar.caption(TAGLINE)
-    page=st.sidebar.radio("Workspace",["Student Mission","Teacher Studio","Evidence Board","Demo Guide","Future Roadmap"])
+    page=st.sidebar.radio("Workspace",["Student Mission", "Teacher Studio", "Evidence Board", "Project Team", "Demo Guide", "Future Roadmap"])
     presentation=st.sidebar.toggle("Presentation Mode", value=True); st.sidebar.caption("Python + Streamlit + Wikipedia real data upgrade.")
     st.sidebar.markdown("<div class='team-box'><div class='team-title'>Project Team</div>", unsafe_allow_html=True)
     for name,role in TEAM_MEMBERS: st.sidebar.markdown(f"<div class='team-line'><div class='team-name'>{name}</div><div class='team-role'>{role}</div></div>", unsafe_allow_html=True)
@@ -222,7 +222,7 @@ def mission_control():
             lecture_time=st.text_input("Lecture time", value="Tomorrow 9 AM")
         with c2: persona=st.radio("Feedback style", ["Normal Mode","Coach Mode","Roast Mode"], captions=["Direct","Supportive","Funny pressure"])
         with c3:
-            st.markdown("**Output quality**"); st.caption("Tiny answer"); st.caption("Simple explanation"); st.caption("Real example"); st.caption("Mistake correction"); st.caption("Class questions")
+            st.markdown("**Quick output**"); st.caption("Tiny answer"); st.caption("Simple explanation"); st.caption("Real example"); st.caption("Mistake correction"); st.caption("Class questions")
         start=st.form_submit_button("Start Pre-Class Mission", use_container_width=True)
     if start:
         pack=build_pack(topic); st.session_state.student=student; st.session_state.topic=topic; st.session_state.persona=persona; st.session_state.pack=pack; st.session_state.brief=build_brain_brief(pack); st.session_state.questions=make_questions(pack); st.session_state.quiz_result=None; st.session_state.latest_session=None; st.rerun()
@@ -336,12 +336,12 @@ def project_team_page():
             <div class='team-hero-content'>
                 <div class='team-hero-kicker'>Team Preluma • Yunnan University</div>
                 <h1>Built by students, for better pre-class learning.</h1>
-                <p>This page shows the real project team behind Preluma. The work is divided into core Python development, UI/UX integration, feature testing, topic data, documentation, and presentation support.</p>
+                <p>This premium team interface shows the real people behind Preluma and explains the project workload in a professional and respectful way.</p>
             </div>
         </div>
         """, unsafe_allow_html=True)
     else:
-        st.warning("Team photo missing. Add assets/team_preluma.jpg")
+        st.warning("Team photo missing. Upload assets/team_preluma.jpg")
 
     st.markdown("""
     <div class='member-grid'>
@@ -355,7 +355,7 @@ def project_team_page():
                 <li>Feature testing support</li>
             </ul>
         </div>
-        <div class='member-card lead'>
+        <div class='member-card main'>
             <div class='member-role'>Core Development • UI/UX • Integration • Deployment</div>
             <h3>MAMUNUR RASHID</h3>
             <p>Handled the hardest core part of Preluma: product design, Python Streamlit UI, system integration, deployment, real-data upgrade, and final demo flow.</p>
@@ -382,46 +382,29 @@ def project_team_page():
 
     st.markdown("""
     <div class='team-note'>
-        <b>Team message:</b> Preluma was designed as a Python-based educational technology project. 
-        The goal is not only to show a beautiful interface, but to demonstrate a complete learning workflow: 
-        topic input, real-data support, Brain Brief, quiz, Mistake Clinic, Smart QnA, Teacher Studio, Evidence Board, and future roadmap.
+        <b>Team message:</b> Preluma was designed as a Python-based educational technology project.
+        The main technical system was built through Python Streamlit UI, module integration, real-data support, quiz logic, Smart QnA, and deployment.
+        Other team members supported testing, topic data, documentation, and presentation preparation.
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("### Work Division")
     st.dataframe(pd.DataFrame({
         "Member": ["MAMUNUR RASHID", "MD FAHIM", "MD JIARUL ISLAM"],
-        "Main Responsibility": ["Core development, UI/UX, integration, deployment", "Feature logic, quiz testing, interaction feedback", "Topic data, documentation, presentation support"],
+        "Main Responsibility": [
+            "Core development, UI/UX, system integration, deployment, real-data upgrade, final demo flow",
+            "Feature logic, quiz testing, interaction feedback",
+            "Topic data, documentation, presentation support"
+        ],
         "Project Value": [
             "Builds the hardest core system and connects all parts into one deployed Python Streamlit product",
             "Improves interaction quality and checks app behavior",
-            "Strengthens content base and presentation material",
-        ],
-    }), use_container_width=True)
-
-    
-    st.markdown("### Contribution Weight Summary")
-    st.dataframe(pd.DataFrame({
-        "Area": [
-            "Hardest/Core Part",
-            "Support Part",
-            "Support Part"
-        ],
-        "Member": [
-            "MAMUNUR RASHID",
-            "MD FAHIM",
-            "MD JIARUL ISLAM"
-        ],
-        "Contribution": [
-            "Main app development, UI/UX, system integration, deployment, real-data upgrade, final demo flow",
-            "Quiz logic checking, feature feedback, interaction testing",
-            "Topic data support, documentation, presentation support"
+            "Strengthens content base and presentation material"
         ]
     }), use_container_width=True)
 
     st.markdown("### Professor-facing Summary")
-    st.success("This team page makes the project feel real, organized, and presentation-ready while keeping the main app interface clean.")
-
+    st.success("This page shows clear workload distribution while keeping team spirit professional and respectful.")
 
 
 def demo_guide():

@@ -112,3 +112,16 @@ Final workload wording:
 - Mamunur Rashid — Core Development, UI/UX, System Integration, Deployment, Real-data Upgrade, Final Demo Flow
 - MD Fahim — Feature Logic, Quiz Testing, Interaction Feedback
 - MD Jiarul Islam — Topic Data, Documentation, Presentation Support
+
+
+## V16.3 Team Page Guaranteed
+
+Fixed missing Project Team page in sidebar and guaranteed team photo support.
+
+New/required asset:
+
+```text
+assets/team_preluma.jpg
+```
+
+Also compacted Mission Control and removed the large output-quality column.

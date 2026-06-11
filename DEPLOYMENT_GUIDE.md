@@ -76,3 +76,17 @@ Then open the app and check the new sidebar page:
 
 This version updates the Project Team page and workload wording.
 Upload streamlit_app.py and README.md at minimum.
+
+
+## V16.3 upload checklist
+
+Upload/replace:
+
+- streamlit_app.py
+- README.md
+- DEPLOYMENT_GUIDE.md
+- assets/team_preluma.jpg
+
+Then open sidebar and click:
+
+Project Team
