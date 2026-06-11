@@ -1,17 +1,15 @@
-# Deploy Preluma V17.2
-
-Upload all files and reboot Streamlit.
+# Deploy Preluma V18 Premium Stable Final
 
 Commit message:
 
-Fix core flow and finalize strict Python native UI
+Finalize premium stable Preluma demo
 
-After upload test:
-
-1. Student Mission loads.
-2. Click Start Pre-Class Mission.
-3. Brain Brief appears.
-4. Quiz works.
-5. Smart QnA works.
-6. Project Team page shows group photo.
-7. Evidence Board opens.
+After upload:
+1. Reboot Streamlit app.
+2. Test Student Mission.
+3. Start Pre-Class Mission.
+4. Check Brain Brief.
+5. Check Quiz.
+6. Check Smart QnA.
+7. Check Project Team.
+8. Check Evidence Board.

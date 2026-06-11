@@ -1,25 +1,24 @@
-# Preluma V17.2 Native Premium Stable
+# Preluma V18 Premium Stable Final
 
-Strict Python-only project using Streamlit native UI.
+Preluma is a Python Streamlit project for pre-class preparation.
 
-## Fixed in this version
+This version combines:
+- Stable V17.2 core logic
+- Premium Streamlit presentation UI
+- Wikipedia real-data fallback
+- Smart QnA
+- Teacher Studio
+- Evidence Board
+- Project Team page
+- Regression tests
 
-- Fixed `build_pack(..., use_wikipedia=True)` TypeError.
-- Rebuilt `engine.py` and `topics.py` to remove mismatch.
-- Added core student mission regression tests.
-- Kept strict Python-only rule: no custom HTML, no CSS, no JavaScript.
+## Teacher defense line
 
-## Stack
-
-- Python
-- Streamlit native UI
-- Pandas
-- Plotly
-- Requests
-- Pytest
+All core functionality is written in Python: topic data, quiz logic, Smart QnA, Wikipedia fetching, teacher dashboard, file export, and testing. Visual styling is only inside the Streamlit Python app for better presentation.
 
 ## Upload checklist
 
+Upload/replace all files:
 - streamlit_app.py
 - engine.py
 - topics.py
