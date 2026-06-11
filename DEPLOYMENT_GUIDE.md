@@ -1,21 +1,17 @@
-# Deploy Preluma V17.1
+# Deploy Preluma V17.2
 
-Upload/replace:
-
-- streamlit_app.py
-- topics.py
-- engine.py
-- teacher.py
-- wiki_fetcher.py
-- requirements.txt
-- README.md
-- DEPLOYMENT_GUIDE.md
-- tests/
-- assets/ynu_campus.jpg
-- assets/team_preluma.jpg
+Upload all files and reboot Streamlit.
 
 Commit message:
 
-Fix strict Python import and TOPIC_OPTIONS
+Fix core flow and finalize strict Python native UI
 
-After upload: reboot Streamlit and hard refresh.
+After upload test:
+
+1. Student Mission loads.
+2. Click Start Pre-Class Mission.
+3. Brain Brief appears.
+4. Quiz works.
+5. Smart QnA works.
+6. Project Team page shows group photo.
+7. Evidence Board opens.

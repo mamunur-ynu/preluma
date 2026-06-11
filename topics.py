@@ -51,7 +51,7 @@ TOPICS = {
     "quantum mechanics": make_topic(
         "Quantum Mechanics",
         "Quantum mechanics is the branch of physics that explains how very small things such as electrons, photons, and atoms behave.",
-        "In simple words, tiny particles follow special rules that are different from everyday objects.",
+        "Tiny particles follow special rules that are different from everyday objects.",
         {
             "superposition": concept(
                 "Superposition means a quantum system can be described as a combination of possible states before measurement.",
@@ -97,44 +97,18 @@ TOPICS = {
         "Python is a high-level programming language used for data, AI, automation, and web apps.",
         "Python is like writing a clear recipe that a computer can follow step by step.",
         {
-            "function": concept(
-                "A function is a reusable block of code that performs a task.",
-                "It is like a small machine: give input and get output.",
-                "A function can calculate average marks.",
-                "Code inside a function runs only when called.",
-                "Mention input, process, output, and reuse.",
-            ),
-            "loop": concept(
-                "A loop repeats a block of code.",
-                "It tells the computer to do the same action again and again.",
-                "A loop can print all names in a list.",
-                "A loop without stopping condition can run forever.",
-                "Mention repetition and control condition.",
-            ),
+            "function": concept("A function is a reusable block of code that performs a task.", "It is like a small machine: give input and get output.", "A function can calculate average marks.", "Code inside a function runs only when called.", "Mention input, process, output, and reuse."),
+            "loop": concept("A loop repeats a block of code.", "It tells the computer to do the same action again and again.", "A loop can print all names in a list.", "A loop without stopping condition can run forever.", "Mention repetition and control condition."),
         },
-        {"AI": "Python is widely used in machine learning.", "automation": "Python can automate repetitive tasks."},
     ),
     "data structures": make_topic(
         "Data Structures",
         "Data structures are ways of storing and organizing data so it can be used efficiently.",
         "It is like choosing the right container for different kinds of information.",
         {
-            "stack": concept(
-                "A stack follows last-in, first-out order.",
-                "It is like a pile of plates.",
-                "Undo operations often use a stack.",
-                "A stack is not the same as a queue.",
-                "Mention LIFO.",
-            ),
-            "queue": concept(
-                "A queue follows first-in, first-out order.",
-                "It is like waiting in line.",
-                "Printer jobs can use a queue.",
-                "Queue order is not random.",
-                "Mention FIFO.",
-            ),
+            "stack": concept("A stack follows last-in, first-out order.", "It is like a pile of plates.", "Undo operations often use a stack.", "A stack is not the same as a queue.", "Mention LIFO."),
+            "queue": concept("A queue follows first-in, first-out order.", "It is like waiting in line.", "Printer jobs can use a queue.", "Queue order is not random.", "Mention FIFO."),
         },
-        {"search": "Data structures help find information quickly.", "databases": "Indexes use tree-like structures."},
     ),
     "artificial intelligence": make_topic(
         "Artificial Intelligence",
@@ -166,66 +140,16 @@ TOPICS = {
         "A city needs clean water coming in and dirty or rain water going out safely.",
         {"drainage": concept("Drainage removes excess rainwater from urban areas.", "It is the city's way of carrying rainwater away.", "Storm drains reduce street flooding.", "Drainage is not the same as drinking water supply.", "Mention flood prevention.")},
     ),
-    "database management system": make_topic(
-        "Database Management System",
-        "A database management system is software used to create, manage, and access databases.",
-        "It is like a smart digital filing cabinet.",
-        {"primary key": concept("A primary key uniquely identifies each row.", "It is like a unique ID card.", "Student ID can be a primary key.", "Primary key should not repeat.", "Mention uniqueness.")},
-    ),
-    "software engineering": make_topic(
-        "Software Engineering",
-        "Software engineering is the systematic process of designing, building, testing, and maintaining software.",
-        "It is like building a house, but the house is an app or program.",
-        {"testing": concept("Testing checks whether software works correctly.", "It is checking homework before submission.", "Unit tests check small parts.", "Testing cannot be skipped.", "Mention quality assurance.")},
-    ),
-    "cybersecurity": make_topic(
-        "Cybersecurity",
-        "Cybersecurity is the practice of protecting computers, networks, and data from unauthorized access or damage.",
-        "It is like locking doors for your digital life.",
-        {"phishing": concept("Phishing tricks users into giving sensitive information.", "A fake message tries to steal your password.", "Fake bank emails are examples.", "Real-looking links can still be dangerous.", "Mention social engineering.")},
-    ),
-    "operating system": make_topic(
-        "Operating System",
-        "An operating system is system software that manages computer hardware, software resources, and services for programs.",
-        "It is the manager of the computer.",
-        {"process": concept("A process is a running program.", "It is a program that is currently working.", "A browser running on your computer is a process.", "A process is not the same as a file.", "Mention execution.")},
-    ),
-    "computer network": make_topic(
-        "Computer Network",
-        "A computer network is a group of connected devices that exchange data.",
-        "It is like roads connecting computers.",
-        {"protocol": concept("A protocol is a set of communication rules.", "It is the language rules computers follow.", "HTTP is used for web communication.", "Devices need common rules.", "Mention communication standard.")},
-    ),
-    "linear regression": make_topic(
-        "Linear Regression",
-        "Linear regression is a statistical method that models the relationship between input variables and a continuous output.",
-        "It draws a best-fit line to make predictions.",
-        {"slope": concept("Slope shows how much output changes when input changes.", "It tells how steep the line is.", "More study hours may increase score.", "Slope does not always prove causation.", "Mention rate of change.")},
-    ),
-    "logistic regression": make_topic(
-        "Logistic Regression",
-        "Logistic regression is a classification method used to estimate the probability of a binary outcome.",
-        "It predicts the chance of something being yes or no.",
-        {"sigmoid": concept("Sigmoid maps any number to a value between 0 and 1.", "It turns a score into a probability.", "It can show disease risk probability.", "Probability is not always certainty.", "Mention 0 to 1 output.")},
-    ),
-    "decision tree": make_topic(
-        "Decision Tree",
-        "A decision tree is a machine learning model that splits data using decision rules.",
-        "It is like a flowchart of yes/no questions.",
-        {"node": concept("A node is a decision point or result in a tree.", "It is one question box.", "Is glucose high? can be a node.", "Not every node is final.", "Mention decision point.")},
-    ),
-    "neural network": make_topic(
-        "Neural Network",
-        "A neural network is a machine learning model made of connected layers that transform inputs into outputs.",
-        "It is like many small calculators working together to learn patterns.",
-        {"weight": concept("A weight controls the strength of a connection.", "It says how important an input is.", "Glucose may have strong weight in diabetes prediction.", "Weights are learned during training.", "Mention learned parameter.")},
-    ),
-    "cloud computing": make_topic(
-        "Cloud Computing",
-        "Cloud computing delivers servers, storage, databases, networking, software, and analytics through the internet.",
-        "It is like renting computer power online.",
-        {"scalability": concept("Scalability means handling more users or work.", "The system can grow when more people come.", "Adding more cloud resources during exams.", "Scaling can increase cost.", "Mention growth capacity.")},
-    ),
+    "database management system": make_topic("Database Management System", "A database management system is software used to create, manage, and access databases.", "It is like a smart digital filing cabinet.", {"primary key": concept("A primary key uniquely identifies each row.", "It is like a unique ID card.", "Student ID can be a primary key.", "Primary key should not repeat.", "Mention uniqueness.")}),
+    "software engineering": make_topic("Software Engineering", "Software engineering is the systematic process of designing, building, testing, and maintaining software.", "It is like building a house, but the house is an app or program.", {"testing": concept("Testing checks whether software works correctly.", "It is checking homework before submission.", "Unit tests check small parts.", "Testing cannot be skipped.", "Mention quality assurance.")}),
+    "cybersecurity": make_topic("Cybersecurity", "Cybersecurity is the practice of protecting computers, networks, and data from unauthorized access or damage.", "It is like locking doors for your digital life.", {"phishing": concept("Phishing tricks users into giving sensitive information.", "A fake message tries to steal your password.", "Fake bank emails are examples.", "Real-looking links can still be dangerous.", "Mention social engineering.")}),
+    "operating system": make_topic("Operating System", "An operating system is system software that manages computer hardware, software resources, and services for programs.", "It is the manager of the computer.", {"process": concept("A process is a running program.", "It is a program that is currently working.", "A browser running on your computer is a process.", "A process is not the same as a file.", "Mention execution.")}),
+    "computer network": make_topic("Computer Network", "A computer network is a group of connected devices that exchange data.", "It is like roads connecting computers.", {"protocol": concept("A protocol is a set of communication rules.", "It is the language rules computers follow.", "HTTP is used for web communication.", "Devices need common rules.", "Mention communication standard.")}),
+    "linear regression": make_topic("Linear Regression", "Linear regression is a statistical method that models the relationship between input variables and a continuous output.", "It draws a best-fit line to make predictions.", {"slope": concept("Slope shows how much output changes when input changes.", "It tells how steep the line is.", "More study hours may increase score.", "Slope does not always prove causation.", "Mention rate of change.")}),
+    "logistic regression": make_topic("Logistic Regression", "Logistic regression is a classification method used to estimate the probability of a binary outcome.", "It predicts the chance of something being yes or no.", {"sigmoid": concept("Sigmoid maps any number to a value between 0 and 1.", "It turns a score into a probability.", "It can show disease risk probability.", "Probability is not always certainty.", "Mention 0 to 1 output.")}),
+    "decision tree": make_topic("Decision Tree", "A decision tree is a machine learning model that splits data using decision rules.", "It is like a flowchart of yes/no questions.", {"node": concept("A node is a decision point or result in a tree.", "It is one question box.", "Is glucose high? can be a node.", "Not every node is final.", "Mention decision point.")}),
+    "neural network": make_topic("Neural Network", "A neural network is a machine learning model made of connected layers that transform inputs into outputs.", "It is like many small calculators working together to learn patterns.", {"weight": concept("A weight controls the strength of a connection.", "It says how important an input is.", "Glucose may have strong weight in diabetes prediction.", "Weights are learned during training.", "Mention learned parameter.")}),
+    "cloud computing": make_topic("Cloud Computing", "Cloud computing delivers servers, storage, databases, networking, software, and analytics through the internet.", "It is like renting computer power online.", {"scalability": concept("Scalability means handling more users or work.", "The system can grow when more people come.", "Adding more cloud resources during exams.", "Scaling can increase cost.", "Mention growth capacity.")}),
 }
 
 def canonical_key(topic: str) -> str:
