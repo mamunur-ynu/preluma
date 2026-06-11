@@ -12,7 +12,7 @@ from topics import TOPIC_OPTIONS, validate_topics
 from wiki_fetcher import smart_answer_from_pack
 
 
-APP_VERSION = "17.0 Strict Python Only"
+APP_VERSION = "17.1 Strict Python Import Fix"
 APP_NAME = "Preluma"
 TAGLINE = "Light Up Before Class"
 

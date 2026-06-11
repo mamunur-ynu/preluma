@@ -1,57 +1,20 @@
-# Preluma V17 Strict Python Only
+# Preluma V17.1 Strict Python Import Fix
 
-Preluma is a Python-only Streamlit final project.
+This version fixes the deployment ImportError by rebuilding a clean valid `topics.py` with guaranteed `TOPIC_OPTIONS`.
 
-## Strict rule
-
-This version avoids custom HTML, CSS, JavaScript, React, and external frontend code.
-
-The app uses only Python-based components:
-
+Strict Python-only:
 - Python
 - Streamlit native UI
 - Pandas
 - Plotly
 - Requests
-- JSON export
 - Pytest
 
-## Core features
+No custom HTML, CSS, JavaScript, React, or Node.js.
 
-- Brain Brief
-- Quiz
-- Mistake Clinic
-- Smart QnA
-- Wikipedia real-data fallback
-- Teacher Studio
-- Evidence Board
-- Project Team page
-- Future Roadmap
-
-## Required assets
-
-```text
-assets/ynu_campus.jpg
-assets/team_preluma.jpg
-```
-
-## Run locally
-
-```bash
-pip install -r requirements.txt
-streamlit run streamlit_app.py
-```
-
-## Test
-
-```bash
-python -m pytest -q
-```
-
-## Workload wording
-
-Mamunur Rashid: Core Development, UI/UX, System Integration, Deployment, Real-data Upgrade, Final Demo Flow.
-
-MD Fahim: Feature Logic, Quiz Testing, Interaction Feedback.
-
-MD Jiarul Islam: Topic Data, Documentation, Presentation Support.
+Verified:
+- Static strict-Python check
+- Python compile check
+- `TOPIC_OPTIONS` import check
+- Mocked `streamlit_app` import check
+- Pytest passed

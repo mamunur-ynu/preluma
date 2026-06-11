@@ -1,20 +1,10 @@
-# Deploy Preluma V17 Strict Python Only
+# Deploy Preluma V17.1
 
-Upload/replace all files from this version.
-
-## Important
-
-This version is strict Python-only:
-- No custom HTML
-- No CSS styling file
-- No JavaScript
-- No React
-
-## Upload checklist
+Upload/replace:
 
 - streamlit_app.py
-- engine.py
 - topics.py
+- engine.py
 - teacher.py
 - wiki_fetcher.py
 - requirements.txt
@@ -24,15 +14,8 @@ This version is strict Python-only:
 - assets/ynu_campus.jpg
 - assets/team_preluma.jpg
 
-## Commit message
+Commit message:
 
-Finalize strict Python-only version
+Fix strict Python import and TOPIC_OPTIONS
 
-## After upload
-
-1. Reboot Streamlit app
-2. Open Student Mission
-3. Start mission
-4. Open Project Team
-5. Check photo
-6. Open Evidence Board
+After upload: reboot Streamlit and hard refresh.
