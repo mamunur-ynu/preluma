@@ -221,3 +221,9 @@ EXTRA_MASSIVE_TOPICS = {
     },
 }
 TOPICS.update(EXTRA_MASSIVE_TOPICS)
+
+
+TOPIC_OPTIONS = [
+    topic["title"] for topic in TOPICS.values()
+]
+TOPIC_OPTIONS = sorted(set(TOPIC_OPTIONS)) + ["Custom Topic"]
