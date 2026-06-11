@@ -150,33 +150,41 @@ def llm_tutor(topic: str, question: str, style: str = "Normal Mode") -> dict | N
 
     explanation_style = {
         "child": (
-            "The student wants a very simple explanation like they are 5 years old. "
-            "Use toy analogies, everyday objects, and the simplest possible words. "
-            "No jargon whatsoever. Make it feel like a bedtime story explanation."
+            "CRITICAL: The student is asking you to explain like they are 5 years old. "
+            "You MUST use a fun story or toy analogy. NEVER use technical words. "
+            "Example of what GOOD child-style sounds like: "
+            "'Imagine computers are people in different cities. A protocol is like agreeing to speak the same language before talking — like both agreeing to speak English so they understand each other.' "
+            "Your explain_simply field MUST sound exactly like this — fun, story-like, zero jargon. "
+            "If your explanation sounds like a textbook, you have FAILED. Rewrite it until a 5-year-old would smile."
         ),
         "exam": (
-            "The student needs an exam-ready answer. "
-            "Give a precise definition, key points in order, and exactly what to write in an exam or viva. "
-            "Be structured and academic."
+            "The student needs a precise exam-ready answer. "
+            "tiny_answer: one-line definition. "
+            "explain_simply: 3 key points a student must mention in an exam answer, numbered. "
+            "exam_angle: exact phrasing to use in a viva or written exam. "
+            "Be structured, precise, and academic throughout."
         ),
         "example": (
-            "The student learns best through examples. "
-            "Lead with a vivid, concrete real-world example FIRST, then explain the concept from it. "
-            "Use at least two different examples."
+            "The student wants to learn through examples. "
+            "In explain_simply: give TWO vivid real-world examples first, then derive the concept from them. "
+            "In real_life_example: give a third completely different example. "
+            "Never start with the definition — always lead with the example."
         ),
         "compare": (
-            "The student wants a comparison. "
-            "Clearly explain how the two things are different and similar. "
-            "Use a short side-by-side style explanation."
+            "The student wants to compare two things. "
+            "In explain_simply: write a clear side-by-side comparison. "
+            "Start with what they have in common, then what makes them different. "
+            "Be specific — name exact differences, not vague statements."
         ),
         "deep": (
-            "The student wants to understand WHY and HOW something works. "
-            "Go deeper than the surface definition. Explain the mechanism, the reason, the cause. "
-            "Use analogies to make the reasoning clear."
+            "The student wants to understand the deep reason WHY or HOW something works. "
+            "In explain_simply: go beyond the definition — explain the mechanism, cause, and effect. "
+            "Use a step-by-step logical flow. Use an analogy to make the reasoning click. "
+            "Do not just repeat the definition — explain the underlying logic."
         ),
         "normal": (
             "Give a clear, direct, accurate explanation. "
-            "Start with the core idea, add one example, then cover the common mistake."
+            "Start with the core idea in one sentence, add one concrete example, then name one common mistake."
         ),
     }.get(q_style, "Give a clear and accurate explanation.")
 
@@ -193,19 +201,21 @@ def llm_tutor(topic: str, question: str, style: str = "Normal Mode") -> dict | N
 
     system = f"""You are Preluma UltraTutor — an expert AI teaching assistant for university students.
 
-Your job: read the student's question carefully and answer EXACTLY the way they need it.
+Your MOST IMPORTANT job: detect HOW the student is asking and match your answer style EXACTLY to that.
 
-Explanation style for this question: {explanation_style}
+REQUIRED STYLE FOR THIS RESPONSE:
+{explanation_style}
 
-Persona: {persona_instruction}
+PERSONA:
+{persona_instruction}
 
-Rules:
-- Match your language complexity to what the student asked for
-- If they asked for simple: be VERY simple, use analogies and everyday objects
-- If they asked for exam style: be precise and structured
-- Never use bullet symbols (* or -)
-- Keep total response under 250 words
-- Always respond with ONLY a valid JSON object, no preamble, no markdown"""
+STRICT RULES — violating these means your answer is wrong:
+1. The "explain_simply" field must FULLY match the required style above — not just partially
+2. If the student asked for child-style: ZERO technical terms allowed in explain_simply
+3. If the student asked for exam-style: EVERY sentence must be exam-appropriate
+4. Never use bullet symbols (* or -)
+5. Keep total response under 280 words
+6. ONLY output a valid JSON object — absolutely no text before or after it, no markdown fences"""
 
     user = (
         f"Topic: {topic}\n"
@@ -213,7 +223,7 @@ Rules:
         "Respond with exactly this JSON structure:\n"
         '{"concept": "short name of what you are explaining", '
         '"tiny_answer": "one sharp sentence that directly answers the question", '
-        '"explain_simply": "explanation matched to how the student asked", '
+        '"explain_simply": "explanation matched to how the student asked — simple if they asked simply, deep if they asked deeply", '
         '"real_life_example": "one concrete vivid real-world example", '
         '"common_mistake": "one mistake students make about this", '
         '"exam_angle": "what to say in an exam or viva about this"}'
@@ -229,8 +239,14 @@ Rules:
         if required.issubset(parsed.keys()):
             return parsed
 
-    return {"concept": topic, "tiny_answer": raw[:300], "explain_simply": "",
-            "real_life_example": "", "common_mistake": "", "exam_angle": ""}
+    return {
+        "concept": topic,
+        "tiny_answer": raw[:300],
+        "explain_simply": "",
+        "real_life_example": "",
+        "common_mistake": "",
+        "exam_angle": "",
+    }
 
 
 def llm_brain_brief(topic: str, definition: str, concepts: list) -> dict | None:
@@ -261,7 +277,7 @@ def llm_class_questions(topic: str, definition: str, concepts: list) -> list | N
     system = (
         "You are Preluma, a pre-class learning assistant. "
         "Generate 5 smart questions a well-prepared student would ask a professor in class. "
-        "Questions should be specific, insightful, and show genuine preparation. "
+        "Questions should be specific, insightful, and show genuine preparation — not just basic definitions. "
         "Respond with ONLY a JSON array of 5 strings — no markdown, no preamble."
     )
     user = (
