@@ -22,7 +22,7 @@ _GEMINI_MODEL    = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
 _OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "openai/gpt-4.1-mini")
 _TOGETHER_MODEL   = os.environ.get("TOGETHER_MODEL", "meta-llama/Llama-3.3-70B-Instruct-Turbo")
 _TIMEOUT         = 20
-_MAX_TOKENS      = 800
+_MAX_TOKENS      = 1400
 
 
 def _key(name: str) -> str:
@@ -335,8 +335,9 @@ STRICT RULES — violating these means your answer is wrong:
 2. If the student asked for child-style: ZERO technical terms allowed in explain_simply
 3. If the student asked for exam-style: EVERY sentence must be exam-appropriate
 4. Never use bullet symbols (* or -)
-5. Keep total response under 280 words
-6. ONLY output a valid JSON object — absolutely no text before or after it, no markdown fences"""
+5. Match the requested depth: short may be brief, balanced should be 2-4 connected paragraphs, deep may be 5-8 coherent paragraphs
+6. Write natural prose, not disconnected fragments
+7. ONLY output a valid JSON object — absolutely no text before or after it, no markdown fences"""
 
     user = (
         f"Topic: {topic}\n"
@@ -344,7 +345,7 @@ STRICT RULES — violating these means your answer is wrong:
         "Respond with exactly this JSON structure:\n"
         '{"concept": "short name of what you are explaining", '
         '"tiny_answer": "one sharp sentence that directly answers the question", '
-        '"explain_simply": "explanation matched to how the student asked — simple if they asked simply, deep if they asked deeply", '
+        '"explain_simply": "a natural connected explanation matched to the request; for deep requests explain mechanism, cause, effect, and why it matters in coherent paragraphs", '
         '"real_life_example": "one concrete vivid real-world example", '
         '"common_mistake": "one mistake students make about this", '
         '"exam_angle": "what to say in an exam or viva about this"}'

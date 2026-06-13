@@ -10,6 +10,12 @@ def _click(at, label):
     raise AssertionError(f"Button not found: {label}")
 
 
+def _open_page(at, page):
+    at.session_state["active_page"] = page
+    at.run()
+    assert len(at.exception) == 0
+
+
 def test_streamlit_startup_and_guided_flow():
     at = AppTest.from_file("streamlit_app.py", default_timeout=30).run()
     assert len(at.exception) == 0
@@ -28,26 +34,16 @@ def test_streamlit_startup_and_guided_flow():
 def test_streamlit_sidebar_pages_open():
     at = AppTest.from_file("streamlit_app.py", default_timeout=30).run()
     assert len(at.exception) == 0
-    radio = at.sidebar.radio[0]
-    for page in ["✨ Ask Preluma AI", "Homework Center"]:
-        radio.set_value(page).run()
-        assert len(at.exception) == 0
-        radio = at.sidebar.radio[0]
-    homework_page = next(value for value in radio.options if value.startswith("🔔 My Homework"))
-    radio.set_value(homework_page).run()
-    assert len(at.exception) == 0
+    for page in ["Ask Preluma AI", "Homework Center", "My Homework"]:
+        _open_page(at, page)
 
 
 def test_project_team_page_and_question_aware_ai():
     at = AppTest.from_file("streamlit_app.py", default_timeout=30).run()
-    radio = at.sidebar.radio[0]
-    radio.set_value("Project Team").run()
-    assert len(at.exception) == 0
+    _open_page(at, "Project Team")
     assert any("Team Preluma" in (item.value or "") for item in at.markdown)
 
-    radio = at.sidebar.radio[0]
-    radio.set_value("✨ Ask Preluma AI").run()
-    assert len(at.exception) == 0
+    _open_page(at, "Ask Preluma AI")
     at.text_area[0].set_value("about machine learning").run()
     _click(at, "Ask Preluma AI")
     assert any("Machine Learning" in (item.value or "") for item in at.markdown)

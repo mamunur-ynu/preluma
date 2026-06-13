@@ -25,7 +25,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "23.0 Clean AI + Team Final"
+APP_VERSION = "24.0 Polished AI + Team Final"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -270,10 +270,19 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 }
 
 /* ── Team photo: full image, no face cropping ── */
-.team-photo-shell { margin: 1rem 0 1.5rem; padding: 14px; border-radius: 26px; background: linear-gradient(135deg, rgba(56,189,248,.10), rgba(124,58,237,.12)); border: 1px solid rgba(125,211,252,.22); box-shadow: 0 24px 60px rgba(0,0,0,.35); }
-.team-photo-caption { display:flex; align-items:center; justify-content:space-between; gap:12px; padding: 14px 6px 4px; }
-.team-photo-title { color:#f8fafc; font-size:20px; font-weight:800; }
-.team-photo-sub { color:#94a3b8; font-size:13px; margin-top:3px; }
+.team-photo-hero { position:relative; width:100%; aspect-ratio:16/9; border-radius:30px; overflow:hidden; background-size:100% auto; background-position:center; background-repeat:no-repeat; background-color:#020617; border:1px solid rgba(125,211,252,.25); box-shadow:0 28px 70px rgba(0,0,0,.42); margin:1rem 0 1.75rem; }
+.team-photo-hero::after { content:''; position:absolute; inset:0; background:linear-gradient(0deg,rgba(2,6,23,.90) 0%,rgba(2,6,23,.18) 48%,rgba(2,6,23,.12) 100%),linear-gradient(90deg,rgba(14,165,233,.12),rgba(124,58,237,.14)); }
+.team-photo-content { position:absolute; z-index:2; left:34px; right:34px; bottom:30px; }
+.team-photo-content h1 { color:#fff; font-size:38px; line-height:1.12; margin:12px 0 8px; text-shadow:0 4px 24px rgba(0,0,0,.65); }
+.team-photo-content p { color:#e2e8f0; max-width:760px; line-height:1.55; margin:0; text-shadow:0 3px 18px rgba(0,0,0,.65); }
+.sidebar-profile { padding:12px 14px; border-radius:16px; background:rgba(15,23,42,.72); border:1px solid rgba(148,163,184,.12); margin:.35rem 0 1rem; }
+.sidebar-profile b { color:#f8fafc; font-size:13px; }
+.sidebar-profile span { color:#94a3b8; font-size:12px; }
+.nav-label { color:#64748b; font-size:10px; font-weight:900; letter-spacing:.14em; text-transform:uppercase; margin:16px 0 7px; }
+.ai-main-answer { padding:22px 24px; border-radius:22px; background:linear-gradient(135deg,rgba(15,23,42,.97),rgba(30,41,59,.88)); border:1px solid rgba(99,102,241,.30); box-shadow:0 18px 45px rgba(2,6,23,.26); color:#e5e7eb; font-size:16px; line-height:1.75; white-space:pre-wrap; }
+.ai-meta { color:#94a3b8; font-size:12px; margin:7px 0 12px; }
+.follow-grid { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+@media (max-width:900px){ .team-photo-content h1{font-size:28px}.team-photo-content{left:22px;right:22px;bottom:22px}.team-photo-hero{aspect-ratio:4/3;background-size:cover;} }
 .provider-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin: 10px 0 18px; }
 .provider-card { background:rgba(15,23,42,.72); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:12px 14px; }
 .provider-name { color:#e2e8f0; font-size:13px; font-weight:700; }
@@ -318,68 +327,65 @@ def reset_session():
 
 
 
+def _nav_button(label: str, page_name: str) -> None:
+    if st.sidebar.button(label, key=f"nav_{page_name}", use_container_width=True):
+        st.session_state.active_page = page_name
+        st.rerun()
+
+
 def sidebar():
     st.sidebar.markdown("## Preluma")
     st.sidebar.caption("Light Up Before Class")
+    st.session_state.setdefault("active_page", "Student Mission")
 
     student_name = st.sidebar.text_input(
         "Active student",
         value=st.session_state.get("student", "Student"),
         key="sidebar_student_identity",
+        label_visibility="collapsed",
+        placeholder="Student name",
     )
     if student_name.strip():
         st.session_state.student = student_name.strip()
 
-    unread_count = len(
-        notifications_for_student(
-            st.session_state.get("student", "Student"),
-            unread_only=True,
-        )
+    unread_count = len(notifications_for_student(st.session_state.get("student", "Student"), unread_only=True))
+    st.sidebar.markdown(
+        f"<div class='sidebar-profile'><b>{st.session_state.get('student','Student')}</b><br>"
+        f"<span>{unread_count} unread homework notification{'s' if unread_count != 1 else ''}</span></div>",
+        unsafe_allow_html=True,
     )
 
-    page = st.sidebar.radio(
-        "Workspace",
-        [
-            "Student Mission",
-            f"🔔 My Homework ({unread_count})",
-            "✨ Ask Preluma AI",
-            "Teacher Studio",
-            "Homework Center",
-            "Evidence Board",
-            "Professor Defense",
-            "Project Team",
-            "Demo Guide",
-            "Future Roadmap",
-        ],
-    )
+    st.sidebar.markdown("<div class='nav-label'>Learn</div>", unsafe_allow_html=True)
+    _nav_button("🎯  Student Mission", "Student Mission")
+    _nav_button(f"🔔  My Homework ({unread_count})", "My Homework")
+    _nav_button("✨  Ask Preluma AI", "Ask Preluma AI")
+
+    st.sidebar.markdown("<div class='nav-label'>Teach</div>", unsafe_allow_html=True)
+    _nav_button("📊  Teacher Studio", "Teacher Studio")
+    _nav_button("🏫  Homework Center", "Homework Center")
+
+    with st.sidebar.expander("Project & Presentation", expanded=False):
+        if st.button("Evidence Board", key="nav_evidence", use_container_width=True):
+            st.session_state.active_page = "Evidence Board"; st.rerun()
+        if st.button("Professor Defense", key="nav_defense", use_container_width=True):
+            st.session_state.active_page = "Professor Defense"; st.rerun()
+        if st.button("Project Team", key="nav_team", use_container_width=True):
+            st.session_state.active_page = "Project Team"; st.rerun()
+        if st.button("Demo Guide", key="nav_demo", use_container_width=True):
+            st.session_state.active_page = "Demo Guide"; st.rerun()
+        if st.button("Future Roadmap", key="nav_roadmap", use_container_width=True):
+            st.session_state.active_page = "Future Roadmap"; st.rerun()
 
     presentation = st.sidebar.toggle("Presentation Mode", value=True)
-
-    st.sidebar.markdown(
-        "<div class='ai-bar'><div class='ai-dot'></div>"
-        "<div class='ai-txt'><b>Preluma AI</b><br>"
-        "Ask for child-level, step-by-step, example, or exam explanations.</div></div>",
-        unsafe_allow_html=True,
-    )
-
-    st.sidebar.markdown(
-        "<div class='team-box'><div class='team-ttl'>Project Team</div>",
-        unsafe_allow_html=True,
-    )
-    for name, role in TEAM_MEMBERS:
-        st.sidebar.markdown(
-            f"<div class='team-row'><div class='team-name'>{name}</div>"
-            f"<div class='team-role'>{role}</div></div>",
-            unsafe_allow_html=True,
-        )
-    st.sidebar.markdown("</div>", unsafe_allow_html=True)
+    st.sidebar.caption(f"Current page: {st.session_state.active_page}")
 
     if st.sidebar.button("Reset session", use_container_width=True):
         reset_session()
+        st.session_state.active_page = "Student Mission"
         st.rerun()
 
-    st.sidebar.caption(f"v{APP_VERSION} · Python + Streamlit + AI")
-    return page, presentation
+    st.sidebar.caption(f"v{APP_VERSION} · Python + Streamlit")
+    return st.session_state.active_page, presentation
 
 
 # ── Hero ─────────────────────────────────────────────────────────────────────
@@ -1141,6 +1147,26 @@ def teacher_studio():
 
 
 
+def _question_needs_clarification(question: str) -> bool:
+    words = [word for word in str(question).strip().split() if word]
+    vague = {"help", "explain", "this", "it", "more", "details", "why", "how"}
+    return len(words) <= 2 or (len(words) <= 4 and all(word.casefold().strip("?.,") in vague for word in words))
+
+
+def _natural_answer_text(response: dict, depth: str) -> str:
+    direct = str(response.get("tiny_answer", "")).strip()
+    simple = str(response.get("explain_simply", "")).strip()
+    example = str(response.get("real_life_example", "")).strip()
+    mistake = str(response.get("common_mistake", "")).strip()
+    exam = str(response.get("exam_angle", "")).strip()
+    separator = "\n\n"
+    if depth == "Short":
+        return separator.join(part for part in [direct, simple] if part)
+    if depth == "Deep":
+        return separator.join(part for part in [direct, simple, f"For example, {example}" if example else "", f"A common misunderstanding is this: {mistake}" if mistake else "", f"For an exam or viva, remember: {exam}" if exam else ""] if part)
+    return separator.join(part for part in [direct, simple, f"For example, {example}" if example else ""] if part)
+
+
 def _clear_ai_chat() -> None:
     st.session_state.tutor_history = []
     st.session_state.ai_context_note = ""
@@ -1152,96 +1178,97 @@ def ask_preluma_ai_page():
     st.markdown("""<div class='sec-head'>
       <div class='sec-icon' style='background:rgba(99,102,241,.15);'>✨</div>
       <div><div class='sec-title'>Ask Preluma AI</div>
-      <div class='sec-sub'>Question-aware tutoring with multi-provider fallback and friendly explanations</div></div>
+      <div class='sec-sub'>Ask naturally. Preluma follows your exact topic, depth, and learning goal.</div></div>
     </div>""", unsafe_allow_html=True)
 
     current_pack = st.session_state.get("pack")
     mission_topic = current_pack.get("title") if current_pack else st.session_state.get("topic", "General learning")
-    context_note = st.session_state.get("ai_context_note", "")
-
     providers = available_providers()
     provider_label = _provider()
-    st.markdown(
-        "<span class='context-chip'>Mission context: " + str(mission_topic) + "</span>"
-        "<span class='context-chip'>Primary: " + str(provider_label) + "</span>"
-        "<span class='context-chip'>Fallback-ready: " + str(len(providers)) + " providers</span>",
-        unsafe_allow_html=True,
-    )
-    if providers:
-        cards = "".join(
-            f"<div class='provider-card'><div class='provider-name'>{name}</div><div class='provider-status'>Available</div></div>"
-            for name in providers
-        )
-        st.markdown(f"<div class='provider-grid'>{cards}</div>", unsafe_allow_html=True)
-    else:
-        st.info("No external API key is configured. Preluma will use its curated topic engine and Wikipedia-supported fallback.")
 
-    if context_note:
-        st.markdown(f"<div class='ai-bar'><div class='ai-dot'></div><div class='ai-txt'>{context_note}</div></div>", unsafe_allow_html=True)
-
-    control1, control2, control3 = st.columns([1.1, 1, 1])
-    with control1:
-        mode = st.selectbox("Explanation style", ["Explain like I am 5", "Friendly Tutor", "Step-by-Step", "Exam/Viva Answer", "Give More Examples"])
-    with control2:
-        use_context = st.toggle("Use mission context", value=True)
-    with control3:
+    top1, top2, top3 = st.columns([1.2, 1, 1])
+    with top1:
+        use_context = st.toggle("Use current mission context", value=True)
+    with top2:
+        mode = st.selectbox("Teaching style", ["Auto-detect", "Explain like I am 5", "Friendly Tutor", "Step-by-Step", "Exam/Viva Answer", "Give More Examples"])
+    with top3:
         depth = st.selectbox("Answer depth", ["Balanced", "Short", "Deep"])
 
-    st.session_state.setdefault("ai_question_input", "")
-    prompt_cols = st.columns(4)
-    prompt_texts = ["Explain the main idea simply", "Give one real example", "Why is this important?", "Give me a similar practice question"]
-    for column, prompt in zip(prompt_cols, prompt_texts):
-        if column.button(prompt, use_container_width=True):
-            st.session_state.ai_question_input = prompt
-            st.rerun()
-
-    question = st.text_area(
-        "What do you want to understand?",
-        key="ai_question_input",
-        placeholder="Example: Explain machine learning simply and give one real example.",
-        height=120,
+    st.markdown(
+        f"<span class='context-chip'>Context: {mission_topic if use_context else 'Question only'}</span>"
+        f"<span class='context-chip'>Provider: {provider_label}</span>"
+        f"<span class='context-chip'>Fallbacks ready: {len(providers)}</span>",
+        unsafe_allow_html=True,
     )
 
-    ask_col, clear_col = st.columns([4, 1])
+    st.session_state.setdefault("ai_question_input", "")
+    question = st.text_area(
+        "Your question",
+        key="ai_question_input",
+        placeholder="Ask naturally, for example: I do not understand machine learning. First explain the basic idea, then tell me how it learns from data.",
+        height=130,
+    )
+
+    quick = st.columns(4)
+    quick_prompts = ["Explain simply", "Give a real example", "Go deeper", "Quiz me"]
+    for col, prompt in zip(quick, quick_prompts):
+        if col.button(prompt, use_container_width=True):
+            base = question.strip() or mission_topic
+            st.session_state.ai_question_input = f"{prompt}: {base}"
+            st.rerun()
+
+    ask_col, clear_col = st.columns([5, 1])
     ask = ask_col.button("Ask Preluma AI", use_container_width=True)
     clear_col.button("Clear", use_container_width=True, on_click=_clear_ai_chat)
 
     if ask and question.strip():
         detected_topic = detect_topic_from_question(question, mission_topic if use_context else "General learning")
-        style_prefix = {
-            "Explain like I am 5": "Explain like I am 5 years old using a safe, fun analogy. ",
-            "Friendly Tutor": "Explain as a patient and friendly tutor. ",
-            "Step-by-Step": "Explain step by step and connect each step. ",
-            "Exam/Viva Answer": "Give an exam-ready and viva-ready answer. ",
-            "Give More Examples": "Teach through two simple real-life examples. ",
-        }[mode]
-        depth_prefix = {"Short":"Keep the response concise. ", "Balanced":"Give a balanced response. ", "Deep":"Give a deeper mechanism-focused response. "}[depth]
-        routed_question = style_prefix + depth_prefix + question.strip()
+        if _question_needs_clarification(question):
+            st.session_state.tutor_history.append({
+                "question": question.strip(),
+                "topic": detected_topic,
+                "clarification": True,
+                "answer_text": "I can help, but I need one detail first: do you want a simple overview, a deep explanation of how it works, a real-life example, or an exam-ready answer?",
+                "source": "Preluma intent check",
+            })
+        else:
+            style_prefix = {
+                "Auto-detect": "Follow the user's wording and automatically match the requested teaching style. ",
+                "Explain like I am 5": "Explain like I am 5 years old using a safe and memorable analogy. ",
+                "Friendly Tutor": "Explain as a patient, natural, friendly tutor. ",
+                "Step-by-Step": "Explain step by step and connect cause and effect. ",
+                "Exam/Viva Answer": "Give an exam-ready and viva-ready answer. ",
+                "Give More Examples": "Teach through multiple clear real-life examples. ",
+            }[mode]
+            depth_prefix = {
+                "Short": "Answer briefly and directly. ",
+                "Balanced": "Give a natural balanced explanation in connected paragraphs. ",
+                "Deep": "Give a deep, accurate, mechanism-focused explanation in coherent paragraphs. Explain why and how, not only what. ",
+            }[depth]
+            routed_question = style_prefix + depth_prefix + question.strip()
+            with st.spinner(f"Preluma AI is understanding your question about {detected_topic}..."):
+                response = llm_tutor(detected_topic, routed_question, st.session_state.get("persona", "Normal Mode")) if llm_available() else None
+                source = f"AI provider: {_provider()}" if response else "Curated + Wikipedia fallback"
+                if response is None:
+                    fallback_pack = build_pack(detected_topic, use_wikipedia=True)
+                    response = tutor_sections(fallback_pack, routed_question, st.session_state.get("persona", "Normal Mode"))
+            response["concept"] = detected_topic
+            answer_text = _natural_answer_text(response, depth)
+            st.session_state.tutor_history.append({"question":question.strip(),"topic":detected_topic,"response":response,"answer_text":answer_text,"source":source,"depth":depth})
 
-        with st.spinner(f"Preluma AI is answering about {detected_topic}..."):
-            response = llm_tutor(detected_topic, routed_question, st.session_state.get("persona", "Normal Mode")) if llm_available() else None
-            source = f"AI provider: {_provider()}" if response else "Curated Preluma fallback"
-            if response is None:
-                fallback_pack = build_pack(detected_topic, use_wikipedia=True)
-                response = tutor_sections(fallback_pack, routed_question, st.session_state.get("persona", "Normal Mode"))
-
-        response["concept"] = detected_topic
-        st.session_state.tutor_history.append({"question": question.strip(), "topic": detected_topic, "response": response, "source": source})
-
-    history = st.session_state.get("tutor_history", [])
-    for item in history[-6:]:
+    for index, item in enumerate(st.session_state.get("tutor_history", [])[-8:]):
         st.markdown(f"<div class='chat-user'>{item['question']}</div>", unsafe_allow_html=True)
-        response = item['response']
-        st.markdown(f"<div class='chat-ai'><div class='albl lbl-cyan'>{item['topic']} · {item['source']}</div><div class='atxt'><b>{response.get('tiny_answer','')}</b></div></div>", unsafe_allow_html=True)
-        fields = [
-            ("Friendly explanation", "lbl-purple", response.get("explain_simply", "")),
-            ("Real example", "lbl-green", response.get("real_life_example", "")),
-            ("Common mistake", "lbl-red", response.get("common_mistake", "")),
-            ("Exam memory line", "lbl-yellow", response.get("exam_angle", "")),
-        ]
-        for title, label, value in fields:
-            if value:
-                st.markdown(f"<div class='card-glass'><div class='albl {label}'>{title}</div><div class='atxt'>{value}</div></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='ai-meta'>{item['topic']} · {item['source']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='ai-main-answer'>{item.get('answer_text','')}</div>", unsafe_allow_html=True)
+        if not item.get("clarification"):
+            response = item.get("response", {})
+            with st.expander("Study support: mistake, exam line, and extra details"):
+                if response.get("common_mistake"):
+                    st.markdown(f"**Common mistake:** {response['common_mistake']}")
+                if response.get("exam_angle"):
+                    st.markdown(f"**Exam/Viva memory line:** {response['exam_angle']}")
+                if response.get("real_life_example"):
+                    st.markdown(f"**Example:** {response['real_life_example']}")
 
 
 def my_homework_page():
@@ -1532,15 +1559,15 @@ def project_team():
     st.markdown("### Project Team")
     st.caption("A collaborative student team building Preluma for guided pre-class learning.")
 
-    if TEAM_IMAGE.exists():
-        st.markdown("<div class='team-photo-shell'>", unsafe_allow_html=True)
-        st.image(str(TEAM_IMAGE), width="stretch")
-        st.markdown("""
-        <div class='team-photo-caption'>
-          <div><div class='team-photo-title'>Team Preluma</div>
-          <div class='team-photo-sub'>Preluma team at Yunnan University</div></div>
-          <span class='badge'>Python · Streamlit · EdTech</span>
-        </div></div>
+    if TEAM_URI:
+        st.markdown(f"""
+        <div class='team-photo-hero' style="background-image:url('{TEAM_URI}');">
+          <div class='team-photo-content'>
+            <span class='badge'>Team Preluma · Yunnan University</span>
+            <h1>Building a smarter pre-class learning experience together.</h1>
+            <p>Three students combined core development, testing, topic data, and presentation support to shape Preluma into a working Python Streamlit prototype.</p>
+          </div>
+        </div>
         """, unsafe_allow_html=True)
     else:
         st.warning("Team photo is missing: assets/team_preluma.jpg")
@@ -1551,29 +1578,26 @@ def project_team():
         <div class='member-role'>Feature Logic · Quiz Testing</div>
         <h3>MD FAHIM</h3>
         <p>Supported quiz checking, feature testing, and interaction feedback.</p>
-        <ul class='contrib-list'><li>Quiz testing</li><li>Feature feedback</li><li>User-flow checking</li></ul>
       </div>
       <div class='member-card main'>
         <div class='member-role'>Core App · UI/UX · Integration</div>
         <h3>MAMUNUR RASHID</h3>
         <p>Worked on the main Python Streamlit app, interface design, module integration, and deployment flow.</p>
-        <ul class='contrib-list'><li>Python Streamlit development</li><li>UI/UX design</li><li>System integration</li></ul>
       </div>
       <div class='member-card'>
         <div class='member-role'>Topic Data · Documentation</div>
         <h3>MD JIARUL ISLAM</h3>
         <p>Supported topic data organization, documentation, and presentation preparation.</p>
-        <ul class='contrib-list'><li>Topic data</li><li>Documentation</li><li>Presentation support</li></ul>
       </div>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("### Work Division")
     st.dataframe([
-        {"Member":"MAMUNUR RASHID", "Main Responsibility":"Core app, UI/UX, integration", "Project Value":"Connected the main modules into one deployed Streamlit product"},
-        {"Member":"MD FAHIM", "Main Responsibility":"Quiz testing and feature feedback", "Project Value":"Improved interaction quality and checked quiz behavior"},
-        {"Member":"MD JIARUL ISLAM", "Main Responsibility":"Topic data and documentation", "Project Value":"Supported content organization and presentation material"},
-    ], use_container_width=True)
+        {"Member":"MAMUNUR RASHID", "Main Responsibility":"Core app, UI/UX, integration", "Contribution":"Connected the main modules into one deployed Streamlit product"},
+        {"Member":"MD FAHIM", "Main Responsibility":"Quiz testing and feature feedback", "Contribution":"Improved interaction quality and checked quiz behaviour"},
+        {"Member":"MD JIARUL ISLAM", "Main Responsibility":"Topic data and documentation", "Contribution":"Supported content organization and presentation material"},
+    ], use_container_width=True, hide_index=True)
 
 
 # ── Demo Guide ────────────────────────────────────────────────────────────────
@@ -1630,12 +1654,13 @@ def main():
     init_state()
     page, presentation = sidebar()
 
-    if page.startswith("🔔 My Homework"):
+    if page in {"My Homework", "🔔 My Homework"} or page.startswith("🔔 My Homework"):
         my_homework_page()
         return
 
     pages = {
         "Student Mission": lambda: student_mission(presentation),
+        "Ask Preluma AI": ask_preluma_ai_page,
         "✨ Ask Preluma AI": ask_preluma_ai_page,
         "Teacher Studio": teacher_studio,
         "Homework Center": homework_center_page,

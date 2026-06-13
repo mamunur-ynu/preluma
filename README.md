@@ -1,41 +1,17 @@
-# Preluma V23 — Clean AI + Team Final
+# Preluma V24 — Polished AI + Team Final
 
-This build focuses on the two highest-priority quality issues: question-aware AI tutoring and a fully visible premium team page.
+This build focuses on three high-impact corrections:
 
-## AI upgrades
+- Compact grouped sidebar: Learn, Teach, and Project/Presentation
+- Premium team-photo background hero with all three members visible
+- Intent-aware Preluma AI with natural paragraph answers, deep-answer mode, clarification for vague questions, chat history, and multi-provider fallback
 
-- Explicit user questions override old mission context.
-- `about machine learning` now routes to **Machine Learning**, not an unrelated prior topic.
-- Six provider-ready architecture:
-  - OpenAI
-  - Anthropic Claude
-  - Google Gemini
-  - Groq
-  - OpenRouter
-  - Together AI
-- One provider answers while the next providers act as automatic fallbacks.
-- If no API key is configured, Preluma uses the curated topic engine and Wikipedia-supported fallback.
-- Chat-style history, context chips, explanation style, answer depth, clear chat, and provider status.
+## AI behavior
 
-## Team page upgrades
+Preluma prioritizes the user's exact question over old mission context. It detects the topic and requested explanation style. Vague requests trigger one concise clarification. Clear requests receive a natural answer whose depth follows Short, Balanced, or Deep.
 
-- The real team photo is rendered as a full image instead of a cropped CSS background.
-- All three people remain visible.
-- Balanced role descriptions and equal member cards.
-- Team photo path: `assets/team_preluma.jpg`.
+External providers are optional. Available providers are used through automatic fallback. Without keys, curated topic packs and Wikipedia-supported fallback remain available.
 
-## Secret setup
+## Safe deployment
 
-Do not upload a real `.streamlit/secrets.toml` to GitHub.
-Copy values into Streamlit Cloud Secrets using `.streamlit/secrets.example.toml` as a template.
-
-## Verification
-
-- Python compilation
-- Unit tests
-- Streamlit startup
-- Full guided mission flow
-- Project Team page runtime
-- Ask Preluma AI runtime
-- Question/topic mismatch regression test
-- Homework pages runtime
+Never commit real API keys. Configure them only in Streamlit Cloud Secrets.
