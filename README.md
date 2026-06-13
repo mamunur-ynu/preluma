@@ -1,4 +1,4 @@
-# Preluma V22 — Guided Learning + Homework MVP
+# Preluma V22.1 — Runtime Fixed Guided Learning + Homework MVP
 
 Preluma is now a connected pre-class learning and homework diagnostic prototype.
 
@@ -61,3 +61,8 @@ Real user accounts are intentionally not implemented in this MVP. The active stu
 ## Safe secret management
 
 Never upload a real `.streamlit/secrets.toml` to GitHub. Add API keys only through Streamlit Cloud Secrets.
+
+
+## Runtime verification
+
+This release includes Streamlit AppTest coverage for startup, the full guided mission, AI page, Homework Center, and My Homework.

@@ -12,6 +12,7 @@ from teacher import build_teacher_dataframe, class_average_readiness, readiness_
 from topics import TOPIC_OPTIONS, validate_topics
 from wiki_fetcher import smart_answer_from_pack
 from storage_core import append_student_row, next_record_id, read_recent_logs, timestamp
+from llm import active_provider as _provider
 from homework_core import (
     create_homework,
     homework_for_student,
@@ -24,7 +25,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "22.0 Guided Learning + Homework MVP"
+APP_VERSION = "22.1 Runtime Fixed"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -300,6 +301,70 @@ def reset_session():
     for key in keys:
         st.session_state.pop(key, None)
 
+
+
+def sidebar():
+    st.sidebar.markdown("## Preluma")
+    st.sidebar.caption("Light Up Before Class")
+
+    student_name = st.sidebar.text_input(
+        "Active student",
+        value=st.session_state.get("student", "Student"),
+        key="sidebar_student_identity",
+    )
+    if student_name.strip():
+        st.session_state.student = student_name.strip()
+
+    unread_count = len(
+        notifications_for_student(
+            st.session_state.get("student", "Student"),
+            unread_only=True,
+        )
+    )
+
+    page = st.sidebar.radio(
+        "Workspace",
+        [
+            "Student Mission",
+            f"🔔 My Homework ({unread_count})",
+            "✨ Ask Preluma AI",
+            "Teacher Studio",
+            "Homework Center",
+            "Evidence Board",
+            "Professor Defense",
+            "Project Team",
+            "Demo Guide",
+            "Future Roadmap",
+        ],
+    )
+
+    presentation = st.sidebar.toggle("Presentation Mode", value=True)
+
+    st.sidebar.markdown(
+        "<div class='ai-bar'><div class='ai-dot'></div>"
+        "<div class='ai-txt'><b>Preluma AI</b><br>"
+        "Ask for child-level, step-by-step, example, or exam explanations.</div></div>",
+        unsafe_allow_html=True,
+    )
+
+    st.sidebar.markdown(
+        "<div class='team-box'><div class='team-ttl'>Project Team</div>",
+        unsafe_allow_html=True,
+    )
+    for name, role in TEAM_MEMBERS:
+        st.sidebar.markdown(
+            f"<div class='team-row'><div class='team-name'>{name}</div>"
+            f"<div class='team-role'>{role}</div></div>",
+            unsafe_allow_html=True,
+        )
+    st.sidebar.markdown("</div>", unsafe_allow_html=True)
+
+    if st.sidebar.button("Reset session", use_container_width=True):
+        reset_session()
+        st.rerun()
+
+    st.sidebar.caption(f"v{APP_VERSION} · Python + Streamlit + AI")
+    return page, presentation
 
 
 # ── Hero ─────────────────────────────────────────────────────────────────────
