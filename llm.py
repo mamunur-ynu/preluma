@@ -131,6 +131,7 @@ def _parse_json(raw: str) -> dict | None:
 
 
 def _detect_question_style(question: str) -> str:
+    """Detect how the student wants the answer delivered."""
     q = question.lower()
     if any(w in q for w in ["5 year", "5-year", "kid", "child", "simple", "easy", "beginner", "basic"]):
         return "child"
@@ -148,6 +149,7 @@ def _detect_question_style(question: str) -> str:
 def llm_tutor(topic: str, question: str, style: str = "Normal Mode") -> dict | None:
     q_style = _detect_question_style(question)
 
+    # Build explanation style instruction based on BOTH persona and question style
     explanation_style = {
         "child": (
             "CRITICAL: The student is asking you to explain like they are 5 years old. "

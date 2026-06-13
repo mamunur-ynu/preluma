@@ -12,21 +12,32 @@ from teacher import build_teacher_dataframe, class_average_readiness, readiness_
 from topics import TOPIC_OPTIONS, validate_topics
 from wiki_fetcher import smart_answer_from_pack
 from storage_core import append_student_row, next_record_id, read_recent_logs, timestamp
+from homework_core import (
+    create_homework,
+    homework_for_student,
+    homework_overview,
+    load_homework,
+    load_questions,
+    load_student_mistakes,
+    notifications_for_student,
+    seed_homework_demo,
+    submit_homework,
+)
 
-APP_VERSION = "20.0 Compliance Elite"
-APP_NAME = "Preluma"
-TAGLINE = "Light Up Before Class"
+APP_VERSION = "22.0 Guided Learning + Homework MVP"
+APP_NAME    = "Preluma"
+TAGLINE     = "Light Up Before Class"
 
 TEAM_MEMBERS = [
-    ("MAMUNUR RASHID", "Core Development • UI/UX • Integration • Deployment"),
-    ("MD FAHIM", "Feature Logic • Quiz Testing • Interaction Feedback"),
-    ("MD JIARUL ISLAM", "Topic Data • Documentation • Presentation Support"),
+    ("MAMUNUR RASHID", "Core Development · UI/UX · Integration · Deployment"),
+    ("MD FAHIM",       "Feature Logic · Quiz Testing · Interaction Feedback"),
+    ("MD JIARUL ISLAM","Topic Data · Documentation · Presentation Support"),
 ]
 
 CAMPUS_IMAGE = Path("assets/ynu_campus.jpg")
 TEAM_IMAGE = Path("assets/team_preluma.jpg")
 
-st.set_page_config(page_title=APP_NAME, page_icon="✨", layout="wide")
+st.set_page_config(page_title="Preluma — Light Up Before Class", page_icon=None, layout="wide")
 
 
 @st.cache_data(show_spinner=False)
@@ -34,11 +45,10 @@ def image_data_uri(path_str):
     path = Path(path_str)
     if path.exists():
         suffix = path.suffix.lower().replace(".", "")
-        mime = "jpeg" if suffix in ["jpg", "jpeg"] else "png"
+        mime = "jpeg" if suffix in ["jpg","jpeg"] else "png"
         data = base64.b64encode(path.read_bytes()).decode("ascii")
         return f"data:image/{mime};base64,{data}"
     return ""
-
 
 CAMPUS_URI = image_data_uri(str(CAMPUS_IMAGE))
 TEAM_URI = image_data_uri(str(TEAM_IMAGE))
@@ -46,651 +56,1506 @@ TEAM_URI = image_data_uri(str(TEAM_IMAGE))
 
 CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
-html, body, [class*="css"] {font-family: 'Inter', sans-serif;}
-.block-container {max-width: 1180px; padding-top: 1.3rem;}
-[data-testid="stSidebar"] {background: #071021;}
-[data-testid="stSidebar"] * {color: #e5e7eb;}
-h1, h2, h3 {letter-spacing: -0.02em;}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*, *::before, *::after { box-sizing: border-box; }
+html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+.block-container { max-width: 1200px; padding-top: 0 !important; padding-left: 2rem; padding-right: 2rem; }
+[data-testid="stSidebar"] { background: #03080f; border-right: 1px solid rgba(255,255,255,.06); }
+[data-testid="stSidebar"] * { color: #e2e8f0; }
+h1, h2, h3 { letter-spacing: -0.02em; }
+
+/* ── Hero ── */
 .hero {
-    position: relative;
-    padding: 34px 38px;
-    min-height: 285px;
-    border-radius: 30px;
-    overflow: hidden;
-    border: 1px solid rgba(125,211,252,.22);
-    background-size: cover;
-    background-position: center;
-    box-shadow: 0 28px 60px rgba(2,6,23,.46);
-    margin-bottom: 16px;
+    position: relative; min-height: 340px; border-radius: 28px;
+    overflow: hidden; border: 1px solid rgba(255,255,255,.10);
+    box-shadow: 0 32px 80px rgba(0,0,0,.55); margin-bottom: 2rem;
+    background-size: cover; background-position: center 35%;
 }
-.hero::after {
-    content: "";
-    position: absolute;
-    inset: 0;
+.hero-overlay {
+    position: absolute; inset: 0;
     background:
-      linear-gradient(90deg, rgba(2,6,23,.83) 0%, rgba(15,23,42,.55) 48%, rgba(88,28,135,.47) 100%),
-      radial-gradient(circle at 20% 10%, rgba(14,165,233,.25), transparent 32%);
-    z-index: 1;
+        linear-gradient(105deg, rgba(2,6,23,.92) 0%, rgba(7,14,35,.78) 38%,
+        rgba(15,23,62,.55) 65%, rgba(55,10,120,.40) 100%),
+        radial-gradient(ellipse at 15% 50%, rgba(56,189,248,.18) 0%, transparent 50%);
 }
-.hero-content {position: relative; z-index: 2;}
-.brand-row {display:flex; align-items:center; gap:14px; margin-bottom:18px;}
+.hero-content {
+    position: relative; z-index: 2; padding: 44px 52px;
+    display: flex; flex-direction: column; justify-content: center; min-height: 340px;
+}
+.hero-top { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
 .logo-mark {
-    width:42px; height:42px; border-radius:15px;
-    background: linear-gradient(135deg,#38bdf8,#8b5cf6);
-    box-shadow: 0 12px 28px rgba(56,189,248,.22);
+    width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0;
+    background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #a78bfa 100%);
+    box-shadow: 0 8px 24px rgba(56,189,248,.30);
+    display: flex; align-items: center; justify-content: center;
 }
-.brand-title {font-weight:900; color:#fff; font-size:18px;}
-.brand-sub {color:#dbeafe; font-size:13px; margin-top:2px;}
-.badge {
-    display:inline-block; padding:8px 13px; border-radius:999px;
-    background:rgba(14,165,233,.17); border:1px solid rgba(125,211,252,.36);
-    color:#bae6fd; font-weight:850; font-size:13px;
+.logo-mark svg { width: 22px; height: 22px; }
+.brand-name { font-size: 17px; font-weight: 800; color: #fff; }
+.brand-tag  { font-size: 12px; color: #93c5fd; margin-top: 1px; }
+.uni-pill {
+    margin-left: auto; padding: 6px 14px; border-radius: 999px;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.20);
+    color: #e2e8f0; font-size: 12px; font-weight: 600;
 }
-.uni-badge {
-    display:inline-block; padding:8px 13px; border-radius:999px;
-    background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.24);
-    color:#fff; font-weight:850; font-size:12px; margin-left:8px;
+.ai-pill {
+    padding: 6px 12px; border-radius: 999px; margin-left: 8px;
+    background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.25);
+    color: #6ee7b7; font-size: 11px; font-weight: 700;
 }
-.hero h1 {font-size:40px; line-height:1.08; color:white; margin:28px 0 14px; max-width: 950px; text-shadow:0 4px 22px rgba(0,0,0,.52);}
-.hero p {font-size:16px; max-width: 860px; color:#e0f2fe; line-height:1.6; text-shadow:0 3px 16px rgba(0,0,0,.42);}
-.chip {
-    display:inline-block; padding:10px 14px; margin: 4px 6px 8px 0;
-    border-radius:999px; background:#eef2ff; color:#3730a3;
-    font-weight:900; font-size:13px;
+.hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 999px; margin-bottom: 18px;
+    background: rgba(56,189,248,.15); border: 1px solid rgba(56,189,248,.35);
+    color: #7dd3fc; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
 }
-.card {
-    padding: 18px 20px; border-radius:22px;
-    background: linear-gradient(135deg, rgba(15,23,42,.94), rgba(30,41,59,.82));
-    border:1px solid rgba(125,211,252,.18);
+.hero-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #38bdf8; }
+.hero h1 {
+    font-size: 42px; line-height: 1.06; font-weight: 900; color: #fff;
+    margin: 0 0 16px; letter-spacing: -.025em; max-width: 780px;
+    text-shadow: 0 2px 30px rgba(0,0,0,.50);
 }
-.metric-grid {display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin: 14px 0 18px;}
-.metric-number {font-size:26px; color:#fff; font-weight:900;}
-.metric-label {font-size:12px; color:#93c5fd; font-weight:900; letter-spacing:.08em; text-transform:uppercase; margin-top:5px;}
-.flow-grid {display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin:16px 0;}
-.flow-card small {color:#93c5fd; font-weight:900; letter-spacing:.08em;}
-.flow-card h3 {color:#fff; margin:8px 0 8px; font-size:21px;}
-.flow-card p {color:#cbd5e1; line-height:1.55;}
-.answer-card {
-    padding: 18px 20px;
-    border-radius: 22px;
-    background: rgba(15,23,42,.72);
-    border: 1px solid rgba(148,163,184,.20);
-    margin: 12px 0;
+.hero h1 span { color: #7dd3fc; }
+.hero-sub { font-size: 16px; color: #cbd5e1; line-height: 1.65; max-width: 640px; }
+.hero-stats { display: flex; gap: 32px; margin-top: 28px; }
+.hero-stat-num { font-size: 22px; font-weight: 800; color: #fff; }
+.hero-stat-lbl { font-size: 11px; color: #94a3b8; margin-top: 2px; font-weight: 500; }
+
+/* ── Progress ── */
+.progress-wrap {
+    display: flex; gap: 0; margin: 0 0 2rem;
+    background: rgba(15,23,42,.60); border-radius: 16px;
+    padding: 6px; border: 1px solid rgba(255,255,255,.07);
 }
-.answer-title {
-    color:#93c5fd; font-size:13px; font-weight:900;
-    text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px;
+.progress-step { flex: 1; text-align: center; padding: 10px 8px; border-radius: 12px;
+    font-size: 12px; font-weight: 600; color: #64748b; }
+.progress-step.done   { color: #34d399; background: rgba(52,211,153,.10); }
+.progress-step.active { color: #38bdf8; background: rgba(56,189,248,.12); font-weight: 800; }
+
+/* ── Section header ── */
+.sec-head { display: flex; align-items: center; gap: 12px; margin: 2rem 0 1rem; }
+.sec-icon {
+    width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
 }
-.answer-card p, .answer-card li {color:#e5e7eb; font-size:15px; line-height:1.6;}
+.sec-title { font-size: 20px; font-weight: 800; color: #f1f5f9; }
+.sec-sub   { font-size: 13px; color: #64748b; margin-top: 2px; }
+
+/* ── Cards ── */
+.card-glass {
+    background: rgba(15,23,42,.70); border: 1px solid rgba(255,255,255,.08);
+    border-radius: 20px; padding: 20px 22px; margin: 10px 0;
+}
+.card-glass:hover { border-color: rgba(56,189,248,.22); }
+.albl { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+.atxt { font-size: 15px; color: #e2e8f0; line-height: 1.7; }
+.lbl-blue   { color: #60a5fa; }
+.lbl-purple { color: #a78bfa; }
+.lbl-green  { color: #34d399; }
+.lbl-orange { color: #fb923c; }
+.lbl-red    { color: #f87171; }
+.lbl-yellow { color: #fbbf24; }
+.lbl-cyan   { color: #22d3ee; }
+
+/* ── AI bar ── */
+.ai-bar {
+    display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+    border-radius: 14px; margin-bottom: 16px;
+    background: rgba(52,211,153,.08); border: 1px solid rgba(52,211,153,.25);
+}
+.ai-dot { width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 8px #34d399; }
+.ai-txt { font-size: 13px; color: #6ee7b7; font-weight: 600; }
+
+/* ── Notice ── */
 .notice {
-    padding: 13px 15px; border-radius: 17px;
-    background: rgba(59,130,246,.12);
-    border: 1px solid rgba(96,165,250,.24);
-    color:#dbeafe; line-height:1.55; margin-bottom:12px;
-}
-.prof-grid {display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; margin:16px 0;}
-.prof-card {
-    padding:17px; border-radius:21px;
-    background:linear-gradient(135deg, rgba(14,165,233,.13), rgba(124,58,237,.11));
-    border:1px solid rgba(125,211,252,.22);
-}
-.prof-card h4 {margin:0 0 8px; color:#fff; font-size:17px;}
-.prof-card p {color:#cbd5e1; font-size:14px; line-height:1.55;}
-.team-hero {
-    position: relative;
-    min-height: 430px;
-    border-radius: 32px;
-    overflow: hidden;
-    border: 1px solid rgba(125,211,252,.24);
-    box-shadow: 0 28px 70px rgba(2,6,23,.50);
-    background-size: cover;
-    background-position: center 42%;
-    margin-bottom: 22px;
-}
-.team-hero::after {
-    content:"";
-    position:absolute;
-    inset:0;
-    background:
-      linear-gradient(90deg, rgba(2,6,23,.78) 0%, rgba(15,23,42,.34) 48%, rgba(88,28,135,.43) 100%),
-      linear-gradient(0deg, rgba(2,6,23,.88) 0%, rgba(2,6,23,.12) 48%, rgba(2,6,23,.30) 100%);
-    z-index:1;
-}
-.team-hero-content {position:absolute; left:34px; bottom:30px; right:34px; z-index:2;}
-.team-hero h1 {color:white; margin:0 0 10px; font-size:40px; line-height:1.08; text-shadow:0 5px 24px rgba(0,0,0,.55);}
-.team-hero p {color:#e0f2fe; max-width:850px; font-size:16px; line-height:1.6; margin:0; text-shadow:0 3px 18px rgba(0,0,0,.45);}
-.member-grid {display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin:18px 0;}
-.member-card {
-    padding:20px; border-radius:24px;
-    background:linear-gradient(135deg, rgba(15,23,42,.94), rgba(30,41,59,.82));
-    border:1px solid rgba(125,211,252,.18);
-    box-shadow:0 18px 45px rgba(2,6,23,.28);
-}
-.member-card.main {border-color:rgba(96,165,250,.45); background:linear-gradient(135deg, rgba(14,165,233,.17), rgba(124,58,237,.14));}
-.member-role {color:#93c5fd; font-weight:900; font-size:12px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:8px;}
-.member-card h3 {color:#fff; margin:0 0 8px; font-size:21px;}
-.member-card p {color:#cbd5e1; line-height:1.55; margin:0;}
-.contribution-list {margin-top:12px; padding-left:18px; color:#e5e7eb;}
-.contribution-list li {margin-bottom:6px;}
-.stButton > button {
-    border-radius: 14px !important;
-    font-weight: 900 !important;
-    min-height: 48px !important;
-    border: 1px solid rgba(125,211,252,.35) !important;
-    background: linear-gradient(135deg, rgba(37,99,235,.95), rgba(124,58,237,.92)) !important;
-    color: white !important;
-}
-@media (max-width: 900px) {
-    .metric-grid, .flow-grid, .prof-grid, .member-grid {grid-template-columns: 1fr;}
-    .hero {padding: 24px 22px;}
-    .hero h1, .team-hero h1 {font-size: 30px;}
-    .team-hero {min-height:340px;}
+    padding: 13px 16px; border-radius: 14px; margin-bottom: 14px;
+    background: rgba(56,189,248,.08); border: 1px solid rgba(56,189,248,.20);
+    color: #bae6fd; font-size: 14px; line-height: 1.6;
 }
 
-.rubric-grid {display:grid; grid-template-columns: repeat(2, 1fr); gap:14px; margin:16px 0;}
+/* ── Score ── */
+.score-big { font-size: 56px; font-weight: 900; line-height: 1; }
+.score-lbl { font-size: 14px; color: #94a3b8; margin-top: 6px; }
+.r-pill { display: inline-block; padding: 6px 18px; border-radius: 999px; font-size: 14px; font-weight: 700; margin-top: 8px; }
+.pill-g { background: rgba(52,211,153,.15); color: #34d399; border: 1px solid rgba(52,211,153,.30); }
+.pill-y { background: rgba(251,191,36,.15);  color: #fbbf24; border: 1px solid rgba(251,191,36,.30); }
+.pill-r { background: rgba(248,113,113,.15); color: #f87171; border: 1px solid rgba(248,113,113,.30); }
+
+/* ── KPI ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin: 1.5rem 0; }
+.kpi-card {
+    background: rgba(15,23,42,.70); border: 1px solid rgba(255,255,255,.07);
+    border-radius: 18px; padding: 20px 18px;
+}
+.kpi-num { font-size: 30px; font-weight: 900; color: #fff; }
+.kpi-lbl { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .07em; margin-top: 6px; }
+
+/* ── Flow ── */
+.flow-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin: 1.5rem 0; }
+.flow-card {
+    background: rgba(15,23,42,.60); border: 1px solid rgba(255,255,255,.07);
+    border-radius: 18px; padding: 22px 20px;
+}
+.flow-step  { font-size: 11px; font-weight: 700; color: #38bdf8; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 10px; }
+.flow-title { font-size: 18px; font-weight: 800; color: #f1f5f9; margin-bottom: 8px; }
+.flow-desc  { font-size: 14px; color: #94a3b8; line-height: 1.6; }
+
+/* ── Evidence ── */
+.ev-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin: 1.5rem 0; }
+.ev-card {
+    background: linear-gradient(135deg, rgba(14,165,233,.10), rgba(124,58,237,.08));
+    border: 1px solid rgba(125,211,252,.15); border-radius: 18px; padding: 18px 16px;
+}
+.ev-card h4 { font-size: 15px; font-weight: 700; color: #e2e8f0; margin: 0 0 8px; }
+.ev-card p  { font-size: 13px; color: #94a3b8; line-height: 1.6; margin: 0; }
+
+/* ── Rubric ── */
+.rubric-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; margin: 1.5rem 0; }
 .rubric-card {
-    padding:18px; border-radius:22px;
-    background:linear-gradient(135deg, rgba(34,197,94,.12), rgba(14,165,233,.10));
-    border:1px solid rgba(125,211,252,.22);
+    padding: 18px; border-radius: 22px;
+    background: linear-gradient(135deg, rgba(34,197,94,.12), rgba(14,165,233,.10));
+    border: 1px solid rgba(125,211,252,.22);
 }
-.rubric-card h4 {color:#fff; margin:0 0 8px; font-size:17px;}
-.rubric-card p {color:#cbd5e1; margin:0; line-height:1.55;}
+.rubric-card h4 { color: #fff; margin: 0 0 8px; font-size: 16px; }
+.rubric-card p  { color: #cbd5e1; margin: 0; line-height: 1.55; font-size: 14px; }
 
+/* ── Team ── */
+.member-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin: 1.5rem 0; }
+.member-card {
+    padding: 20px; border-radius: 24px;
+    background: linear-gradient(135deg, rgba(15,23,42,.94), rgba(30,41,59,.82));
+    border: 1px solid rgba(125,211,252,.18);
+}
+.member-card.main { border-color: rgba(96,165,250,.45); background: linear-gradient(135deg, rgba(14,165,233,.17), rgba(124,58,237,.14)); }
+.member-role { color: #93c5fd; font-weight: 900; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+.member-card h3 { color: #fff; margin: 0 0 8px; font-size: 19px; }
+.member-card p  { color: #cbd5e1; line-height: 1.55; margin: 0; font-size: 14px; }
+.contrib-list { margin-top: 10px; padding-left: 16px; color: #94a3b8; font-size: 13px; }
+.contrib-list li { margin-bottom: 5px; }
+
+/* ── Chip ── */
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 1rem 0 1.5rem; }
+.chip { padding: 7px 14px; border-radius: 999px; background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.25); color: #a5b4fc; font-size: 12px; font-weight: 600; }
+
+/* ── Concept ── */
+.concept-block {
+    background: rgba(15,23,42,.55); border: 1px solid rgba(255,255,255,.07);
+    border-radius: 16px; padding: 16px 18px; margin: 8px 0;
+}
+.concept-block-title { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; color: #818cf8; }
+.concept-block p { font-size: 14px; color: #cbd5e1; line-height: 1.65; margin: 3px 0; }
+
+/* ── Sidebar team ── */
+.team-box { background: rgba(15,23,42,.80); border: 1px solid rgba(255,255,255,.07); border-radius: 16px; padding: 14px 16px; margin-top: 16px; }
+.team-ttl { font-size: 10px; font-weight: 800; color: #475569; letter-spacing: .10em; text-transform: uppercase; margin-bottom: 12px; }
+.team-row { padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+.team-row:last-child { border-bottom: none; }
+.team-name { font-size: 12px; font-weight: 700; color: #e2e8f0; }
+.team-role { font-size: 11px; color: #475569; margin-top: 2px; }
+
+/* ── Buttons ── */
+.stButton > button {
+    border-radius: 14px !important; font-weight: 700 !important; font-size: 14px !important;
+    min-height: 50px !important; border: none !important;
+    background: linear-gradient(135deg, #2563eb, #7c3aed) !important;
+    color: #fff !important; box-shadow: 0 4px 20px rgba(37,99,235,.35) !important;
+}
+.stButton > button:hover { opacity: .88 !important; }
+
+@media(max-width:900px) {
+    .kpi-grid,.flow-grid,.ev-grid,.rubric-grid,.member-grid { grid-template-columns: 1fr; }
+    .hero-content { padding: 28px 24px; }
+    .hero h1 { font-size: 28px; }
+    .hero-stats { gap: 20px; }
+}
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
 
 
+# ── helpers ─────────────────────────────────────────────────────────────────
+
 def init_state():
-    st.session_state.setdefault("student", "Mim")
+    st.session_state.setdefault("student", "Student")
     st.session_state.setdefault("topic", "Quantum Mechanics")
     st.session_state.setdefault("persona", "Normal Mode")
+    st.session_state.setdefault("tutor_history", [])
+    st.session_state.setdefault("score_history", [])
+    st.session_state.setdefault("mission_started", False)
+    st.session_state.setdefault("mission_step", 0)
+    st.session_state.setdefault("practice_reflection", "")
+    st.session_state.setdefault("homework_result", None)
+    st.session_state.setdefault("selected_homework_id", None)
+    st.session_state.setdefault("ai_context_note", "")
+    seed_homework_demo()
 
 
 def reset_session():
-    for key in ["student", "topic", "persona", "use_wiki", "pack", "brief", "questions", "quiz_result", "latest_session"]:
+    keys = [
+        "student", "topic", "persona", "use_wiki", "pack", "brief",
+        "questions", "quiz_result", "latest_session", "tutor_history",
+        "score_history", "class_questions", "mission_started",
+        "mission_step", "practice_reflection", "homework_result",
+        "selected_homework_id", "ai_context_note",
+    ]
+    for key in keys:
         st.session_state.pop(key, None)
 
 
-def sidebar():
-    st.sidebar.title(APP_NAME)
-    st.sidebar.caption(TAGLINE)
-    page = st.sidebar.radio(
-        "Workspace",
-        ["Student Mission", "Teacher Studio", "Evidence Board", "Professor Defense", "Project Team", "Demo Guide", "Future Roadmap"],
-    )
-    presentation = st.sidebar.toggle("Presentation Mode", value=True)
-    st.sidebar.info("Python + Streamlit project. Styling is inside Streamlit for presentation; core logic is Python.")
-    st.sidebar.subheader("Project Team")
-    for name, role in TEAM_MEMBERS:
-        st.sidebar.write(f"**{name}**")
-        st.sidebar.caption(role)
-    st.sidebar.divider()
-    if st.sidebar.button("Reset session"):
-        reset_session()
-        st.rerun()
-    st.sidebar.caption(f"Version {APP_VERSION}")
-    return page, presentation
 
+# ── Hero ─────────────────────────────────────────────────────────────────────
 
 def hero():
-    bg = f"linear-gradient(90deg, rgba(2,6,23,.80) 0%, rgba(15,23,42,.54) 48%, rgba(88,28,135,.50) 100%), url('{CAMPUS_URI}')" if CAMPUS_URI else "linear-gradient(135deg, #020617 0%, #111827 48%, #4c1d95 100%)"
+    bg = f"url('{CAMPUS_URI}')" if CAMPUS_URI else "linear-gradient(135deg,#020617,#0f172a,#1e1b4b)"
+    provider = _provider()
+    ai_pill = f"<span class='ai-pill'>AI: {provider}</span>" if provider != "none" else ""
+
     st.markdown(f"""
-    <div class='hero' style="background-image: {bg};">
-        <div class='hero-content'>
-            <div class='brand-row'>
-                <div class='logo-mark'></div>
-                <div>
-                    <div class='brand-title'>Preluma</div>
-                    <div class='brand-sub'>Light Up Before Class</div>
-                </div>
-                <span class='uni-badge'>Yunnan University</span>
-            </div>
-            <span class='badge'>Pre-class brain priming</span>
-            <h1>Prepare before class. Understand more during class.</h1>
-            <p>Preluma turns passive preparation into a Python-powered learning mission: Brain Brief, quiz, Mistake Clinic, Smart QnA, Teacher Studio, and class-ready questions.</p>
+    <div class='hero' style="background-image:{bg};">
+      <div class='hero-overlay'></div>
+      <div class='hero-content'>
+        <div class='hero-top'>
+          <div class='logo-mark'>
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <div><div class='brand-name'>Preluma</div><div class='brand-tag'>Light Up Before Class</div></div>
+          <div class='uni-pill'>Yunnan University</div>
+          {ai_pill}
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        <div class='hero-badge'>Pre-class brain priming system</div>
+        <h1>Prepare before class.<br><span>Understand more during class.</span></h1>
+        <div class='hero-sub'>Built for Yunnan University students. Preluma turns passive pre-class preparation into a guided, AI-powered learning mission with Brain Brief, Quiz, UltraTutor, and Smart Class Questions.</div>
+        <div class='hero-stats'>
+          <div><div class='hero-stat-num'>18</div><div class='hero-stat-lbl'>Curated Topics</div></div>
+          <div><div class='hero-stat-num'>4</div><div class='hero-stat-lbl'>Skill Checks</div></div>
+          <div><div class='hero-stat-num'>AI</div><div class='hero-stat-lbl'>Smart Tutor</div></div>
+          <div><div class='hero-stat-num'>CSV</div><div class='hero-stat-lbl'>Data Persistence</div></div>
+        </div>
+      </div>
+    </div>""", unsafe_allow_html=True)
 
 
-def chips():
-    items = ["Topic", "Brain Brief", "Quiz", "Mistake Clinic", "Smart QnA", "Class Questions", "Dashboard"]
-    st.markdown(" ".join([f"<span class='chip'>{item}</span>" for item in items]), unsafe_allow_html=True)
+# ── Progress ──────────────────────────────────────────────────────────────────
+
+def progress_bar():
+    has_brief = "brief" in st.session_state
+    has_quiz  = "quiz_result" in st.session_state
+    has_tutor = bool(st.session_state.get("tutor_history"))
+    steps = [
+        ("Choose Topic", True,      False),
+        ("Brain Brief",  has_brief, not has_brief),
+        ("Quiz",         has_quiz,  has_brief and not has_quiz),
+        ("UltraTutor",   has_tutor, has_quiz  and not has_tutor),
+        ("Class Ready",  has_tutor, False),
+    ]
+    html = "<div class='progress-wrap'>"
+    for label, done, active in steps:
+        c = "done" if done else ("active" if active else "")
+        prefix = "✓ " if done else ""
+        html += f"<div class='progress-step {c}'>{prefix}{label}</div>"
+    html += "</div>"
+    st.markdown(html, unsafe_allow_html=True)
+
+def chip_row():
+    labels = ["Topic","Brain Brief","All Concepts","Quiz","Mistake Clinic","UltraTutor","Class Questions","Readiness Score"]
+    st.markdown("<div class='chip-row'>" + "".join(f"<span class='chip'>{l}</span>" for l in labels) + "</div>", unsafe_allow_html=True)
 
 
-def metrics_and_steps():
-    st.markdown("""
-    <div class='metric-grid'>
-        <div class='card'><div class='metric-number'>4</div><div class='metric-label'>Quiz Checks</div></div>
-        <div class='card'><div class='metric-number'>5</div><div class='metric-label'>Class Questions</div></div>
-        <div class='card'><div class='metric-number'>1</div><div class='metric-label'>Mistake Clinic</div></div>
-        <div class='card'><div class='metric-number'>0–100</div><div class='metric-label'>Readiness Score</div></div>
-    </div>
-    <div class='flow-grid'>
-        <div class='card flow-card'><small>STEP 1</small><h3>Prime the brain</h3><p>Start with a compact Brain Brief before the lecture.</p></div>
-        <div class='card flow-card'><small>STEP 2</small><h3>Find weak spots</h3><p>Use a quiz and Mistake Clinic to detect misunderstanding.</p></div>
-        <div class='card flow-card'><small>STEP 3</small><h3>Ask better questions</h3><p>Leave with class-ready questions and a readiness score.</p></div>
-    </div>
-    """, unsafe_allow_html=True)
-
+# ── Mission Control ───────────────────────────────────────────────────────────
 
 def mission_control():
-    st.markdown("### Mission Control")
-    st.markdown("<div class='notice'>Choose a topic. Preluma will generate a pre-class learning mission using Python, curated topic data, and optional Wikipedia real-data fallback.</div>", unsafe_allow_html=True)
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(56,189,248,.12);'>🎯</div>
+      <div><div class='sec-title'>Mission Control</div><div class='sec-sub'>Choose your topic and start your pre-class mission</div></div>
+    </div>""", unsafe_allow_html=True)
 
-    preset = st.selectbox(
-        "Demo preset for presentation",
-        ["Manual Input", "AI Class Demo", "Python Exam Demo", "Statistics Viva Demo", "Urban Water Research Demo"],
-        index=0,
-    )
-
+    preset = st.selectbox("Demo preset", ["Manual Input","AI Class Demo","Python Exam Demo","Statistics Viva Demo"], index=0)
     preset_data = {
-        "AI Class Demo": ("Zhou", "Neural Network", "Tomorrow 9 AM", "Coach Mode", "Deep Understanding"),
-        "Python Exam Demo": ("Mim", "Python Programming", "Tomorrow 9 AM", "Normal Mode", "Exam/Viva Mode"),
-        "Statistics Viva Demo": ("Jia", "Statistics", "Tomorrow 9 AM", "Coach Mode", "Exam/Viva Mode"),
-        "Urban Water Research Demo": ("Mamunur", "Urban Water Management", "Tomorrow 9 AM", "Normal Mode", "Deep Understanding"),
+        "AI Class Demo":        ("Amir",  "Neural Network",      "Tomorrow 9 AM", "Coach Mode",  "Deep Understanding"),
+        "Python Exam Demo":     ("Jia",   "Python Programming",  "Tomorrow 9 AM", "Normal Mode", "Exam/Viva Mode"),
+        "Statistics Viva Demo": ("Nadia", "Statistics",          "Tomorrow 9 AM", "Coach Mode",  "Exam/Viva Mode"),
     }
+    ds, dt, dtime, dp, dm = preset_data.get(preset, (
+        st.session_state.student, st.session_state.topic, "Tomorrow 9 AM", st.session_state.persona, "Fast Review"))
 
-    default_student = st.session_state.student
-    default_topic = st.session_state.topic
-    default_time = "Tomorrow 9 AM"
-    default_persona = st.session_state.persona
-    default_mode = "Fast Review"
-
-    if preset in preset_data:
-        default_student, default_topic, default_time, default_persona, default_mode = preset_data[preset]
-
-    with st.form("mission_form", border=True):
-        c1, c2, c3 = st.columns([1, 1.25, 1])
+    with st.form("mission_form", border=False):
+        st.markdown("<div class='card-glass' style='padding:24px;'>", unsafe_allow_html=True)
+        c1, c2, c3 = st.columns([1.4, 1, 0.9])
         with c1:
-            student = st.text_input("Student", value=default_student)
-            lecture_time = st.text_input("Lecture time", value=default_time)
+            student      = st.text_input("Your name", value=ds)
+            topic_choice = st.selectbox("Lecture topic", TOPIC_OPTIONS,
+                index=TOPIC_OPTIONS.index(dt) if dt in TOPIC_OPTIONS else 0)
+            topic = st.text_input("Custom topic", placeholder="e.g. Reinforcement Learning") \
+                    if topic_choice == "Custom Topic" else topic_choice
+            lecture_time = st.text_input("Lecture time", value=dtime)
         with c2:
-            current_topic = default_topic if default_topic in TOPIC_OPTIONS else "Quantum Mechanics"
-            topic_choice = st.selectbox("Lecture topic", TOPIC_OPTIONS, index=TOPIC_OPTIONS.index(current_topic))
-            if topic_choice == "Custom Topic":
-                topic = st.text_input("Custom topic", value="Photosynthesis")
-            else:
-                topic = topic_choice
+            persona       = st.radio("Tutor personality", ["Normal Mode","Coach Mode","Roast Mode"],
+                captions=["Clear & direct","Warm & motivating","Funny pressure"],
+                index=["Normal Mode","Coach Mode","Roast Mode"].index(dp) if dp in ["Normal Mode","Coach Mode","Roast Mode"] else 0)
+            learning_mode = st.selectbox("Learning mode",["Fast Review","Deep Understanding","Exam/Viva Mode"],
+                index=["Fast Review","Deep Understanding","Exam/Viva Mode"].index(dm) if dm in ["Fast Review","Deep Understanding","Exam/Viva Mode"] else 0)
         with c3:
-            persona = st.selectbox("Feedback style", ["Normal Mode", "Coach Mode", "Roast Mode"], index=["Normal Mode", "Coach Mode", "Roast Mode"].index(default_persona) if default_persona in ["Normal Mode", "Coach Mode", "Roast Mode"] else 0)
-            learning_mode = st.selectbox("Learning mode", ["Fast Review", "Deep Understanding", "Exam/Viva Mode"], index=["Fast Review", "Deep Understanding", "Exam/Viva Mode"].index(default_mode))
-            use_wiki = st.checkbox("Use Wikipedia real data", value=True)
-            st.caption("Brain Brief • Quiz • Smart QnA")
+            use_wiki = st.checkbox("Wikipedia real data", value=True)
+            st.markdown("**You will get:**")
+            for item in ["AI Brain Brief","All concepts in tabs","Quiz + skill check","Mistake clinic","UltraTutor answers","Smart class questions"]:
+                st.markdown(f"<div style='font-size:13px;color:#94a3b8;padding:2px 0;'>→ {item}</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
         start = st.form_submit_button("Start Pre-Class Mission", use_container_width=True)
 
     if start:
-        with st.spinner("Building your pre-class mission..."):
+        if not topic or not topic.strip():
+            st.warning("Please enter a topic first.")
+            return
+        with st.spinner("Building your AI-powered learning mission..."):
             pack = build_pack(topic, use_wikipedia=use_wiki)
-            st.session_state.student = student
-            st.session_state.topic = topic
-            st.session_state.persona = persona
-            st.session_state.learning_mode = learning_mode
-            st.session_state.use_wiki = use_wiki
-            st.session_state.pack = pack
-            st.session_state.brief = build_brain_brief(pack)
-            st.session_state.questions = make_questions(pack)
-            st.session_state.quiz_result = None
-            st.session_state.latest_session = None
-        st.rerun()
-
-def brain_brief():
-    if "brief" not in st.session_state:
-        return
-    b = st.session_state.brief
-    pack = st.session_state.pack
-    st.markdown("### Brain Brief")
-    st.caption(f"Learning mode: {st.session_state.get('learning_mode', 'Fast Review')}")
-    st.markdown(f"""
-    <div class='answer-card'><div class='answer-title'>Tiny answer</div><p>{b['tiny_answer']}</p></div>
-    <div class='answer-card'><div class='answer-title'>Explain simply</div><p>{b['simple']}</p></div>
-    <div class='answer-card'><div class='answer-title'>Key concept</div><p><b>{b['key_concept']}</b>: {b['concept_simple']}</p></div>
-    <div class='answer-card'><div class='answer-title'>Real-life example</div><p>{b['example']}</p></div>
-    <div class='answer-card'><div class='answer-title'>Common mistake</div><p>{b['misconception']}</p></div>
-    """, unsafe_allow_html=True)
-    with st.expander("Important facts and source"):
-        for fact in b["facts"]:
-            st.write(f"- {fact}")
-        if pack.get("source_url"):
-            st.success("Real data source used.")
-            st.write(pack.get("source_url"))
-
-
-def quiz():
-    if "questions" not in st.session_state:
-        return
-    st.markdown("### Quick Quiz")
-    with st.form("quiz_form", border=True):
-        answers = {}
-        for i, q in enumerate(st.session_state.questions):
-            answers[i] = st.radio(q["q"], q["options"], key=f"quiz_{i}")
-        submit = st.form_submit_button("Check Readiness", use_container_width=True)
-    if submit:
-        result = grade(st.session_state.questions, answers)
-        st.session_state.quiz_result = result
-        st.session_state.latest_session = {
-            "Student": st.session_state.student,
-            "Topic": st.session_state.pack["title"],
-            "Readiness": result["pct"],
-            "Weak Skill": result["weakest"],
-        }
-        append_student_row({
-            "Record ID": next_record_id(),
-            "Student": st.session_state.student,
-            "Topic": st.session_state.pack["title"],
-            "Readiness": result["pct"],
-            "Weak Skill": result["weakest"],
-            "Quiz Score": result["score"],
-            "Quiz Total": result["total"],
-            "Lecture Time": "Streamlit session",
-            "Learning Mode": st.session_state.get("learning_mode", "Fast Review"),
-            "Created At": timestamp(),
+            brief = build_brain_brief(pack)
+            questions = make_questions(pack)
+            try:
+                from engine import build_enriched_class_questions
+                class_qs = build_enriched_class_questions(pack)
+            except Exception:
+                class_qs = pack.get("class_questions", [])
+        st.session_state.update({
+            "student": student, "topic": topic, "persona": persona,
+            "learning_mode": learning_mode, "use_wiki": use_wiki,
+            "pack": pack, "brief": brief, "questions": questions,
+            "class_questions": class_qs, "quiz_result": None,
+            "latest_session": None, "tutor_history": [],
+            "mission_started": True, "mission_step": 1,
+            "practice_reflection": "",
         })
         st.rerun()
 
 
-def result_and_mistake_clinic():
-    result = st.session_state.get("quiz_result")
-    if not result:
-        return
-    st.markdown("### Readiness Result")
-    c1, c2 = st.columns(2)
-    c1.metric("Your Readiness", f"{result['pct']}%", f"{result['score']}/{result['total']} correct")
-    c2.metric("Status", readiness_label(result["pct"]))
-    st.markdown("### Mistake Clinic")
-    for i, item in enumerate(result["details"], 1):
-        status = "Correct" if item["correct"] else "Review needed"
-        with st.expander(f"Question {i}: {status} — {item['skill']}"):
-            st.write(f"Your answer: {item['chosen']}")
-            st.write(f"Correct answer: {item['answer']}")
-            st.write(f"Why: {item['why']}")
-            if not item["correct"]:
-                st.info("Tiny fix: read the definition, connect it to one example, then explain it in your own words.")
-    df = build_teacher_dataframe(st.session_state.latest_session)
-    avg = class_average_readiness(df)
-    fig = go.Figure()
-    fig.add_bar(x=["You", "Class Average"], y=[result["pct"], avg])
-    fig.update_layout(title="Readiness Comparison", yaxis_range=[0, 100], height=320, margin=dict(l=20, r=20, t=45, b=20))
-    st.plotly_chart(fig, use_container_width=True)
+# ── Brain Brief ───────────────────────────────────────────────────────────────
 
+def brain_brief():
+    if "brief" not in st.session_state: return
+    b    = st.session_state.brief
+    pack = st.session_state.pack
+
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(167,139,250,.12);'>🧠</div>
+      <div><div class='sec-title'>Brain Brief</div><div class='sec-sub'>Your 2-minute primer before class</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    mode = st.session_state.get("learning_mode","Fast Review")
+    st.caption(f"Learning mode: {mode}")
+
+    if b.get("study_tip"):
+        st.markdown(f"<div class='ai-bar'><div class='ai-dot'></div><div class='ai-txt'>Before class: {b['study_tip']}</div></div>", unsafe_allow_html=True)
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown(f"""<div class='card-glass'><div class='albl lbl-blue'>What is it?</div><div class='atxt'>{b['tiny_answer']}</div></div>
+        <div class='card-glass'><div class='albl lbl-purple'>Simply put</div><div class='atxt'>{b['simple']}</div></div>""", unsafe_allow_html=True)
+    with c2:
+        st.markdown(f"""<div class='card-glass'><div class='albl lbl-green'>Real-life example</div><div class='atxt'>{b['example']}</div></div>
+        <div class='card-glass'><div class='albl lbl-red'>Common mistake</div><div class='atxt'>{b['misconception']}</div></div>""", unsafe_allow_html=True)
+
+    all_concepts = b.get("all_concepts", {})
+    if all_concepts:
+        st.markdown("""<div class='sec-head' style='margin-top:1.5rem;'>
+          <div class='sec-icon' style='background:rgba(251,191,36,.10);'>📖</div>
+          <div><div class='sec-title'>All Key Concepts</div><div class='sec-sub'>Click each tab to explore in depth</div></div>
+        </div>""", unsafe_allow_html=True)
+        tabs = st.tabs([f"  {n.title()}  " for n in all_concepts])
+        for tab, (cname, c) in zip(tabs, all_concepts.items()):
+            with tab:
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown(f"""<div class='concept-block'><div class='concept-block-title'>Definition</div><p>{c['definition']}</p></div>
+                    <div class='concept-block'><div class='concept-block-title'>In simple words</div><p>{c['kid']}</p></div>""", unsafe_allow_html=True)
+                with col2:
+                    st.markdown(f"""<div class='concept-block'><div class='concept-block-title'>Real example</div><p>{c['example']}</p></div>
+                    <div class='concept-block'><div class='concept-block-title'>Mistake · Exam tip</div><p><b>Mistake:</b> {c['mistake']}</p><p><b>Exam:</b> {c['exam']}</p></div>""", unsafe_allow_html=True)
+
+    with st.expander("Key facts & source"):
+        for fact in b.get("facts", []):
+            st.markdown(f"<div style='padding:6px 0;color:#cbd5e1;font-size:14px;border-bottom:1px solid rgba(255,255,255,.05);'>→ {fact}</div>", unsafe_allow_html=True)
+        if pack.get("source_url"):
+            st.success("Real Wikipedia data used.")
+            st.write(pack.get("source_url"))
+
+
+# ── Quiz ──────────────────────────────────────────────────────────────────────
+
+def quiz():
+    if "questions" not in st.session_state: return
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(34,211,238,.10);'>⚡</div>
+      <div><div class='sec-title'>Readiness Quiz</div><div class='sec-sub'>4 questions across 4 skill types — find your weak spots</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    skill_colors = {"Definition":"lbl-blue","Core Concept":"lbl-purple","Application":"lbl-green","Misconception":"lbl-orange"}
+    with st.form("quiz_form", border=False):
+        for i, q in enumerate(st.session_state.questions):
+            sc = skill_colors.get(q["skill"],"lbl-blue")
+            st.markdown(f"""<div class='card-glass' style='margin-bottom:4px;'>
+              <div class='albl {sc}'>{q["skill"]}</div>
+              <div style='font-size:15px;color:#f1f5f9;font-weight:600;margin-bottom:12px;'>{q["q"]}</div>
+            </div>""", unsafe_allow_html=True)
+            st.radio("", q["options"], key=f"quiz_{i}", label_visibility="collapsed")
+            st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+        submit = st.form_submit_button("Check My Readiness", use_container_width=True)
+
+    if submit:
+        answers = {i: st.session_state.get(f"quiz_{i}","") for i in range(len(st.session_state.questions))}
+        result  = grade(st.session_state.questions, answers)
+        st.session_state.quiz_result = result
+        st.session_state.latest_session = {
+            "Student": st.session_state.student, "Topic": st.session_state.pack["title"],
+            "Readiness": result["pct"], "Weak Skill": result["weakest"],
+        }
+        st.session_state.score_history = st.session_state.get("score_history",[])
+        st.session_state.score_history.append({"Attempt": len(st.session_state.score_history)+1,
+            "Topic": st.session_state.pack["title"], "Score": result["pct"]})
+        # Persist to CSV
+        append_student_row({
+            "Record ID": next_record_id(), "Student": st.session_state.student,
+            "Topic": st.session_state.pack["title"], "Readiness": result["pct"],
+            "Weak Skill": result["weakest"], "Quiz Score": result["score"],
+            "Quiz Total": result["total"], "Lecture Time": st.session_state.get("learning_mode","Fast Review"),
+            "Learning Mode": st.session_state.get("learning_mode","Fast Review"), "Created At": timestamp(),
+        })
+        st.rerun()
+
+
+# ── Result ────────────────────────────────────────────────────────────────────
+
+def result_section():
+    result = st.session_state.get("quiz_result")
+    if not result: return
+
+    pct       = result["pct"]
+    pill_cls, color = _rc(pct)
+    label     = _rl(pct)
+
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(52,211,153,.10);'>📊</div>
+      <div><div class='sec-title'>Your Result</div><div class='sec-sub'>Score breakdown and skill analysis</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    c1, c2, c3 = st.columns([1,1.6,1])
+    with c1:
+        st.markdown(f"""<div class='card-glass' style='text-align:center;padding:28px 16px;'>
+          <div class='score-big' style='color:{color};'>{pct}%</div>
+          <div class='score-lbl'>{result['score']}/{result['total']} correct</div>
+          <div class='r-pill {pill_cls}'>{label}</div>
+        </div>""", unsafe_allow_html=True)
+    with c2:
+        rows = build_teacher_dataframe(st.session_state.latest_session)
+        avg  = class_average_readiness(rows)
+        fig  = go.Figure()
+        fig.add_bar(x=["You","Class Avg"], y=[pct, avg], marker_color=[color,"#818cf8"],
+                    text=[f"{pct}%",f"{avg}%"], textposition="outside")
+        fig.update_layout(height=240, margin=dict(l=10,r=10,t=10,b=10),
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font_color="#94a3b8",
+            yaxis=dict(range=[0,110], gridcolor="rgba(255,255,255,.05)"),
+            xaxis=dict(gridcolor="rgba(0,0,0,0)"))
+        st.plotly_chart(fig, use_container_width=True)
+    with c3:
+        st.markdown(f"""<div class='card-glass' style='text-align:center;padding:28px 16px;'>
+          <div style='font-size:12px;color:#64748b;font-weight:700;margin-bottom:8px;'>WEAKEST SKILL</div>
+          <div style='font-size:18px;font-weight:800;color:#f87171;'>{result['weakest']}</div>
+          <div style='font-size:12px;color:#475569;margin-top:8px;'>Focus area</div>
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown("""<div class='sec-head' style='margin-top:1.5rem;'>
+      <div class='sec-icon' style='background:rgba(248,113,113,.10);'>🔬</div>
+      <div><div class='sec-title'>Mistake Clinic</div><div class='sec-sub'>Every wrong answer explained clearly</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    for i, d in enumerate(result["details"], 1):
+        ok = d["correct"]
+        with st.expander(f"{'✓' if ok else '✗'} Q{i}: {d['skill']} — {'Correct' if ok else 'Review needed'}"):
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown(f"<div style='font-size:13px;color:#64748b;'>Your answer</div><div style='font-size:14px;color:{'#34d399' if ok else '#f87171'};font-weight:600;'>{d['chosen'] or 'No answer'}</div>", unsafe_allow_html=True)
+            with col2:
+                st.markdown(f"<div style='font-size:13px;color:#64748b;'>Correct answer</div><div style='font-size:14px;color:#34d399;font-weight:600;'>{d['answer']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='margin-top:10px;font-size:14px;color:#cbd5e1;'>{d['why']}</div>", unsafe_allow_html=True)
+            if not ok:
+                st.info("Fix: read the definition → find one real example → say it in your own words.")
+
+    history = st.session_state.get("score_history",[])
+    if len(history) >= 2:
+        df_h = pd.DataFrame(history)
+        fig2 = px.line(df_h, x="Attempt", y="Score", markers=True, title="Your Readiness Trend", range_y=[0,100])
+        fig2.update_traces(line_color="#38bdf8", marker_color="#7c3aed")
+        fig2.update_layout(height=260, margin=dict(l=10,r=10,t=40,b=10),
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font_color="#94a3b8")
+        st.plotly_chart(fig2, use_container_width=True)
+
+
+# ── Smart QnA + UltraTutor ────────────────────────────────────────────────────
 
 def smart_qna():
-    if "pack" not in st.session_state:
-        return
-    st.markdown("### Smart QnA + UltraTutor")
-    question = st.text_input("Ask any question about this topic", value="Explain this topic with a simple example")
-    c1, c2 = st.columns(2)
-    ask = c1.button("Get Smart Answer", use_container_width=True)
-    tutor = c2.button("Explain Like a Tutor", use_container_width=True)
-    if ask:
-        ans = smart_answer_from_pack(st.session_state.pack, question)
-        st.markdown(f"""
-        <div class='answer-card'><div class='answer-title'>Smart answer</div><p>{ans['answer']}</p></div>
-        <div class='answer-card'><div class='answer-title'>Simple version</div><p>{ans['simple']}</p></div>
-        <div class='answer-card'><div class='answer-title'>Example</div><p>{ans['example']}</p></div>
-        <div class='answer-card'><div class='answer-title'>Reliability note</div><p>{ans['note']}</p></div>
-        """, unsafe_allow_html=True)
-        if ans.get("source_url"):
-            st.caption(f"Source: {ans['source_url']}")
-    if tutor:
-        sections = tutor_sections(st.session_state.pack, question, st.session_state.persona)
-        st.markdown(f"#### {sections['concept']}")
-        st.markdown(f"""
-        <div class='answer-card'><div class='answer-title'>Tiny answer</div><p>{sections['tiny_answer']}</p></div>
-        <div class='answer-card'><div class='answer-title'>Explain simply</div><p>{sections['explain_simply']}</p></div>
-        <div class='answer-card'><div class='answer-title'>Real-life example</div><p>{sections['real_life_example']}</p></div>
-        <div class='answer-card'><div class='answer-title'>Common mistake</div><p>{sections['common_mistake']}</p></div>
-        <div class='answer-card'><div class='answer-title'>Exam angle</div><p>{sections['exam_angle']}</p></div>
-        """, unsafe_allow_html=True)
+    if "pack" not in st.session_state: return
 
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(99,102,241,.12);'>🤖</div>
+      <div><div class='sec-title'>UltraTutor</div><div class='sec-sub'>Ask anything — get an answer matched exactly to how you asked</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    provider = _provider()
+    if provider != "none":
+        st.markdown(f"<div class='ai-bar'><div class='ai-dot'></div><div class='ai-txt'>AI active: {provider} — ask simply for simple answers, ask deeply for deep answers</div></div>", unsafe_allow_html=True)
+    else:
+        st.markdown("<div class='notice'>Running on local data. Set GEMINI_API_KEY in Streamlit secrets for AI answers.</div>", unsafe_allow_html=True)
+
+    persona = st.session_state.get("persona","Normal Mode")
+    hints = {"Normal Mode":"e.g. What is overfitting?","Coach Mode":"e.g. I'm confused, help me understand","Roast Mode":"e.g. Why does everyone talk about neural networks?"}
+    question = st.text_input("", placeholder=hints.get(persona,"Ask any question about this topic..."), key="tutor_q", label_visibility="collapsed")
+
+    col1, col2, col3 = st.columns([2,2,1])
+    with col1:
+        ask_smart = st.button("Smart Answer (local)", use_container_width=True)
+    with col2:
+        ask_tutor = st.button("UltraTutor (AI)", use_container_width=True)
+    with col3:
+        if st.button("Clear", use_container_width=True):
+            st.session_state.tutor_history = []; st.rerun()
+
+    if ask_smart and question.strip():
+        ans = smart_answer_from_pack(st.session_state.pack, question)
+        st.session_state.tutor_history.append({"question": question, "type": "smart", "response": ans})
+        st.rerun()
+
+    if ask_tutor and question.strip():
+        with st.spinner("Thinking..."):
+            s = tutor_sections(st.session_state.pack, question, persona)
+        st.session_state.tutor_history.append({"question": question, "type": "tutor", "response": s})
+        st.rerun()
+
+    for entry in reversed(st.session_state.get("tutor_history",[])):
+        q = entry["question"]
+        r = entry["response"]
+        t = entry.get("type","tutor")
+
+        if t == "smart":
+            st.markdown(f"<div style='margin:16px 0 4px;font-size:16px;font-weight:800;color:#f1f5f9;'>Smart Answer <span style='font-size:12px;color:#475569;margin-left:10px;'>\"{q}\"</span></div>", unsafe_allow_html=True)
+            c1, c2 = st.columns(2)
+            c1.markdown(f"<div class='card-glass'><div class='albl lbl-blue'>Answer</div><div class='atxt'>{r.get('answer','')}</div></div>", unsafe_allow_html=True)
+            c2.markdown(f"<div class='card-glass'><div class='albl lbl-green'>Simple version</div><div class='atxt'>{r.get('simple','')}</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='card-glass'><div class='albl lbl-purple'>Example</div><div class='atxt'>{r.get('example','')}</div></div>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<div style='margin:16px 0 4px;font-size:16px;font-weight:800;color:#f1f5f9;'>{r.get('concept','')} <span style='font-size:12px;color:#475569;margin-left:10px;'>\"{q}\"</span></div>", unsafe_allow_html=True)
+            parts = [("Tiny Answer","lbl-blue",r.get("tiny_answer","")),
+                     ("Explain Simply","lbl-purple",r.get("explain_simply","")),
+                     ("Real-Life Example","lbl-green",r.get("real_life_example","")),
+                     ("Common Mistake","lbl-red",r.get("common_mistake","")),
+                     ("Exam Angle","lbl-yellow",r.get("exam_angle",""))]
+            c1, c2 = st.columns(2)
+            for idx,(title,lbl,text) in enumerate(parts):
+                if not text: continue
+                (c1 if idx%2==0 else c2).markdown(f"<div class='card-glass'><div class='albl {lbl}'>{title}</div><div class='atxt'>{text}</div></div>", unsafe_allow_html=True)
+        st.markdown("<hr style='border-color:rgba(255,255,255,.05);margin:10px 0;'>", unsafe_allow_html=True)
+
+
+# ── Class Questions ───────────────────────────────────────────────────────────
 
 def class_questions_and_download():
-    if "pack" not in st.session_state:
-        return
-    st.markdown("### Smart Class Questions")
-    for i, question in enumerate(st.session_state.pack["class_questions"], 1):
-        st.write(f"{i}. {question}")
-    payload = {
-        "student": st.session_state.student,
-        "topic": st.session_state.pack["title"],
-        "brief": st.session_state.brief,
-        "class_questions": st.session_state.pack["class_questions"],
-        "quiz_result": st.session_state.get("quiz_result"),
-        "learning_mode": st.session_state.get("learning_mode", "Fast Review"),
-        "demo_summary": "Preluma prepared a Brain Brief, quiz, Mistake Clinic, Smart QnA, and class questions.",
-    }
-    st.download_button(
-        "Download Study Brief JSON",
-        data=json.dumps(payload, indent=2),
-        file_name=f"preluma_{st.session_state.pack['title'].lower().replace(' ', '_')}_brief.json",
-        mime="application/json",
-        use_container_width=True,
+    if "pack" not in st.session_state: return
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(34,211,238,.10);'>💬</div>
+      <div><div class='sec-title'>Smart Class Questions</div><div class='sec-sub'>Walk into class with questions that show you prepared</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    class_qs = st.session_state.get("class_questions", st.session_state.pack.get("class_questions",[]))
+    for i, q in enumerate(class_qs, 1):
+        st.markdown(f"<div class='card-glass' style='margin:6px 0;'><span style='color:#38bdf8;font-weight:700;font-size:13px;'>Q{i}</span><span style='color:#e2e8f0;font-size:14px;margin-left:10px;'>{q}</span></div>", unsafe_allow_html=True)
+
+    payload = {"student": st.session_state.student, "topic": st.session_state.pack["title"],
+               "brief": st.session_state.brief, "class_questions": class_qs,
+               "quiz_result": st.session_state.get("quiz_result"),
+               "learning_mode": st.session_state.get("learning_mode","Fast Review")}
+    st.download_button("Download Study Brief", data=json.dumps(payload, indent=2),
+        file_name=f"preluma_{st.session_state.pack['title'].lower().replace(' ','_')}.json",
+        mime="application/json", use_container_width=True)
+
+
+# ── How it works ──────────────────────────────────────────────────────────────
+
+def how_it_works():
+    st.markdown("""<div class='kpi-grid'>
+      <div class='kpi-card'><div class='kpi-num'>18</div><div class='kpi-lbl'>Curated Topics</div></div>
+      <div class='kpi-card'><div class='kpi-num'>4</div><div class='kpi-lbl'>Skill Checks</div></div>
+      <div class='kpi-card'><div class='kpi-num'>AI</div><div class='kpi-lbl'>Smart Tutor</div></div>
+      <div class='kpi-card'><div class='kpi-num'>CSV</div><div class='kpi-lbl'>Persistent Data</div></div>
+    </div>
+    <div class='flow-grid'>
+      <div class='flow-card'><div class='flow-step'>Step 1</div><div class='flow-title'>Prime the brain</div><div class='flow-desc'>AI Brain Brief with all concepts in tabs before the lecture.</div></div>
+      <div class='flow-card'><div class='flow-step'>Step 2</div><div class='flow-title'>Find weak spots</div><div class='flow-desc'>4-question quiz detects exactly which skill needs work.</div></div>
+      <div class='flow-card'><div class='flow-step'>Step 3</div><div class='flow-title'>Ask better questions</div><div class='flow-desc'>Leave with AI-generated class questions and a readiness score.</div></div>
+    </div>""", unsafe_allow_html=True)
+
+
+# ── Student Mission ───────────────────────────────────────────────────────────
+
+def _set_mission_step(step: int) -> None:
+    st.session_state.mission_step = max(1, min(5, int(step)))
+    st.rerun()
+
+
+def _mission_navigation(previous_step: int | None, next_step: int | None, next_label: str = "Next") -> None:
+    left, center, right = st.columns([1, 2, 1])
+    with left:
+        if previous_step is not None and st.button("← Previous", use_container_width=True):
+            _set_mission_step(previous_step)
+    with center:
+        step = st.session_state.get("mission_step", 1)
+        st.progress(step / 5, text=f"Learning mission: Step {step} of 5")
+    with right:
+        if next_step is not None and st.button(f"{next_label} →", use_container_width=True):
+            _set_mission_step(next_step)
+
+
+def mission_brain_brief_screen() -> None:
+    brief = st.session_state.brief
+    pack = st.session_state.pack
+
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(99,102,241,.15);'>🧠</div>
+      <div><div class='sec-title'>Step 1 · Understand the Big Idea</div>
+      <div class='sec-sub'>A friendly foundation before examples and practice</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class='card-glass' style='border-color:rgba(99,102,241,.35);'>
+      <div class='albl lbl-blue'>The tiny answer</div>
+      <div class='atxt'>{brief.get("tiny_answer", "")}</div>
+    </div>
+    <div class='card-glass'>
+      <div class='albl lbl-purple'>Think of it like this</div>
+      <div class='atxt'>{brief.get("simple", "")}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    key_points = brief.get("facts", [])[:3]
+    if key_points:
+        st.markdown("#### Three things to remember")
+        columns = st.columns(len(key_points))
+        for column, fact in zip(columns, key_points):
+            column.markdown(
+                f"<div class='concept-block'><div class='concept-block-title'>Remember</div>"
+                f"<p>{fact}</p></div>",
+                unsafe_allow_html=True,
+            )
+
+    all_concepts = brief.get("all_concepts", {})
+    if all_concepts:
+        with st.expander("Explore the key concepts"):
+            tabs = st.tabs([name.title() for name in all_concepts])
+            for tab, (name, concept) in zip(tabs, all_concepts.items()):
+                with tab:
+                    st.write(concept.get("kid", concept.get("definition", "")))
+                    st.caption(f"Exam reminder: {concept.get('exam', '')}")
+
+    if pack.get("source_url"):
+        st.caption("Source-supported topic pack is active.")
+
+    _mission_navigation(None, 2, "See a Real Example")
+
+
+def mission_example_screen() -> None:
+    brief = st.session_state.brief
+    pack = st.session_state.pack
+
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(168,85,247,.15);'>🌍</div>
+      <div><div class='sec-title'>Step 2 · See It in Real Life</div>
+      <div class='sec-sub'>Turn theory into a picture you can remember</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    example = brief.get("example", "")
+    misconception = brief.get("misconception", "")
+    applications = pack.get("applications", {})
+
+    st.markdown(f"""
+    <div class='card-glass' style='border-color:rgba(168,85,247,.35);'>
+      <div class='albl lbl-purple'>Imagine this</div>
+      <div class='atxt'>{example}</div>
+    </div>
+    <div class='card-glass'>
+      <div class='albl lbl-red'>Do not confuse it with this</div>
+      <div class='atxt'>{misconception}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if applications:
+        st.markdown("#### Where this idea is useful")
+        cols = st.columns(min(3, len(applications)))
+        for index, (name, value) in enumerate(applications.items()):
+            cols[index % len(cols)].markdown(
+                f"<div class='concept-block'><div class='concept-block-title'>"
+                f"{name.title()}</div><p>{value}</p></div>",
+                unsafe_allow_html=True,
+            )
+
+    st.info("Memory trick: connect the definition to one vivid example before trying to memorize it.")
+    _mission_navigation(1, 3, "Try It Yourself")
+
+
+def mission_practice_screen() -> None:
+    brief = st.session_state.brief
+    pack = st.session_state.pack
+    concept_name = brief.get("key_concept", pack.get("title", "the topic"))
+
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(245,158,11,.15);'>✍️</div>
+      <div><div class='sec-title'>Step 3 · Practice the Idea</div>
+      <div class='sec-sub'>Active thinking makes the idea stay in memory</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class='card-glass' style='border-color:rgba(245,158,11,.35);'>
+      <div class='albl lbl-yellow'>Your challenge</div>
+      <div class='atxt'>Explain <b>{concept_name}</b> in your own words, then give one example.</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    reflection = st.text_area(
+        "Write your explanation",
+        value=st.session_state.get("practice_reflection", ""),
+        placeholder="Start with: In simple words, this means...",
+        height=150,
     )
+    st.session_state.practice_reflection = reflection
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Show a gentle hint", use_container_width=True):
+            st.info(f"Use this pattern: meaning → why it matters → example. Simple idea: {brief.get('simple', '')}")
+    with col2:
+        if st.button("Check my thinking", use_container_width=True):
+            word_count = len(reflection.split())
+            if word_count < 8:
+                st.warning("Add a little more: include both the meaning and an example.")
+            elif "example" not in reflection.casefold() and "like" not in reflection.casefold():
+                st.info("Good start. Add a phrase such as “For example…” to make your explanation stronger.")
+            else:
+                st.success("Strong practice answer. You explained the idea and connected it to an example.")
+
+    _mission_navigation(2, 4, "Take the Mock Test")
+
+
+def _save_mission_quiz_result(result: dict) -> None:
+    st.session_state.quiz_result = result
+    st.session_state.latest_session = {
+        "Student": st.session_state.student,
+        "Topic": st.session_state.pack["title"],
+        "Readiness": result["pct"],
+        "Weak Skill": result["weakest"],
+    }
+    st.session_state.score_history = st.session_state.get("score_history", [])
+    st.session_state.score_history.append({
+        "Attempt": len(st.session_state.score_history) + 1,
+        "Topic": st.session_state.pack["title"],
+        "Score": result["pct"],
+    })
+    append_student_row({
+        "Record ID": next_record_id(),
+        "Student": st.session_state.student,
+        "Topic": st.session_state.pack["title"],
+        "Readiness": result["pct"],
+        "Weak Skill": result["weakest"],
+        "Quiz Score": result["score"],
+        "Quiz Total": result["total"],
+        "Lecture Time": "Pre-class mission",
+        "Learning Mode": st.session_state.get("learning_mode", "Fast Review"),
+        "Created At": timestamp(),
+    })
+
+
+def mission_mock_test_screen() -> None:
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(239,68,68,.15);'>📝</div>
+      <div><div class='sec-title'>Step 4 · Mini Mock Test</div>
+      <div class='sec-sub'>Check understanding before entering the lecture</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    questions = st.session_state.questions
+    if st.session_state.get("quiz_result"):
+        result = st.session_state.quiz_result
+        st.success(f"Submitted: {result['score']}/{result['total']} correct · {result['pct']}% readiness")
+        for index, detail in enumerate(result["details"], 1):
+            status = "Correct" if detail["correct"] else "Review"
+            with st.expander(f"Question {index} · {status} · {detail['skill']}"):
+                st.write(f"Your answer: {detail['chosen'] or 'No answer'}")
+                st.write(f"Correct answer: {detail['answer']}")
+                st.info(detail["why"])
+        _mission_navigation(3, 5, "View Final Overview")
+        return
+
+    with st.form("guided_mock_test", border=False):
+        answers = {}
+        for index, question in enumerate(questions):
+            st.markdown(
+                f"<div class='card-glass'><div class='albl lbl-red'>"
+                f"{question['skill']}</div><div class='atxt'>{question['q']}</div></div>",
+                unsafe_allow_html=True,
+            )
+            answers[index] = st.radio(
+                "Choose one",
+                question["options"],
+                key=f"guided_quiz_{index}",
+                label_visibility="collapsed",
+            )
+        submitted = st.form_submit_button("Submit Mock Test", use_container_width=True)
+
+    if submitted:
+        result = grade(questions, answers)
+        _save_mission_quiz_result(result)
+        st.rerun()
+
+    _mission_navigation(3, None)
+
+
+def mission_overview_screen() -> None:
+    brief = st.session_state.brief
+    result = st.session_state.get("quiz_result")
+    class_questions = st.session_state.get("class_questions", [])
+    score = result.get("pct", 0) if result else 0
+    weak = result.get("weakest", "Not tested") if result else "Not tested"
+
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(16,185,129,.15);'>✅</div>
+      <div><div class='sec-title'>Step 5 · Your Learning Overview</div>
+      <div class='sec-sub'>What you know, what to review, and what to ask in class</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Readiness", f"{score}%")
+    c2.metric("Weakest skill", weak)
+    c3.metric("Mission status", "Completed")
+
+    st.markdown(f"""
+    <div class='card-glass' style='border-color:rgba(16,185,129,.35);'>
+      <div class='albl lbl-green'>One-sentence summary</div>
+      <div class='atxt'>{brief.get("tiny_answer", "")}</div>
+    </div>
+    <div class='card-glass'>
+      <div class='albl lbl-yellow'>Your next study action</div>
+      <div class='atxt'>Review <b>{weak}</b>, explain the topic once in your own words, and ask one question during class.</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if class_questions:
+        st.markdown("#### Questions you are ready to ask in class")
+        for number, question in enumerate(class_questions[:5], 1):
+            st.write(f"{number}. {question}")
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("← Review Practice", use_container_width=True):
+            _set_mission_step(3)
+    with col2:
+        if st.button("Ask Preluma AI", use_container_width=True):
+            st.session_state.ai_context_note = (
+                f"Current topic: {st.session_state.pack['title']}. "
+                f"Student readiness: {score}%. Weak skill: {weak}."
+            )
+            st.session_state.force_page_ai = True
+            st.info("Open “✨ Ask Preluma AI” from the sidebar. Your topic context is ready.")
+    with col3:
+        if st.button("Start a New Mission", use_container_width=True):
+            for key in ["pack", "brief", "questions", "quiz_result", "class_questions"]:
+                st.session_state.pop(key, None)
+            st.session_state.mission_started = False
+            st.session_state.mission_step = 0
+            st.rerun()
 
 
 def student_mission(presentation):
     hero()
-    chips()
-    mission_control()
-    brain_brief()
-    quiz()
-    result_and_mistake_clinic()
-    smart_qna()
-    class_questions_and_download()
-    if presentation:
-        metrics_and_steps()
+    chip_row()
 
+    if not st.session_state.get("mission_started") or "pack" not in st.session_state:
+        mission_control()
+        if presentation:
+            how_it_works()
+        return
+
+    step = st.session_state.get("mission_step", 1)
+    if step == 1:
+        mission_brain_brief_screen()
+    elif step == 2:
+        mission_example_screen()
+    elif step == 3:
+        mission_practice_screen()
+    elif step == 4:
+        mission_mock_test_screen()
+    else:
+        mission_overview_screen()
+
+
+
+# ── Teacher Studio
+
+# ── Teacher Studio ────────────────────────────────────────────────────────────
 
 def teacher_studio():
     hero()
-    st.markdown("### Teacher Studio")
-    st.markdown("<div class='notice'>Teacher Studio is now backed by pure Python analytics, manual Merge Sort, Binary Search, CSV persistence, and result.txt audit logging.</div>", unsafe_allow_html=True)
-    rows = build_teacher_dataframe(st.session_state.get("latest_session"))
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(56,189,248,.12);'>👩‍🏫</div>
+      <div><div class='sec-title'>Teacher Studio</div><div class='sec-sub'>Manual Python algorithms: Merge Sort, Binary Search, CSV persistence, audit log</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    rows      = build_teacher_dataframe(st.session_state.get("latest_session"))
     analytics = teacher_analytics(rows)
-    summary = analytics["summary"]
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Class Average", f"{summary['class_average']}%")
-    c2.metric("Variance", summary["population_variance"])
-    c3.metric("Students Tracked", summary["students_tracked"])
-    c4.metric("Weak Skills", summary["unique_weak_skills"])
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["CSV Records", "Merge Sort Ranking", "Search Student", "Weak Skill Analytics", "Audit Log"])
+    summary   = analytics["summary"]
+
+    c1,c2,c3,c4 = st.columns(4)
+    c1.metric("Class Average",  f"{summary['class_average']}%")
+    c2.metric("Variance",       summary["population_variance"])
+    c3.metric("Students",       summary["students_tracked"])
+    c4.metric("Unique Weak Skills", summary["unique_weak_skills"])
+
+    tab1,tab2,tab3,tab4,tab5 = st.tabs(["CSV Records","Merge Sort Ranking","Search Student","Skill Analytics","Audit Log"])
+
     with tab1:
-        st.caption("Loaded from data/students.csv using Python csv module.")
+        st.caption("Physical file: data/students.csv — Python csv module, no pandas for I/O.")
         st.dataframe(rows, use_container_width=True)
+
     with tab2:
-        st.caption(f"Manual Merge Sort by Readiness. elapsed_ns={analytics['sort_readiness_ns']}")
+        st.caption(f"Manual Merge Sort by Readiness — O(n log n) — elapsed: {analytics['sort_readiness_ns']} ns")
         st.dataframe(analytics["sorted_by_readiness"], use_container_width=True)
         fig = go.Figure()
-        fig.add_bar(x=[str(row.get("Student", "")) for row in analytics["sorted_by_readiness"]], y=[float(row.get("Readiness", 0.0)) for row in analytics["sorted_by_readiness"]])
-        fig.update_layout(title="Readiness Ranking by Manual Merge Sort", yaxis_range=[0, 100], height=360)
+        fig.add_bar(
+            x=[str(r.get("Student","")) for r in analytics["sorted_by_readiness"]],
+            y=[float(r.get("Readiness",0)) for r in analytics["sorted_by_readiness"]],
+            marker_color="#38bdf8")
+        fig.update_layout(title="Readiness Ranking — Manual Merge Sort", yaxis_range=[0,100], height=360,
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font_color="#94a3b8")
         st.plotly_chart(fig, use_container_width=True)
+
     with tab3:
-        target = st.text_input("Search student name", value="Mamunur")
-        if st.button("Run Linear Search + Binary Search", use_container_width=True):
-            result = search_student(rows, target)
-            st.write(f"Linear Search elapsed_ns: {result['linear_ns']}")
-            st.write(f"Binary Search elapsed_ns: {result['binary_ns']}")
-            st.write(f"Name-sort before Binary Search elapsed_ns: {result['sort_ns']}")
-            st.write("Binary Search result:")
-            st.dataframe(result["binary_result"], use_container_width=True)
-            st.write("Linear Search baseline result:")
-            st.dataframe(result["linear_result"], use_container_width=True)
+        target = st.text_input("Search student name", value="Amir")
+        if st.button("Run Search Comparison", use_container_width=True):
+            res = search_student(rows, target)
+            col1, col2 = st.columns(2)
+            col1.metric("Linear Search O(n)",       f"{res['linear_ns']} ns")
+            col2.metric("Binary Search O(log n)",   f"{res['binary_ns']} ns")
+            st.caption(f"Merge Sort before Binary Search: {res['sort_ns']} ns — Total Binary Pipeline: {res['total_binary_pipeline_ns']} ns")
+            if res["binary_result"]:
+                st.dataframe(res["binary_result"], use_container_width=True)
+            else:
+                st.info(f"No student found with name '{target}'.")
+
     with tab4:
-        st.caption("Weak skill counts generated by pure Python frequency loop.")
+        st.caption("Weak skill frequency — pure Python loop, no libraries.")
         st.dataframe(analytics["weak_skill_frequency"], use_container_width=True)
+        if analytics["weak_skill_frequency"]:
+            df_skill = pd.DataFrame(analytics["weak_skill_frequency"])
+            if "Weak Skill" in df_skill.columns and "Count" in df_skill.columns:
+                fig2 = px.pie(df_skill, values="Count", names="Weak Skill", title="Skill Gap Distribution", hole=0.45)
+                fig2.update_layout(height=300, paper_bgcolor="rgba(0,0,0,0)", font_color="#94a3b8")
+                st.plotly_chart(fig2, use_container_width=True)
+
     with tab5:
-        st.caption("Latest result.txt audit log entries.")
-        for line in read_recent_logs(12):
+        st.caption("result.txt — algorithm timing audit log.")
+        for line in read_recent_logs(15):
             st.code(line, language="text")
+
+
+
+def ask_preluma_ai_page():
+    hero()
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(99,102,241,.15);'>✨</div>
+      <div><div class='sec-title'>Ask Preluma AI</div>
+      <div class='sec-sub'>A patient tutor that adapts to the way you want to learn</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    pack = st.session_state.get("pack")
+    topic = pack.get("title") if pack else st.session_state.get("topic", "General learning")
+    context_note = st.session_state.get("ai_context_note", "")
+
+    if context_note:
+        st.markdown(
+            f"<div class='ai-bar'><div class='ai-dot'></div>"
+            f"<div class='ai-txt'>{context_note}</div></div>",
+            unsafe_allow_html=True,
+        )
+
+    mode = st.selectbox(
+        "How should Preluma explain?",
+        ["Explain like I am 5", "Friendly Tutor", "Step-by-Step", "Exam/Viva Answer", "Give More Examples"],
+    )
+    question = st.text_area(
+        "What do you want to understand?",
+        placeholder="Example: Why is my answer wrong? Explain it like I am a child.",
+        height=120,
+    )
+
+    quick_prompts = st.columns(4)
+    prompt_texts = [
+        "Explain the main idea simply",
+        "Give one real example",
+        "Why is this important?",
+        "Give me a similar practice question",
+    ]
+    for column, prompt in zip(quick_prompts, prompt_texts):
+        if column.button(prompt, use_container_width=True):
+            question = prompt
+            st.session_state.ai_quick_question = prompt
+
+    active_question = st.session_state.pop("ai_quick_question", question)
+    if st.button("Ask Preluma AI", use_container_width=True) and active_question.strip():
+        style_prefix = {
+            "Explain like I am 5": "Explain like I am 5 years old using a fun analogy. ",
+            "Friendly Tutor": "Explain as a kind and friendly tutor. ",
+            "Step-by-Step": "Explain step by step and show how each step connects. ",
+            "Exam/Viva Answer": "Give an exam-ready and viva-ready answer. ",
+            "Give More Examples": "Teach mainly through two simple real-life examples. ",
+        }[mode]
+        full_question = style_prefix + active_question
+        with st.spinner("Preluma AI is preparing a friendly explanation..."):
+            if pack:
+                response = tutor_sections(pack, full_question, st.session_state.get("persona", "Normal Mode"))
+            else:
+                response = {
+                    "concept": topic,
+                    "tiny_answer": "Start by identifying the exact concept you want to understand.",
+                    "explain_simply": "Choose a mission topic first so Preluma can use the correct lesson context.",
+                    "real_life_example": "For example, start a Neural Network mission and then ask about weights.",
+                    "common_mistake": "Asking without enough context can produce a less specific explanation.",
+                    "exam_angle": "Define the topic, explain the mechanism, and give one example.",
+                }
+
+        st.markdown(f"#### {response.get('concept', topic)}")
+        fields = [
+            ("Direct answer", "lbl-blue", response.get("tiny_answer", "")),
+            ("Friendly explanation", "lbl-purple", response.get("explain_simply", "")),
+            ("Real example", "lbl-green", response.get("real_life_example", "")),
+            ("Common mistake", "lbl-red", response.get("common_mistake", "")),
+            ("Exam memory line", "lbl-yellow", response.get("exam_angle", "")),
+        ]
+        for title, label, value in fields:
+            if value:
+                st.markdown(
+                    f"<div class='card-glass'><div class='albl {label}'>{title}</div>"
+                    f"<div class='atxt'>{value}</div></div>",
+                    unsafe_allow_html=True,
+                )
+
+
+def my_homework_page():
+    hero()
+    student = st.session_state.get("student", "Student")
+    st.markdown(f"### My Homework · {student}")
+
+    notifications = notifications_for_student(student)
+    if notifications:
+        with st.expander(f"🔔 Notifications ({len(notifications)})", expanded=True):
+            for note in reversed(notifications[-5:]):
+                st.markdown(
+                    f"<div class='card-glass'><div class='albl lbl-blue'>{note.get('Title')}</div>"
+                    f"<div class='atxt'>{note.get('Message')}</div></div>",
+                    unsafe_allow_html=True,
+                )
+
+    homework_rows = homework_for_student(student)
+    if not homework_rows:
+        st.info("No homework has been assigned to this student yet.")
+        return
+
+    labels = {
+        f"#{row['Homework ID']} · {row['Title']} · Due {row['Due Date']}": row
+        for row in homework_rows
+    }
+    selected_label = st.selectbox("Choose homework", list(labels))
+    selected = labels[selected_label]
+    homework_id = selected["Homework ID"]
+    st.session_state.selected_homework_id = homework_id
+
+    st.markdown(f"""
+    <div class='card-glass'>
+      <div class='albl lbl-purple'>{selected.get('Topic')}</div>
+      <div class='atxt'><b>{selected.get('Title')}</b><br>{selected.get('Instructions')}</div>
+      <div style='margin-top:12px;color:#94a3b8;font-size:13px;'>
+        Due: {selected.get('Due Date')} · Difficulty: {selected.get('Difficulty')}
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    questions = load_questions(homework_id)
+    with st.form(f"homework_form_{homework_id}", border=False):
+        answers = {}
+        for question in questions:
+            question_id = int(question["Question ID"])
+            st.markdown(
+                f"<div class='card-glass'><div class='albl lbl-yellow'>"
+                f"Question {question_id} · {question.get('Concept')}</div>"
+                f"<div class='atxt'>{question.get('Question')}</div></div>",
+                unsafe_allow_html=True,
+            )
+            answers[question_id] = st.radio(
+                "Choose one",
+                question["Options"],
+                key=f"homework_{homework_id}_{question_id}",
+                label_visibility="collapsed",
+            )
+        submitted = st.form_submit_button("Submit Homework", use_container_width=True)
+
+    if submitted:
+        st.session_state.homework_result = submit_homework(homework_id, student, answers)
+        st.rerun()
+
+    result = st.session_state.get("homework_result")
+    if result:
+        st.success(
+            f"Homework submitted · Attempt {result['attempt']} · "
+            f"{result['score']}/{result['total']} · {result['percentage']}%"
+        )
+        for detail in result["details"]:
+            if detail["correct"]:
+                continue
+            with st.expander(f"Review: {detail['concept']}", expanded=True):
+                st.write(f"Your answer: {detail['chosen']}")
+                st.write(f"Correct answer: {detail['correct_answer']}")
+                st.info(detail["explanation"])
+                if st.button(
+                    f"Ask Preluma AI about {detail['concept']}",
+                    key=f"ask_mistake_{detail['question_id']}",
+                ):
+                    st.session_state.ai_context_note = (
+                        f"Homework mistake. Topic: {selected.get('Topic')}. "
+                        f"Question: {detail['question']} "
+                        f"Student answer: {detail['chosen']}. "
+                        f"Correct answer: {detail['correct_answer']}."
+                    )
+                    st.info("Open “✨ Ask Preluma AI” from the sidebar. The mistake context is ready.")
+
+    mistakes = load_student_mistakes(student)
+    if mistakes:
+        with st.expander("My captured weak areas"):
+            for mistake in mistakes[-8:]:
+                st.write(
+                    f"• {mistake.get('Weak Concept')} — "
+                    f"{mistake.get('Question')}"
+                )
+
+
+def _default_homework_questions(topic: str) -> list[dict]:
+    return [
+        {
+            "question": f"What is the best simple definition of {topic}?",
+            "options": [
+                f"The main idea and meaning of {topic}",
+                "A random unrelated fact",
+                "Only a difficult formula",
+                "Something that cannot be learned",
+            ],
+            "answer": f"The main idea and meaning of {topic}",
+            "concept": "Definition",
+            "explanation": "Start with the core meaning before learning details.",
+            "marks": 1,
+        },
+        {
+            "question": f"What is the best way to understand {topic}?",
+            "options": [
+                "Connect the definition with an example",
+                "Memorize one sentence without meaning",
+                "Skip practice",
+                "Avoid asking questions",
+            ],
+            "answer": "Connect the definition with an example",
+            "concept": "Application",
+            "explanation": "Examples connect theory to something the learner can picture.",
+            "marks": 1,
+        },
+        {
+            "question": f"What should a student do after making a mistake in {topic}?",
+            "options": [
+                "Review the weak concept and try again",
+                "Hide the mistake",
+                "Stop studying",
+                "Choose random answers",
+            ],
+            "answer": "Review the weak concept and try again",
+            "concept": "Reflection",
+            "explanation": "Mistakes are useful when they guide the next study action.",
+            "marks": 1,
+        },
+    ]
+
+
+def homework_center_page():
+    hero()
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(14,165,233,.15);'>🏫</div>
+      <div><div class='sec-title'>Homework Center</div>
+      <div class='sec-sub'>Teacher assignment, student submission, and class diagnostics</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    create_tab, overview_tab = st.tabs(["Create Homework", "Class Overview"])
+
+    with create_tab:
+        with st.form("teacher_homework_creator", border=False):
+            c1, c2 = st.columns(2)
+            title = c1.text_input("Homework title", value="Introduction Practice")
+            topic = c2.text_input("Topic", value="Machine Learning")
+            instructions = st.text_area(
+                "Instructions",
+                value="Read the topic summary and answer all questions.",
+            )
+            c3, c4, c5 = st.columns(3)
+            due_date = c3.text_input("Due date", value="Friday 8:00 PM")
+            difficulty = c4.selectbox("Difficulty", ["Beginner", "Intermediate", "Advanced"])
+            assigned_to = c5.text_input(
+                "Assign to",
+                value="All Students",
+                help="Use All Students or comma-separated student names.",
+            )
+            publish = st.form_submit_button("Publish Homework", use_container_width=True)
+
+        if publish:
+            homework_id = create_homework(
+                title=title,
+                topic=topic,
+                instructions=instructions,
+                due_date=due_date,
+                difficulty=difficulty,
+                assigned_to=assigned_to,
+                created_by="Teacher Demo",
+                questions=_default_homework_questions(topic),
+            )
+            st.success(f"Homework #{homework_id} published. Student notifications were created.")
+
+    with overview_tab:
+        rows = load_homework()
+        if not rows:
+            st.info("No homework is available.")
+        else:
+            labels = {
+                f"#{row['Homework ID']} · {row['Title']}": row
+                for row in rows
+            }
+            selected_label = st.selectbox(
+                "Homework report",
+                list(labels),
+                key="teacher_homework_report",
+            )
+            selected = labels[selected_label]
+            report = homework_overview(selected["Homework ID"])
+
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Submissions", report["submissions"])
+            c2.metric("Average", f"{report['average']}%")
+            c3.metric("Highest", f"{report['highest']}%")
+            c4.metric("Lowest", f"{report['lowest']}%")
+
+            st.markdown(
+                f"<div class='card-glass'><div class='albl lbl-red'>"
+                f"Most common weak concept</div><div class='atxt'>"
+                f"{report['common_weak_concept']} "
+                f"({report['common_weak_count']} captured mistakes)</div></div>",
+                unsafe_allow_html=True,
+            )
+            st.dataframe(report["submission_rows"], use_container_width=True)
+
+
+# ── Evidence Board ────────────────────────────────────────────────────────────
 
 def evidence_board():
     hero()
-    st.markdown("### Evidence Board")
-    st.markdown("""
-    <div class='prof-grid'>
-        <div class='prof-card'><h4>Clear Problem</h4><p>Students often enter lectures unprepared, which leads to passive learning and poor retention.</p></div>
-        <div class='prof-card'><h4>Python Implementation</h4><p>The project is built with Python, Streamlit, Pandas, Plotly, dictionaries, functions, forms, session state, and Requests.</p></div>
-        <div class='prof-card'><h4>Learning Workflow</h4><p>Preluma combines Brain Brief, quiz, Mistake Clinic, Smart QnA, class questions, and readiness score.</p></div>
-        <div class='prof-card'><h4>Real Data Upgrade</h4><p>Unknown topics can use Wikipedia API through Python Requests as a real-data fallback.</p></div>
-        <div class='prof-card'><h4>Teacher Value</h4><p>Teacher Studio demonstrates readiness analytics and weak-skill detection.</p></div>
-        <div class='prof-card'><h4>Testing</h4><p>Regression tests check topic data, core flow, Wikipedia argument support, and quiz logic.</p></div>
-    </div>
-    """, unsafe_allow_html=True)
-    st.markdown("### Python Concepts Used")
-    concepts = pd.DataFrame({
-        "Concept": ["Functions", "Dictionaries", "Session State", "Forms", "DataFrame", "Plotly Charts", "Requests API", "File Export", "Testing"],
-        "Use in Project": ["Reusable units", "Topic packs", "Remember user flow", "Safe submissions", "Analytics", "Readiness chart", "Wikipedia fetch", "Download JSON", "Stability tests"],
-    })
-    st.dataframe(concepts, use_container_width=True)
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(167,139,250,.12);'>📋</div>
+      <div><div class='sec-title'>Evidence Board</div><div class='sec-sub'>What this project demonstrates and why it matters</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    st.markdown("""<div class='ev-grid'>
+      <div class='ev-card'><h4>Clear Problem</h4><p>Students enter lectures unprepared, leading to passive learning and poor retention.</p></div>
+      <div class='ev-card'><h4>Python Architecture</h4><p>Streamlit, Pandas, Plotly, dicts, session state, forms, CSV, and modular functions.</p></div>
+      <div class='ev-card'><h4>Manual Algorithms</h4><p>Merge Sort O(n log n) and Binary Search O(log n) implemented from scratch — no library sorting.</p></div>
+      <div class='ev-card'><h4>Multi-LLM AI</h4><p>Claude, Groq, and Gemini with automatic fallback — whichever key is available is used.</p></div>
+      <div class='ev-card'><h4>CSV Persistence</h4><p>Student quiz results stored in data/students.csv using Python csv module. Survives page refresh.</p></div>
+      <div class='ev-card'><h4>Wikipedia Fallback</h4><p>Unknown topics fetch real content from Wikipedia API — no empty answers ever.</p></div>
+      <div class='ev-card'><h4>Audit Log</h4><p>Every algorithm call is timed and written to result.txt with nanosecond precision.</p></div>
+      <div class='ev-card'><h4>Smart Tutor Style</h4><p>UltraTutor detects if you want child-simple, exam-ready, example-first, or deep explanation.</p></div>
+      <div class='ev-card'><h4>Live Deployment</h4><p>Running live at preluma-edtech.streamlit.app — accessible from any device, anywhere.</p></div>
+    </div>""", unsafe_allow_html=True)
+
     errors = validate_topics()
     if errors:
-        st.warning("Some topic validation issues were found.")
-        for issue in errors:
-            st.write(f"- {issue}")
+        st.warning("Topic issues: " + ", ".join(errors[:3]))
     else:
-        st.success("Topic data validation passed.")
+        st.success(f"All topic packs validated — no data errors found.")
 
-
-def professor_defense():
-    hero()
-    st.markdown("### Professor Defense")
-    st.markdown("<div class='notice'>This page is designed for final presentation defense: problem, Python implementation, innovation, testing, and contribution are explained clearly.</div>", unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class='rubric-grid'>
-        <div class='rubric-card'><h4>1. Real Problem</h4><p>Students enter lectures unprepared, which reduces understanding, memory, and class participation.</p></div>
-        <div class='rubric-card'><h4>2. Python Solution</h4><p>Preluma uses Python Streamlit to create a pre-class mission: topic input, Brain Brief, quiz, Mistake Clinic, Smart QnA, and dashboard.</p></div>
-        <div class='rubric-card'><h4>3. Real Data</h4><p>For unknown topics, Python Requests can fetch Wikipedia summary as a real-data fallback.</p></div>
-        <div class='rubric-card'><h4>4. Teacher Value</h4><p>Teacher Studio shows readiness scores and weak-skill analytics before class.</p></div>
-        <div class='rubric-card'><h4>5. Testing Proof</h4><p>Regression tests verify topic schema, build_pack, quiz flow, tutor output, and Smart QnA.</p></div>
-        <div class='rubric-card'><h4>6. Future Product</h4><p>The project can grow into student accounts, teacher class codes, PDF notes, RAG retrieval, and mobile app support.</p></div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("### Architecture")
-    st.code(
-        "Student Input → Topic Router → Curated Topic Pack / Wikipedia Fallback → Brain Brief → Quiz → Mistake Clinic → Smart QnA → Teacher Analytics → Export",
-        language="text",
-    )
-
-    st.markdown("### 100/100 Rubric Target")
-    rubric = pd.DataFrame({
-        "Area": ["Problem Clarity", "Python Logic", "Data Handling", "Interactivity", "Testing", "UI/Presentation", "Team Contribution", "Future Potential"],
-        "What We Show": [
-            "Clear learning problem",
-            "Functions, modules, session state, quiz engine",
-            "Topic dictionaries, schema validation, Wikipedia fallback",
-            "Forms, quiz, QnA, download, dashboard",
-            "Pytest and regression tests",
-            "Premium Streamlit presentation",
-            "Workload table and Project Team page",
-            "Roadmap for real EdTech product",
-        ],
-        "Score Strategy": ["High", "High", "High", "High", "High", "High", "High", "High"],
-    })
-    st.dataframe(rubric, use_container_width=True)
-
-    st.markdown("### Defense Line")
-    st.success("Preluma is a Python Streamlit project. All core logic is Python: data processing, topic routing, quiz grading, Smart QnA, CSV persistence, manual Merge Sort, Binary Search, timing logs, teacher analytics, export, and testing. Styling is only for presentation inside the Streamlit app.")
-
-
-def project_team():
-    st.markdown("### Project Team")
-    bg = f"url('{TEAM_URI}')" if TEAM_URI else "linear-gradient(135deg,#020617,#4c1d95)"
-    st.markdown(f"""
-    <div class='team-hero' style="background-image: {bg};">
-        <div class='team-hero-content'>
-            <span class='badge'>Team Preluma • Yunnan University</span>
-            <h1>Built by students, for better pre-class learning.</h1>
-            <p>This page shows the real project team and the workload distribution behind Preluma.</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    st.markdown("""
-    <div class='member-grid'>
-        <div class='member-card'>
-            <div class='member-role'>Feature Logic • Quiz Testing</div>
-            <h3>MD FAHIM</h3>
-            <p>Supported quiz behavior checking, interaction feedback, and feature testing.</p>
-            <ul class='contribution-list'><li>Quiz behavior checking</li><li>Interaction feedback</li><li>Feature testing support</li></ul>
-        </div>
-        <div class='member-card main'>
-            <div class='member-role'>Core Development • UI/UX • Integration • Deployment</div>
-            <h3>MAMUNUR RASHID</h3>
-            <p>Handled the hardest core part of Preluma: product design, Python Streamlit UI, system integration, deployment, real-data upgrade, and final demo flow.</p>
-            <ul class='contribution-list'><li>Main Python Streamlit app development</li><li>UI/UX design and premium interface polish</li><li>Core module integration and deployment</li><li>Wikipedia real-data and Smart QnA upgrade</li><li>Final demo flow and presentation preparation</li></ul>
-        </div>
-        <div class='member-card'>
-            <div class='member-role'>Topic Data • Documentation</div>
-            <h3>MD JIARUL ISLAM</h3>
-            <p>Supported topic data organization, documentation, and presentation preparation.</p>
-            <ul class='contribution-list'><li>Topic data support</li><li>Documentation support</li><li>Presentation support</li></ul>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    st.markdown("### Work Division")
+    st.markdown("### Python Concepts Demonstrated")
     st.dataframe(pd.DataFrame({
-        "Member": ["MAMUNUR RASHID", "MD FAHIM", "MD JIARUL ISLAM"],
-        "Main Responsibility": ["Core development, UI/UX, system integration, deployment, real-data upgrade, final demo flow", "Feature logic, quiz testing, interaction feedback", "Topic data, documentation, presentation support"],
-        "Project Value": ["Builds the hardest core system and connects all parts into one deployed Python Streamlit product", "Improves interaction quality and checks app behavior", "Strengthens content base and presentation material"],
+        "Concept": ["Functions","Nested Dicts","Session State","Forms","DataFrame","Plotly Charts",
+                    "CSV File I/O","Wikipedia API","Multi-LLM","Merge Sort","Binary Search","Audit Log","Tabs"],
+        "Used For": ["Modular app logic","Topic pack storage","Quiz and tutor state",
+                     "Safe form submission","Teacher analytics","Readiness visualisation",
+                     "Persistent student records","Unknown topic fallback","Claude/Groq/Gemini auto-select",
+                     "Manual O(n log n) ranking","Manual O(log n) student search",
+                     "Algorithm timing in result.txt","All-concept display"],
     }), use_container_width=True)
 
 
+# ── Professor Defense ─────────────────────────────────────────────────────────
+
+def professor_defense():
+    hero()
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(52,211,153,.10);'>🎓</div>
+      <div><div class='sec-title'>Professor Defense</div><div class='sec-sub'>Built for final presentation — clear problem, Python proof, innovation, and contribution</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    st.markdown("""<div class='rubric-grid'>
+      <div class='rubric-card'><h4>1. Real Problem</h4><p>Students enter lectures unprepared, reducing understanding, memory, and class participation.</p></div>
+      <div class='rubric-card'><h4>2. Python Solution</h4><p>Preluma uses Python + Streamlit: Brain Brief, quiz, Mistake Clinic, UltraTutor, and dashboard.</p></div>
+      <div class='rubric-card'><h4>3. Algorithm Proof</h4><p>Merge Sort (O n log n) and Binary Search (O log n) implemented manually. Timing stored in result.txt.</p></div>
+      <div class='rubric-card'><h4>4. Real Data</h4><p>Wikipedia API fallback for unknown topics. CSV persistence for student records. No empty answers.</p></div>
+      <div class='rubric-card'><h4>5. AI Integration</h4><p>Claude, Groq, and Gemini — multi-provider with automatic fallback. Smart question style detection.</p></div>
+      <div class='rubric-card'><h4>6. Teacher Value</h4><p>Teacher Studio: readiness analytics, skill gap chart, merge sort ranking, and binary search demo.</p></div>
+      <div class='rubric-card'><h4>7. Testing Proof</h4><p>Regression tests verify topic schema, build_pack, quiz flow, tutor output, and QnA.</p></div>
+      <div class='rubric-card'><h4>8. Future Product</h4><p>Student accounts, teacher class codes, PDF notes, RAG retrieval, and mobile app roadmap.</p></div>
+    </div>""", unsafe_allow_html=True)
+
+    st.markdown("### System Architecture")
+    st.code("Student Input → Topic Router → Curated Pack / Wikipedia Fallback → Brain Brief\n→ Quiz (4 skills) → Mistake Clinic → UltraTutor (AI) → Class Questions\n→ CSV Persistence → Merge Sort + Binary Search → Teacher Analytics → Export", language="text")
+
+    st.markdown("### Defense Line")
+    st.success("Third-party libraries are allowed. Preluma uses Streamlit and Plotly for the interface, but all core algorithms — Merge Sort, Binary Search, statistics, CSV I/O — are implemented manually in Python. This proves both presentation skill and algorithmic understanding.")
+
+
+# ── Project Team ──────────────────────────────────────────────────────────────
+
+def project_team():
+    st.markdown("### Project Team")
+
+    if TEAM_URI:
+        st.markdown(f"""
+        <div class='team-hero' style="background-image: url('{TEAM_URI}');">
+            <div class='team-hero-content'>
+                <span class='badge'>Team Preluma • Yunnan University</span>
+                <h1>A balanced student team project for pre-class learning.</h1>
+                <p>Each member contributed to make Preluma complete, presentable, and useful for the classroom.</p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.info("Team image is missing. Add assets/team_preluma.jpg")
+
+    st.markdown("""
+    <div class='member-grid'>
+      <div class='member-card'>
+        <div class='member-role'>Feature Logic · Quiz Testing</div>
+        <h3>MD FAHIM</h3>
+        <p>Supported quiz checking, feature testing, and interaction feedback.</p>
+        <ul class='contrib-list'>
+          <li>Quiz testing</li>
+          <li>Feature feedback</li>
+          <li>User-flow checking</li>
+        </ul>
+      </div>
+      <div class='member-card main'>
+        <div class='member-role'>Core App · UI/UX · Integration</div>
+        <h3>MAMUNUR RASHID</h3>
+        <p>Worked on the main Python Streamlit app, interface design, module integration, and deployment flow.</p>
+        <ul class='contrib-list'>
+          <li>Python Streamlit development</li>
+          <li>UI/UX design</li>
+          <li>System integration</li>
+        </ul>
+      </div>
+      <div class='member-card'>
+        <div class='member-role'>Topic Data · Documentation</div>
+        <h3>MD JIARUL ISLAM</h3>
+        <p>Supported topic data organization, documentation, and presentation preparation.</p>
+        <ul class='contrib-list'>
+          <li>Topic data</li>
+          <li>Documentation</li>
+          <li>Presentation support</li>
+        </ul>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### Work Division")
+    st.dataframe([
+        {"Member":"MAMUNUR RASHID", "Main Responsibility":"Core app, UI/UX, integration", "Project Value":"Connected the main modules into one deployed Streamlit product"},
+        {"Member":"MD FAHIM", "Main Responsibility":"Quiz testing and feature feedback", "Project Value":"Improved interaction quality and checked quiz behavior"},
+        {"Member":"MD JIARUL ISLAM", "Main Responsibility":"Topic data and documentation", "Project Value":"Supported content organization and presentation material"},
+    ], use_container_width=True)
+
+
+# ── Demo Guide ────────────────────────────────────────────────────────────────
+
 def demo_guide():
     hero()
-    st.markdown("### 3-Minute Demo Guide")
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(251,191,36,.10);'>🎬</div>
+      <div><div class='sec-title'>Demo Script</div><div class='sec-sub'>3-minute presentation guide</div></div>
+    </div>""", unsafe_allow_html=True)
+
     steps = [
-        "Say: Preluma is a Python Streamlit project for pre-class preparation.",
-        "Explain the problem: students enter lectures unprepared.",
-        "Choose a topic and start the mission.",
-        "Show Brain Brief, quiz, Mistake Clinic, and Smart QnA.",
-        "Show Teacher Studio and Evidence Board.",
-        "Show Project Team and workload distribution.",
+        ("Open Preluma", "Show preluma-edtech.streamlit.app. Say: Python-based pre-class learning assistant with Wikipedia fallback, manual algorithms, and multi-LLM AI."),
+        ("Show the problem", "Students sit in lectures without preparation — passive learning, low retention, bad questions."),
+        ("Start a mission", "Select Machine Learning, enter name, click Start Pre-Class Mission."),
+        ("Brain Brief", "Show 2-column layout and concept tabs — all concepts explained, not just one."),
+        ("Quiz", "Take the quiz — each question tests a different skill type."),
+        ("Mistake Clinic", "Every wrong answer gets a clear correction with reasoning."),
+        ("UltraTutor", "Ask 'explain it like I am 5 years old' — show how style changes completely with AI."),
+        ("Teacher Studio", "Show Merge Sort ranking, Binary Search, CSV persistence, and audit log."),
+        ("Evidence Board", "Show Python concepts table — 13 concepts demonstrated."),
+        ("Professor Defense", "Show the 8-point rubric and defense line."),
     ]
-    for step in steps:
-        st.write(step)
+    for i, (title, desc) in enumerate(steps, 1):
+        st.markdown(f"""<div class='card-glass' style='margin:6px 0;display:flex;gap:16px;align-items:flex-start;'>
+          <div style='min-width:28px;height:28px;border-radius:50%;background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.25);display:flex;align-items:center;justify-content:center;color:#38bdf8;font-size:12px;font-weight:800;flex-shrink:0;'>{i}</div>
+          <div><div style='font-size:14px;font-weight:700;color:#f1f5f9;'>{title}</div><div style='font-size:13px;color:#94a3b8;margin-top:4px;'>{desc}</div></div>
+        </div>""", unsafe_allow_html=True)
+
     st.success("Final line: Preluma does not replace teachers. It prepares students to understand teachers better.")
 
 
+# ── Roadmap ───────────────────────────────────────────────────────────────────
+
 def roadmap():
     hero()
-    st.markdown("### Future Roadmap")
-    df = pd.DataFrame({
-        "Phase": ["Current Python Demo", "Prototype", "AI Upgrade", "Real Product"],
-        "Goal": ["Final project submission", "Student/teacher accounts", "RAG tutor with citations", "Mobile/web app"],
-        "Technology": ["Python + Streamlit", "Python + SQLite/database", "Python + retrieval + LLM API", "Python backend + mobile/web frontend"],
-        "Status": ["Now", "Next", "Later", "Future"],
-    })
-    st.dataframe(df, use_container_width=True)
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(52,211,153,.10);'>🚀</div>
+      <div><div class='sec-title'>Future Roadmap</div><div class='sec-sub'>Where Preluma goes next</div></div>
+    </div>""", unsafe_allow_html=True)
 
-    st.markdown("### Product Growth Plan")
-    roadmap_text = """Phase 1: Streamlit demo
-Phase 2: Save student history in database
-Phase 3: Upload teacher notes/PDF
-Phase 4: Retrieval-based tutor with citations
-Phase 5: Classroom analytics and mobile app"""
-    st.code(roadmap_text, language="text")
+    st.dataframe(pd.DataFrame({
+        "Phase":      ["Current","Prototype","AI Upgrade","Real Product"],
+        "Goal":       ["Final project submission","Student accounts + history","RAG tutor with citations","Mobile app + class codes"],
+        "Technology": ["Python + Streamlit + Gemini","Python + SQLite","Embeddings + retrieval + LLM","API backend + React Native"],
+        "Status":     ["Live now","Next semester","Future","Long-term"],
+    }), use_container_width=True)
+    st.code("Now:    Python + Streamlit + Wikipedia + Claude/Groq/Gemini + CSV + Merge Sort\nNext:   Login + SQLite + saved student history per account\nLater:  Upload course PDF + retrieval + cited AI answers\nFuture: Mobile app + teacher dashboard + real-time class codes", language="text")
 
+
+# ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
     init_state()
     page, presentation = sidebar()
-    if page == "Student Mission":
-        student_mission(presentation)
-    elif page == "Teacher Studio":
-        teacher_studio()
-    elif page == "Evidence Board":
-        evidence_board()
-    elif page == "Professor Defense":
-        professor_defense()
-    elif page == "Project Team":
-        project_team()
-    elif page == "Demo Guide":
-        demo_guide()
-    else:
-        roadmap()
+
+    if page.startswith("🔔 My Homework"):
+        my_homework_page()
+        return
+
+    pages = {
+        "Student Mission": lambda: student_mission(presentation),
+        "✨ Ask Preluma AI": ask_preluma_ai_page,
+        "Teacher Studio": teacher_studio,
+        "Homework Center": homework_center_page,
+        "Evidence Board": evidence_board,
+        "Professor Defense": professor_defense,
+        "Project Team": project_team,
+        "Demo Guide": demo_guide,
+        "Future Roadmap": roadmap,
+    }
+    pages.get(page, lambda: student_mission(presentation))()
+
 
 
 if __name__ == "__main__":

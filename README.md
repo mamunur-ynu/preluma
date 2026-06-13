@@ -1,19 +1,63 @@
-# Preluma V20 Compliance Elite
+# Preluma V22 — Guided Learning + Homework MVP
 
-Strict technical compliance version.
+Preluma is now a connected pre-class learning and homework diagnostic prototype.
 
-## Upgrades
-- Removed pandas from core analytics and teacher backend.
-- Added pure Python mean, population variance, sample variance, frequency count, unique count.
-- Added manual Merge Sort for readiness ranking.
-- Added manual Merge Sort by normalized name and Binary Search for student lookup.
-- Added Linear Search baseline.
-- Added timing with time.perf_counter_ns().
-- Added physical persistence with data/students.csv using csv module.
-- Added result.txt audit log for algorithm timings.
+## Guided Student Mission
 
-## Teacher defense line
-The teacher dashboard no longer depends on pandas for analytics. It reads records from students.csv, computes all math using pure Python loops, ranks students using manual Merge Sort, searches students using Binary Search, measures execution time with perf_counter_ns(), and appends evidence to result.txt.
+The input form disappears after the student starts a mission. The same main area becomes a five-step learning journey:
 
-## Upload checklist
-streamlit_app.py, engine.py, topics.py, teacher.py, wiki_fetcher.py, analytics_core.py, algorithms_core.py, storage_core.py, requirements.txt, README.md, DEPLOYMENT_GUIDE.md, tests/, assets/ynu_campus.jpg, assets/team_preluma.jpg
+1. Understand the Big Idea
+2. See It in Real Life
+3. Practice the Idea
+4. Mini Mock Test
+5. Final Learning Overview
+
+The final overview shows readiness, weak skill, review direction, and class-ready questions.
+
+## Ask Preluma AI
+
+The sidebar contains a dedicated AI tutor page with these modes:
+
+- Explain like I am 5
+- Friendly Tutor
+- Step-by-Step
+- Exam/Viva Answer
+- Give More Examples
+
+Mission and homework mistake context can be passed to this tutor.
+
+## Homework MVP
+
+Teacher:
+- Creates and publishes homework
+- Assigns to all students or named students
+- Creates student notifications
+- Views submissions, average, highest, lowest, and common weak concept
+
+Student:
+- Receives homework notification
+- Completes homework in Preluma
+- Receives automatic marking
+- Reviews mistakes
+- Captures weak concepts
+- Sends mistake context to Preluma AI
+
+## Physical data files
+
+Created at runtime with Python csv:
+
+- data/homework.csv
+- data/homework_questions.csv
+- data/homework_submissions.csv
+- data/student_mistakes.csv
+- data/notifications.csv
+- data/students.csv
+- result.txt
+
+## Account scope
+
+Real user accounts are intentionally not implemented in this MVP. The active student name simulates user identity. Authentication, class membership, permissions, and database migration are shown in the Future Roadmap.
+
+## Safe secret management
+
+Never upload a real `.streamlit/secrets.toml` to GitHub. Add API keys only through Streamlit Cloud Secrets.
