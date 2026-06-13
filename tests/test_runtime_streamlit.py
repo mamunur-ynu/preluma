@@ -36,3 +36,19 @@ def test_streamlit_sidebar_pages_open():
     homework_page = next(value for value in radio.options if value.startswith("🔔 My Homework"))
     radio.set_value(homework_page).run()
     assert len(at.exception) == 0
+
+
+def test_project_team_page_and_question_aware_ai():
+    at = AppTest.from_file("streamlit_app.py", default_timeout=30).run()
+    radio = at.sidebar.radio[0]
+    radio.set_value("Project Team").run()
+    assert len(at.exception) == 0
+    assert any("Team Preluma" in (item.value or "") for item in at.markdown)
+
+    radio = at.sidebar.radio[0]
+    radio.set_value("✨ Ask Preluma AI").run()
+    assert len(at.exception) == 0
+    at.text_area[0].set_value("about machine learning").run()
+    _click(at, "Ask Preluma AI")
+    assert any("Machine Learning" in (item.value or "") for item in at.markdown)
+    assert not any("Variance · Curated" in (item.value or "") for item in at.markdown)

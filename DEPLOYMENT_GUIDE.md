@@ -1,48 +1,19 @@
-# Deploy Preluma V22
+# Deploy Preluma V23
 
-## Replace/upload
+1. Upload/replace all V23 files in the GitHub repository.
+2. Do not upload a real `.streamlit/secrets.toml`.
+3. Add optional API keys through Streamlit Cloud → App settings → Secrets.
+4. Commit message:
 
-- streamlit_app.py
-- engine.py
-- topics.py
-- teacher.py
-- wiki_fetcher.py
-- llm.py
-- analytics_core.py
-- algorithms_core.py
-- storage_core.py
-- homework_core.py
-- requirements.txt
-- tests/
-- assets/
-- .streamlit/config.toml
+   `Fix question-aware AI and full team photo`
 
-Do not upload a real secrets.toml.
+5. Reboot the Streamlit app.
+6. Hard refresh the browser.
 
-## Commit message
+## Live checks
 
-Add guided mission and homework learning loop
-
-## Test after reboot
-
-### Guided mission
-1. Open Student Mission.
-2. Start a mission.
-3. Confirm setup form disappears.
-4. Move through all five steps.
-5. Submit the mock test.
-6. Confirm the final overview appears.
-
-### Homework
-1. Open Homework Center.
-2. Publish homework.
-3. Set the active student in the sidebar.
-4. Open My Homework.
-5. Submit homework.
-6. Review captured mistakes.
-7. Open Homework Center → Class Overview.
-
-### AI
-1. Complete a mission or make a homework mistake.
-2. Open Ask Preluma AI.
-3. Try child-level and step-by-step explanation modes.
+1. Project Team → confirm all three people are visible.
+2. Ask Preluma AI → ask `about machine learning`.
+3. Confirm the answer title/context says Machine Learning, not Variance.
+4. Student Mission → complete all five steps.
+5. Homework Center and My Homework → open without errors.

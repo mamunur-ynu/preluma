@@ -1,19 +1,26 @@
 """
 llm.py  –  Preluma V17
 Multi-provider LLM integration.
-Priority: Anthropic Claude → Groq → Gemini → local fallback.
+Priority is configurable; providers automatically fall back when keys or calls fail.
 """
 
 import os
 import json
 import requests
 
+_OPENAI_URL    = "https://api.openai.com/v1/chat/completions"
 _ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 _GROQ_URL      = "https://api.groq.com/openai/v1/chat/completions"
-_GEMINI_URL    = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+_GEMINI_URL    = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+_OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+_TOGETHER_URL   = "https://api.together.xyz/v1/chat/completions"
 
-_ANTHROPIC_MODEL = "claude-sonnet-4-20250514"
-_GROQ_MODEL      = "llama-3.3-70b-versatile"
+_OPENAI_MODEL    = os.environ.get("OPENAI_MODEL", "gpt-4.1-mini")
+_ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
+_GROQ_MODEL      = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+_GEMINI_MODEL    = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+_OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "openai/gpt-4.1-mini")
+_TOGETHER_MODEL   = os.environ.get("TOGETHER_MODEL", "meta-llama/Llama-3.3-70B-Instruct-Turbo")
 _TIMEOUT         = 20
 _MAX_TOKENS      = 800
 
@@ -28,6 +35,24 @@ def _key(name: str) -> str:
         pass
     return os.environ.get(name, "").strip()
 
+
+
+def _call_openai(system: str, user: str) -> str:
+    key = _key("OPENAI_API_KEY")
+    if not key:
+        return ""
+    try:
+        resp = requests.post(
+            _OPENAI_URL,
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={"model": _OPENAI_MODEL, "max_tokens": _MAX_TOKENS,
+                  "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]},
+            timeout=_TIMEOUT,
+        )
+        resp.raise_for_status()
+        return resp.json()["choices"][0]["message"]["content"].strip()
+    except Exception:
+        return ""
 
 def _call_anthropic(system: str, user: str) -> str:
     key = _key("ANTHROPIC_API_KEY")
@@ -75,7 +100,7 @@ def _call_gemini(system: str, user: str) -> str:
         return ""
     try:
         resp = requests.post(
-            f"{_GEMINI_URL}?key={key}",
+            f"{_GEMINI_URL.format(model=_GEMINI_MODEL)}?key={key}",
             headers={"Content-Type": "application/json"},
             json={
                 "contents": [{"role": "user", "parts": [{"text": f"{system}\n\n{user}"}]}],
@@ -90,23 +115,117 @@ def _call_gemini(system: str, user: str) -> str:
     return ""
 
 
+
+def _call_openrouter(system: str, user: str) -> str:
+    key = _key("OPENROUTER_API_KEY")
+    if not key:
+        return ""
+    try:
+        resp = requests.post(
+            _OPENROUTER_URL,
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
+                     "HTTP-Referer": "https://preluma-edtech.streamlit.app", "X-Title": "Preluma"},
+            json={"model": _OPENROUTER_MODEL, "max_tokens": _MAX_TOKENS,
+                  "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]},
+            timeout=_TIMEOUT,
+        )
+        resp.raise_for_status()
+        return resp.json()["choices"][0]["message"]["content"].strip()
+    except Exception:
+        return ""
+
+
+def _call_together(system: str, user: str) -> str:
+    key = _key("TOGETHER_API_KEY")
+    if not key:
+        return ""
+    try:
+        resp = requests.post(
+            _TOGETHER_URL,
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={"model": _TOGETHER_MODEL, "max_tokens": _MAX_TOKENS,
+                  "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]},
+            timeout=_TIMEOUT,
+        )
+        resp.raise_for_status()
+        return resp.json()["choices"][0]["message"]["content"].strip()
+    except Exception:
+        return ""
+
+def available_providers() -> list[str]:
+    providers: list[str] = []
+    mapping = [
+        ("OPENAI_API_KEY", "OpenAI"),
+        ("ANTHROPIC_API_KEY", "Claude (Anthropic)"),
+        ("GEMINI_API_KEY", "Gemini"),
+        ("GROQ_API_KEY", "Groq"),
+        ("OPENROUTER_API_KEY", "OpenRouter"),
+        ("TOGETHER_API_KEY", "Together AI"),
+    ]
+    for key_name, label in mapping:
+        if _key(key_name):
+            providers.append(label)
+    return providers
+
+
 def active_provider() -> str:
-    if _key("ANTHROPIC_API_KEY"): return "Claude (Anthropic)"
-    if _key("GROQ_API_KEY"):      return "Groq (Llama 3.3)"
-    if _key("GEMINI_API_KEY"):    return "Gemini 1.5 Flash"
-    return "none"
+    providers = available_providers()
+    return providers[0] if providers else "Curated fallback"
 
 
 def llm_available() -> bool:
-    return active_provider() != "none"
+    return bool(available_providers())
 
 
 def _call_llm(system: str, user: str) -> str:
-    for fn in (_call_anthropic, _call_groq, _call_gemini):
+    # One provider answers; the next providers are automatic fallbacks.
+    for fn in (_call_openai, _call_anthropic, _call_gemini, _call_groq, _call_openrouter, _call_together):
         result = fn(system, user)
         if result:
             return result
     return ""
+
+
+def detect_topic_from_question(question: str, fallback_topic: str = "General learning") -> str:
+    """Extract an explicit topic so old mission context cannot override the user's question."""
+    raw = " ".join(str(question).strip().split())
+    lowered = raw.casefold()
+    common = {
+        "machine learning": "Machine Learning",
+        "deep learning": "Deep Learning",
+        "neural network": "Neural Network",
+        "quantum mechanics": "Quantum Mechanics",
+        "statistics": "Statistics",
+        "variance": "Variance",
+        "python": "Python Programming",
+        "photosynthesis": "Photosynthesis",
+        "artificial intelligence": "Artificial Intelligence",
+        "ai": "Artificial Intelligence",
+        "urban water management": "Urban Water Management",
+    }
+    for phrase, title in common.items():
+        if phrase in lowered:
+            return title
+
+    prefixes = [
+        "about ", "explain ", "what is ", "what are ", "tell me about ",
+        "teach me ", "describe ", "define ", "how does ", "how do ",
+    ]
+    candidate = lowered
+    for prefix in prefixes:
+        if candidate.startswith(prefix):
+            candidate = candidate[len(prefix):]
+            break
+    cleanup = [
+        " simply", " in simple words", " like i am 5", " step by step",
+        " with an example", " and give one example", " please", "?", ".",
+    ]
+    for suffix in cleanup:
+        candidate = candidate.replace(suffix, "")
+    candidate = candidate.strip(" :,-")
+    if 1 <= len(candidate.split()) <= 7 and len(candidate) >= 3:
+        return candidate.title()
+    return fallback_topic or "General learning"
 
 
 def _parse_json(raw: str) -> dict | None:
