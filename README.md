@@ -1,17 +1,28 @@
-# Preluma V24 — Polished AI + Team Final
+# Preluma V25 — Unique Interfaces + Adaptive AI
 
-This build focuses on three high-impact corrections:
+This build focuses on product polish and stability. Teacher profile pages are intentionally deferred until accurate, approved teacher names, photographs, course details, and materials are available.
 
-- Compact grouped sidebar: Learn, Teach, and Project/Presentation
-- Premium team-photo background hero with all three members visible
-- Intent-aware Preluma AI with natural paragraph answers, deep-answer mode, clarification for vague questions, chat history, and multi-provider fallback
+## Improvements
 
-## AI behavior
+- Compact professional sidebar with no emoji
+- Separate Learn, Teach, and Project navigation groups
+- Distinct visual identity for every workspace
+- Student Mission retains the campus mission theme
+- Homework uses an assignment-desk visual system
+- Preluma AI uses a focused conversational interface
+- Teacher Studio uses a data-dashboard identity
+- Evidence Board uses a technical lab identity
+- Professor Defense uses a formal academic identity
+- Project Team uses the team photograph as a premium background hero
+- Demo Guide and Future Roadmap have dedicated layouts
+- Adaptive AI clarification is used only for genuinely ambiguous questions
+- Short, balanced, and deep responses render as natural paragraphs
+- Existing guided mission, homework, algorithms, persistence, and provider fallback remain included
 
-Preluma prioritizes the user's exact question over old mission context. It detects the topic and requested explanation style. Vague requests trigger one concise clarification. Clear requests receive a natural answer whose depth follows Short, Balanced, or Deep.
+## Deferred
 
-External providers are optional. Available providers are used through automatic fallback. Without keys, curated topic packs and Wikipedia-supported fallback remain available.
+Teacher profiles, teacher photos, course-specific teacher workspaces, and teacher-aware RAG are deferred. They should be added only after receiving accurate and approved data.
 
-## Safe deployment
+## Security
 
-Never commit real API keys. Configure them only in Streamlit Cloud Secrets.
+Do not upload `.streamlit/secrets.toml` to GitHub. Configure API keys using Streamlit Cloud Secrets.

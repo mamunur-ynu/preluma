@@ -25,7 +25,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "24.0 Polished AI + Team Final"
+APP_VERSION = "25.0 Unique Interfaces + Adaptive AI"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -292,6 +292,192 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 .context-chip { display:inline-block; padding:7px 12px; border-radius:999px; background:rgba(56,189,248,.10); border:1px solid rgba(56,189,248,.25); color:#7dd3fc; font-size:12px; font-weight:700; margin:0 8px 8px 0; }
 @media (max-width: 900px) { .provider-grid { grid-template-columns: 1fr; } }
 
+
+/* ─────────────────────────────────────────────────────────────────────
+   V25 DESIGN SYSTEM
+   No emoji, compact sidebar, page-specific interface identities.
+   ───────────────────────────────────────────────────────────────────── */
+html, body, [class*="css"] {
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", sans-serif;
+}
+h1, h2, h3, .page-title, .sec-title {
+    font-family: Manrope, Inter, ui-sans-serif, system-ui, sans-serif;
+}
+code, pre, [data-testid="stCodeBlock"] {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+/* compact sidebar */
+[data-testid="stSidebar"] {
+    background:
+        radial-gradient(circle at 20% 0%, rgba(59,130,246,.09), transparent 35%),
+        #050a12;
+    border-right: 1px solid rgba(148,163,184,.10);
+}
+[data-testid="stSidebar"] > div:first-child { padding-top: 1.15rem; }
+[data-testid="stSidebar"] .stButton > button {
+    min-height: 43px !important;
+    border-radius: 12px !important;
+    justify-content: flex-start !important;
+    padding: .62rem .78rem !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    box-shadow: none !important;
+    color: #cbd5e1 !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    transition: .18s ease;
+}
+[data-testid="stSidebar"] .stButton > button:hover {
+    background: rgba(59,130,246,.08) !important;
+    border-color: rgba(96,165,250,.16) !important;
+    color: #fff !important;
+    transform: translateX(2px);
+}
+[data-testid="stSidebar"] .stButton > button[kind="primary"] {
+    background: rgba(37,99,235,.16) !important;
+    border-color: rgba(96,165,250,.35) !important;
+    color: #bfdbfe !important;
+}
+.nav-label {
+    margin: 1.05rem 0 .35rem;
+    color: #64748b !important;
+    font-size: 10px !important;
+    letter-spacing: .17em;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+.sidebar-profile {
+    border-radius: 16px;
+    padding: 14px 15px;
+    margin: .75rem 0 1rem;
+    border: 1px solid rgba(96,165,250,.16);
+    background: linear-gradient(145deg, rgba(15,23,42,.88), rgba(8,15,27,.96));
+}
+.sidebar-profile b { font-size: 14px; color: #f8fafc; }
+.sidebar-profile span { display:block; margin-top:5px; color:#7c8da5; font-size:12px; }
+.sidebar-status {
+    margin-top: 1rem;
+    border: 1px solid rgba(45,212,191,.16);
+    background: rgba(13,148,136,.055);
+    padding: 12px 13px;
+    border-radius: 14px;
+}
+.sidebar-status .status-title { color:#ccfbf1; font-size:12px; font-weight:700; }
+.sidebar-status .status-copy { color:#6f8799; font-size:11px; line-height:1.5; margin-top:4px; }
+
+/* reusable unique page header */
+.page-intro {
+    position: relative;
+    overflow: hidden;
+    border-radius: 26px;
+    padding: 30px 34px;
+    margin: 4px 0 24px;
+    border: 1px solid var(--page-border);
+    background:
+        linear-gradient(120deg, var(--page-bg-a), var(--page-bg-b)),
+        #0b1220;
+    box-shadow: 0 22px 60px rgba(0,0,0,.26);
+}
+.page-intro::after {
+    content: "";
+    position: absolute; width: 260px; height: 260px; right:-90px; top:-125px;
+    border-radius: 50%; background: var(--page-glow); filter: blur(4px);
+}
+.page-kicker {
+    color: var(--page-accent); font-size: 11px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .15em; margin-bottom: 10px;
+}
+.page-title {
+    position: relative; z-index: 1; color:#f8fafc; font-size: 34px;
+    line-height:1.12; letter-spacing:-.035em; font-weight:800; margin:0;
+}
+.page-subtitle {
+    position:relative; z-index:1; max-width:760px; color:#9fb0c6;
+    font-size:14px; line-height:1.7; margin-top:10px;
+}
+.theme-ai       { --page-accent:#c4b5fd; --page-border:rgba(139,92,246,.28); --page-bg-a:rgba(76,29,149,.32); --page-bg-b:rgba(15,23,42,.88); --page-glow:rgba(139,92,246,.18); }
+.theme-homework { --page-accent:#fbbf24; --page-border:rgba(245,158,11,.25); --page-bg-a:rgba(120,53,15,.26); --page-bg-b:rgba(15,23,42,.9); --page-glow:rgba(245,158,11,.13); }
+.theme-teacher  { --page-accent:#67e8f9; --page-border:rgba(6,182,212,.24); --page-bg-a:rgba(8,47,73,.52); --page-bg-b:rgba(15,23,42,.9); --page-glow:rgba(6,182,212,.14); }
+.theme-evidence { --page-accent:#86efac; --page-border:rgba(34,197,94,.25); --page-bg-a:rgba(5,46,22,.48); --page-bg-b:rgba(8,15,27,.95); --page-glow:rgba(34,197,94,.13); }
+.theme-defense  { --page-accent:#bfdbfe; --page-border:rgba(96,165,250,.25); --page-bg-a:rgba(30,58,138,.30); --page-bg-b:rgba(15,23,42,.93); --page-glow:rgba(59,130,246,.15); }
+.theme-demo     { --page-accent:#fdba74; --page-border:rgba(249,115,22,.24); --page-bg-a:rgba(124,45,18,.28); --page-bg-b:rgba(15,23,42,.92); --page-glow:rgba(249,115,22,.12); }
+.theme-roadmap  { --page-accent:#e9d5ff; --page-border:rgba(168,85,247,.24); --page-bg-a:rgba(88,28,135,.30); --page-bg-b:rgba(15,23,42,.92); --page-glow:rgba(168,85,247,.14); }
+
+/* distinct workspace panels */
+.assignment-card {
+    border:1px solid rgba(245,158,11,.21);
+    background:linear-gradient(145deg,rgba(41,30,14,.72),rgba(12,18,29,.92));
+    border-radius:20px;padding:20px 22px;margin:12px 0;
+}
+.analytics-panel {
+    border:1px solid rgba(6,182,212,.18);
+    background:linear-gradient(145deg,rgba(8,47,73,.34),rgba(11,18,32,.94));
+    border-radius:20px;padding:18px;
+}
+.lab-panel {
+    border:1px solid rgba(34,197,94,.18);
+    background:#07110d;border-radius:18px;padding:18px;
+    box-shadow:inset 0 0 35px rgba(34,197,94,.025);
+}
+.defense-panel {
+    border:1px solid rgba(96,165,250,.20);
+    background:linear-gradient(155deg,rgba(30,58,138,.20),rgba(15,23,42,.92));
+    border-radius:20px;padding:20px;
+}
+
+/* AI chat: real conversation layout */
+.ai-chat-shell {
+    max-width: 940px; margin: 0 auto; border:1px solid rgba(139,92,246,.18);
+    background:linear-gradient(160deg,rgba(24,18,46,.78),rgba(8,14,25,.95));
+    border-radius:24px;padding:18px 20px 22px;
+}
+.chat-user {
+    width:fit-content; max-width:78%; margin:18px 0 10px auto !important;
+    background:linear-gradient(135deg,#4f46e5,#7c3aed) !important;
+    border:0 !important; border-radius:20px 20px 5px 20px !important;
+    padding:13px 16px !important; color:white !important;
+}
+.ai-meta { color:#7d8ca5 !important; font-size:11px !important; margin:0 0 6px 5px !important; }
+.ai-main-answer {
+    max-width:92%; border:1px solid rgba(167,139,250,.18) !important;
+    border-radius:5px 20px 20px 20px !important;
+    background:rgba(17,24,39,.88) !important; padding:18px 20px !important;
+    color:#dbe4f0 !important; font-size:15px !important; line-height:1.82 !important;
+    white-space:pre-wrap;
+}
+.context-chip { background:rgba(139,92,246,.08) !important; border-color:rgba(167,139,250,.20) !important; }
+
+/* premium team background hero; keeps full 16:9 composition */
+.team-photo-hero {
+    min-height: 500px !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    border-radius: 28px !important;
+    border: 1px solid rgba(148,163,184,.18) !important;
+    box-shadow: 0 30px 80px rgba(0,0,0,.42) !important;
+}
+.team-photo-hero::before {
+    background:
+        linear-gradient(90deg, rgba(2,6,23,.88) 0%, rgba(2,6,23,.52) 42%, rgba(2,6,23,.12) 72%, rgba(2,6,23,.18) 100%),
+        linear-gradient(0deg, rgba(2,6,23,.62), transparent 52%) !important;
+}
+.team-photo-content { max-width: 575px !important; padding: 44px !important; }
+.team-photo-content h1 { font-size: 38px !important; line-height:1.12 !important; }
+
+/* reduce repeated oversized visual language */
+.stButton > button {
+    border-radius: 12px;
+    font-weight: 650;
+}
+@media (max-width: 850px) {
+    .page-intro { padding:24px 22px; border-radius:20px; }
+    .page-title { font-size:28px; }
+    .team-photo-hero { min-height:420px !important; background-position:center center !important; }
+    .team-photo-content { padding:26px !important; }
+}
+
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -348,43 +534,50 @@ def sidebar():
     if student_name.strip():
         st.session_state.student = student_name.strip()
 
-    unread_count = len(notifications_for_student(st.session_state.get("student", "Student"), unread_only=True))
+    unread_count = len(
+        notifications_for_student(
+            st.session_state.get("student", "Student"),
+            unread_only=True,
+        )
+    )
     st.sidebar.markdown(
-        f"<div class='sidebar-profile'><b>{st.session_state.get('student','Student')}</b><br>"
+        f"<div class='sidebar-profile'><b>{st.session_state.get('student','Student')}</b>"
         f"<span>{unread_count} unread homework notification{'s' if unread_count != 1 else ''}</span></div>",
         unsafe_allow_html=True,
     )
 
     st.sidebar.markdown("<div class='nav-label'>Learn</div>", unsafe_allow_html=True)
-    _nav_button("🎯  Student Mission", "Student Mission")
-    _nav_button(f"🔔  My Homework ({unread_count})", "My Homework")
-    _nav_button("✨  Ask Preluma AI", "Ask Preluma AI")
+    _nav_button("Student Mission", "Student Mission")
+    _nav_button(f"My Homework  {unread_count if unread_count else ''}".rstrip(), "My Homework")
+    _nav_button("Ask Preluma AI", "Ask Preluma AI")
 
     st.sidebar.markdown("<div class='nav-label'>Teach</div>", unsafe_allow_html=True)
-    _nav_button("📊  Teacher Studio", "Teacher Studio")
-    _nav_button("🏫  Homework Center", "Homework Center")
+    _nav_button("Teacher Studio", "Teacher Studio")
+    _nav_button("Homework Center", "Homework Center")
 
-    with st.sidebar.expander("Project & Presentation", expanded=False):
-        if st.button("Evidence Board", key="nav_evidence", use_container_width=True):
-            st.session_state.active_page = "Evidence Board"; st.rerun()
-        if st.button("Professor Defense", key="nav_defense", use_container_width=True):
-            st.session_state.active_page = "Professor Defense"; st.rerun()
-        if st.button("Project Team", key="nav_team", use_container_width=True):
-            st.session_state.active_page = "Project Team"; st.rerun()
-        if st.button("Demo Guide", key="nav_demo", use_container_width=True):
-            st.session_state.active_page = "Demo Guide"; st.rerun()
-        if st.button("Future Roadmap", key="nav_roadmap", use_container_width=True):
-            st.session_state.active_page = "Future Roadmap"; st.rerun()
+    st.sidebar.markdown("<div class='nav-label'>Project</div>", unsafe_allow_html=True)
+    _nav_button("Evidence Board", "Evidence Board")
+    _nav_button("Professor Defense", "Professor Defense")
+    _nav_button("Project Team", "Project Team")
+    _nav_button("Demo Guide", "Demo Guide")
+    _nav_button("Future Roadmap", "Future Roadmap")
 
     presentation = st.sidebar.toggle("Presentation Mode", value=True)
-    st.sidebar.caption(f"Current page: {st.session_state.active_page}")
+
+    st.sidebar.markdown(
+        "<div class='sidebar-status'>"
+        "<div class='status-title'>Preluma AI ready</div>"
+        "<div class='status-copy'>Adaptive explanation, mission context, provider fallback.</div>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
 
     if st.sidebar.button("Reset session", use_container_width=True):
         reset_session()
         st.session_state.active_page = "Student Mission"
         st.rerun()
 
-    st.sidebar.caption(f"v{APP_VERSION} · Python + Streamlit")
+    st.sidebar.caption(f"v{APP_VERSION}")
     return st.session_state.active_page, presentation
 
 
@@ -423,6 +616,20 @@ def hero():
 
 
 # ── Progress ──────────────────────────────────────────────────────────────────
+
+def page_intro(theme: str, kicker: str, title: str, subtitle: str) -> None:
+    """Render a consistent brand header with a page-specific visual identity."""
+    st.markdown(
+        f"""
+        <section class="page-intro theme-{theme}">
+            <div class="page-kicker">{kicker}</div>
+            <h1 class="page-title">{title}</h1>
+            <div class="page-subtitle">{subtitle}</div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 def progress_bar():
     has_brief = "brief" in st.session_state
@@ -522,7 +729,7 @@ def brain_brief():
     pack = st.session_state.pack
 
     st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(167,139,250,.12);'>🧠</div>
+      <div class='sec-icon' style='background:rgba(167,139,250,.12);'>01</div>
       <div><div class='sec-title'>Brain Brief</div><div class='sec-sub'>Your 2-minute primer before class</div></div>
     </div>""", unsafe_allow_html=True)
 
@@ -803,7 +1010,7 @@ def mission_brain_brief_screen() -> None:
     pack = st.session_state.pack
 
     st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(99,102,241,.15);'>🧠</div>
+      <div class='sec-icon' style='background:rgba(99,102,241,.15);'>01</div>
       <div><div class='sec-title'>Step 1 · Understand the Big Idea</div>
       <div class='sec-sub'>A friendly foundation before examples and practice</div></div>
     </div>""", unsafe_allow_html=True)
@@ -850,7 +1057,7 @@ def mission_example_screen() -> None:
     pack = st.session_state.pack
 
     st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(168,85,247,.15);'>🌍</div>
+      <div class='sec-icon' style='background:rgba(168,85,247,.15);'>02</div>
       <div><div class='sec-title'>Step 2 · See It in Real Life</div>
       <div class='sec-sub'>Turn theory into a picture you can remember</div></div>
     </div>""", unsafe_allow_html=True)
@@ -890,7 +1097,7 @@ def mission_practice_screen() -> None:
     concept_name = brief.get("key_concept", pack.get("title", "the topic"))
 
     st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(245,158,11,.15);'>✍️</div>
+      <div class='sec-icon' style='background:rgba(245,158,11,.15);'>03</div>
       <div><div class='sec-title'>Step 3 · Practice the Idea</div>
       <div class='sec-sub'>Active thinking makes the idea stay in memory</div></div>
     </div>""", unsafe_allow_html=True)
@@ -957,7 +1164,7 @@ def _save_mission_quiz_result(result: dict) -> None:
 
 def mission_mock_test_screen() -> None:
     st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(239,68,68,.15);'>📝</div>
+      <div class='sec-icon' style='background:rgba(239,68,68,.15);'>04</div>
       <div><div class='sec-title'>Step 4 · Mini Mock Test</div>
       <div class='sec-sub'>Check understanding before entering the lecture</div></div>
     </div>""", unsafe_allow_html=True)
@@ -1007,7 +1214,7 @@ def mission_overview_screen() -> None:
     weak = result.get("weakest", "Not tested") if result else "Not tested"
 
     st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(16,185,129,.15);'>✅</div>
+      <div class='sec-icon' style='background:rgba(16,185,129,.15);'>05</div>
       <div><div class='sec-title'>Step 5 · Your Learning Overview</div>
       <div class='sec-sub'>What you know, what to review, and what to ask in class</div></div>
     </div>""", unsafe_allow_html=True)
@@ -1044,7 +1251,7 @@ def mission_overview_screen() -> None:
                 f"Student readiness: {score}%. Weak skill: {weak}."
             )
             st.session_state.force_page_ai = True
-            st.info("Open “✨ Ask Preluma AI” from the sidebar. Your topic context is ready.")
+            st.info("Open “Ask Preluma AI” from the sidebar. Your topic context is ready.")
     with col3:
         if st.button("Start a New Mission", use_container_width=True):
             for key in ["pack", "brief", "questions", "quiz_result", "class_questions"]:
@@ -1148,9 +1355,15 @@ def teacher_studio():
 
 
 def _question_needs_clarification(question: str) -> bool:
-    words = [word for word in str(question).strip().split() if word]
-    vague = {"help", "explain", "this", "it", "more", "details", "why", "how"}
-    return len(words) <= 2 or (len(words) <= 4 and all(word.casefold().strip("?.,") in vague for word in words))
+    text = " ".join(str(question).strip().split())
+    if not text:
+        return True
+    cleaned = text.casefold().strip(" ?.,!")
+    ambiguous_only = {
+        "help", "explain", "tell me", "more", "details",
+        "why", "how", "this", "it", "i do not understand",
+    }
+    return cleaned in ambiguous_only
 
 
 def _natural_answer_text(response: dict, depth: str) -> str:
@@ -1159,12 +1372,30 @@ def _natural_answer_text(response: dict, depth: str) -> str:
     example = str(response.get("real_life_example", "")).strip()
     mistake = str(response.get("common_mistake", "")).strip()
     exam = str(response.get("exam_angle", "")).strip()
-    separator = "\n\n"
+
     if depth == "Short":
-        return separator.join(part for part in [direct, simple] if part)
-    if depth == "Deep":
-        return separator.join(part for part in [direct, simple, f"For example, {example}" if example else "", f"A common misunderstanding is this: {mistake}" if mistake else "", f"For an exam or viva, remember: {exam}" if exam else ""] if part)
-    return separator.join(part for part in [direct, simple, f"For example, {example}" if example else ""] if part)
+        pieces = [direct, simple]
+    elif depth == "Deep":
+        pieces = [
+            direct,
+            simple,
+            f"To make this concrete, consider this example: {example}" if example else "",
+            f"One important misunderstanding to avoid is the following: {mistake}" if mistake else "",
+            f"For an exam or viva, the strongest way to remember the idea is: {exam}" if exam else "",
+        ]
+    else:
+        pieces = [
+            direct,
+            simple,
+            f"For example, {example}" if example else "",
+        ]
+
+    paragraphs = []
+    for piece in pieces:
+        piece = " ".join(str(piece).split())
+        if piece:
+            paragraphs.append(piece)
+    return "\n\n".join(paragraphs)
 
 
 def _clear_ai_chat() -> None:
@@ -1174,12 +1405,12 @@ def _clear_ai_chat() -> None:
 
 
 def ask_preluma_ai_page():
-    hero()
-    st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(99,102,241,.15);'>✨</div>
-      <div><div class='sec-title'>Ask Preluma AI</div>
-      <div class='sec-sub'>Ask naturally. Preluma follows your exact topic, depth, and learning goal.</div></div>
-    </div>""", unsafe_allow_html=True)
+    page_intro(
+        "ai",
+        "Adaptive academic tutor",
+        "Ask Preluma AI",
+        "Ask naturally. Preluma detects the topic, understands the learning goal, and adjusts the depth and teaching style.",
+    )
 
     current_pack = st.session_state.get("pack")
     mission_topic = current_pack.get("title") if current_pack else st.session_state.get("topic", "General learning")
@@ -1256,6 +1487,7 @@ def ask_preluma_ai_page():
             answer_text = _natural_answer_text(response, depth)
             st.session_state.tutor_history.append({"question":question.strip(),"topic":detected_topic,"response":response,"answer_text":answer_text,"source":source,"depth":depth})
 
+    st.markdown("<div class='ai-chat-shell'>", unsafe_allow_html=True)
     for index, item in enumerate(st.session_state.get("tutor_history", [])[-8:]):
         st.markdown(f"<div class='chat-user'>{item['question']}</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='ai-meta'>{item['topic']} · {item['source']}</div>", unsafe_allow_html=True)
@@ -1269,16 +1501,21 @@ def ask_preluma_ai_page():
                     st.markdown(f"**Exam/Viva memory line:** {response['exam_angle']}")
                 if response.get("real_life_example"):
                     st.markdown(f"**Example:** {response['real_life_example']}")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def my_homework_page():
-    hero()
     student = st.session_state.get("student", "Student")
-    st.markdown(f"### My Homework · {student}")
+    page_intro(
+        "homework",
+        "Student assignment desk",
+        f"My Homework — {student}",
+        "Review deadlines, complete assigned work, inspect mistakes, and return to weak concepts with focused support.",
+    )
 
     notifications = notifications_for_student(student)
     if notifications:
-        with st.expander(f"🔔 Notifications ({len(notifications)})", expanded=True):
+        with st.expander(f"Notifications ({len(notifications)})", expanded=True):
             for note in reversed(notifications[-5:]):
                 st.markdown(
                     f"<div class='card-glass'><div class='albl lbl-blue'>{note.get('Title')}</div>"
@@ -1356,7 +1593,7 @@ def my_homework_page():
                         f"Student answer: {detail['chosen']}. "
                         f"Correct answer: {detail['correct_answer']}."
                     )
-                    st.info("Open “✨ Ask Preluma AI” from the sidebar. The mistake context is ready.")
+                    st.info("Open “Ask Preluma AI” from the sidebar. The mistake context is ready.")
 
     mistakes = load_student_mistakes(student)
     if mistakes:
@@ -1413,12 +1650,12 @@ def _default_homework_questions(topic: str) -> list[dict]:
 
 
 def homework_center_page():
-    hero()
-    st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(14,165,233,.15);'>🏫</div>
-      <div><div class='sec-title'>Homework Center</div>
-      <div class='sec-sub'>Teacher assignment, student submission, and class diagnostics</div></div>
-    </div>""", unsafe_allow_html=True)
+    page_intro(
+        "homework",
+        "Teacher assignment workspace",
+        "Homework Center",
+        "Create assignments, publish them to students, and review class submission patterns and weak concepts.",
+    )
 
     create_tab, overview_tab = st.tabs(["Create Homework", "Class Overview"])
 
@@ -1556,8 +1793,12 @@ def professor_defense():
 # ── Project Team ──────────────────────────────────────────────────────────────
 
 def project_team():
-    st.markdown("### Project Team")
-    st.caption("A collaborative student team building Preluma for guided pre-class learning.")
+    page_intro(
+        "defense",
+        "Student product team",
+        "Project Team",
+        "A balanced collaboration combining core application development, testing, topic support, and presentation preparation.",
+    )
 
     if TEAM_URI:
         st.markdown(f"""
@@ -1603,11 +1844,12 @@ def project_team():
 # ── Demo Guide ────────────────────────────────────────────────────────────────
 
 def demo_guide():
-    hero()
-    st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(251,191,36,.10);'>🎬</div>
-      <div><div class='sec-title'>Demo Script</div><div class='sec-sub'>3-minute presentation guide</div></div>
-    </div>""", unsafe_allow_html=True)
+    page_intro(
+        "demo",
+        "Presentation walkthrough",
+        "Demo Guide",
+        "A focused presentation sequence for showing the problem, student flow, algorithms, AI support, and teacher value.",
+    )
 
     steps = [
         ("Open Preluma", "Show preluma-edtech.streamlit.app. Say: Python-based pre-class learning assistant with Wikipedia fallback, manual algorithms, and multi-LLM AI."),
@@ -1661,7 +1903,7 @@ def main():
     pages = {
         "Student Mission": lambda: student_mission(presentation),
         "Ask Preluma AI": ask_preluma_ai_page,
-        "✨ Ask Preluma AI": ask_preluma_ai_page,
+        "Ask Preluma AI": ask_preluma_ai_page,
         "Teacher Studio": teacher_studio,
         "Homework Center": homework_center_page,
         "Evidence Board": evidence_board,

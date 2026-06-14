@@ -1,19 +1,22 @@
-# Deploy Preluma V23
+# Deploy Preluma V25
 
-1. Upload/replace all V23 files in the GitHub repository.
-2. Do not upload a real `.streamlit/secrets.toml`.
-3. Add optional API keys through Streamlit Cloud → App settings → Secrets.
-4. Commit message:
+Upload the complete contents of this package to the repository and replace the corresponding older files.
 
-   `Fix question-aware AI and full team photo`
+Commit message:
 
-5. Reboot the Streamlit app.
-6. Hard refresh the browser.
+Polish unique interfaces sidebar and adaptive AI
 
-## Live checks
+After Streamlit Cloud redeploys, verify:
 
-1. Project Team → confirm all three people are visible.
-2. Ask Preluma AI → ask `about machine learning`.
-3. Confirm the answer title/context says Machine Learning, not Variance.
-4. Student Mission → complete all five steps.
-5. Homework Center and My Homework → open without errors.
+1. Sidebar is compact and contains no emoji.
+2. Student Mission keeps the campus learning interface.
+3. My Homework has the amber assignment theme.
+4. Ask Preluma AI has the violet conversational interface.
+5. Teacher Studio has the analytics dashboard theme.
+6. Evidence Board has the technical lab theme.
+7. Professor Defense has the formal academic theme.
+8. Project Team shows the team photo as a background hero.
+9. Deep AI answers appear as connected paragraphs.
+10. Guided Mission and Homework submission still work.
+
+Never upload a real `.streamlit/secrets.toml`.
