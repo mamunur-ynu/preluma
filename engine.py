@@ -152,7 +152,7 @@ def make_questions(pack: Dict) -> List[Dict]:
     misconception = pack["misconceptions"][0]
     return [
         {"skill": SKILL_DEFINITION, "q": f"What is the best simple definition of {pack['title']}?", "options": [pack["definition"], "A random activity with no rules", "Only memorizing a word", "A topic that cannot be explained"], "answer": pack["definition"], "why": "The definition explains the main meaning clearly."},
-        {"skill": SKILL_CORE, "q": f"Which concept is important in {pack['title']}?", "options": [concept_name.title(), "A method that relies on random selection rather than structured reasoning", "A method that relies on random selection rather than structured reasoning", "Random Guess"], "answer": concept_name.title(), "why": f"{concept_name.title()} is a core concept."},
+        {"skill": SKILL_CORE, "q": f"Which concept is important in {pack['title']}?", "options": [concept_name.title(), "Random Guess", "Unrelated Decoration", "A term with no meaning"], "answer": concept_name.title(), "why": f"{concept_name.title()} is a core concept."},
         {"skill": SKILL_APPLICATION, "q": f"Where can {pack['title']} be applied?", "options": [app_name.title(), "Only in dreams", "Nowhere useful", "Only for decoration"], "answer": app_name.title(), "why": f"{app_name.title()} is connected to the topic."},
         {"skill": SKILL_MISCONCEPTION, "q": "Which statement is a common misunderstanding?", "options": [misconception, "Examples help learning", "Class questions are useful", "Definitions are important"], "answer": misconception, "why": "This option describes a misconception students should avoid."},
     ]

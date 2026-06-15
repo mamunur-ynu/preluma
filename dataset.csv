@@ -1,0 +1,7 @@
+Record ID,Student,Topic,Readiness,Weak Skill,Quiz Score,Quiz Total,Lecture Time,Learning Mode,Created At
+1,Amir,Quantum Mechanics,85.0,Core Concept,3,4,Tomorrow 9 AM,Deep Understanding,2026-06-15T09:00:00
+2,Jia,Neural Network,92.0,None,4,4,Tomorrow 9 AM,Deep Understanding,2026-06-15T09:05:00
+3,Fahim,Python Programming,76.0,Application,3,4,Tomorrow 9 AM,Exam/Viva Mode,2026-06-15T09:10:00
+4,Nadia,Statistics,68.0,Definition,2,4,Tomorrow 9 AM,Fast Review,2026-06-15T09:15:00
+5,Omar,Machine Learning,88.0,None,4,4,Tomorrow 9 AM,Deep Understanding,2026-06-15T09:20:00
+6,Sara,Artificial Intelligence,72.0,Misconception,3,4,Tomorrow 9 AM,Fast Review,2026-06-15T09:25:00

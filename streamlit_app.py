@@ -711,6 +711,7 @@ def mission_control():
                 class_qs = pack.get("class_questions", [])
         st.session_state.update({
             "student": student, "topic": topic, "persona": persona,
+            "lecture_time": lecture_time,
             "learning_mode": learning_mode, "use_wiki": use_wiki,
             "pack": pack, "brief": brief, "questions": questions,
             "class_questions": class_qs, "quiz_result": None,
@@ -809,7 +810,8 @@ def quiz():
             "Record ID": next_record_id(), "Student": st.session_state.student,
             "Topic": st.session_state.pack["title"], "Readiness": result["pct"],
             "Weak Skill": result["weakest"], "Quiz Score": result["score"],
-            "Quiz Total": result["total"], "Lecture Time": st.session_state.get("learning_mode","Fast Review"),
+            "Quiz Total": result["total"],
+            "Lecture Time": st.session_state.get("lecture_time", "Tomorrow 9 AM"),
             "Learning Mode": st.session_state.get("learning_mode","Fast Review"), "Created At": timestamp(),
         })
         st.rerun()
@@ -1787,7 +1789,7 @@ def professor_defense():
     st.code("Student Input → Topic Router → Curated Pack / Wikipedia Fallback → Brain Brief\n→ Quiz (4 skills) → Mistake Clinic → UltraTutor (AI) → Class Questions\n→ CSV Persistence → Merge Sort + Binary Search → Teacher Analytics → Export", language="text")
 
     st.markdown("### Defense Line")
-    st.success("Third-party libraries are allowed. Preluma uses Streamlit and Plotly for the interface, but all core algorithms — Merge Sort, Binary Search, statistics, CSV I/O — are implemented manually in Python. This proves both presentation skill and algorithmic understanding.")
+    st.success("Course permission allows third-party libraries for the product interface. Preluma uses Streamlit and Plotly only in the presentation layer; the assessed core work — CSV loading/saving, statistics, Merge Sort, Binary Search, timing, exception handling, and result.txt logging — is implemented manually with the Python standard library.")
 
 
 # ── Project Team ──────────────────────────────────────────────────────────────
