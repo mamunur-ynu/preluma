@@ -540,15 +540,26 @@ def sidebar():
             unread_only=True,
         )
     )
+
+    notification_text = (
+        f"{unread_count} unread homework notification"
+        if unread_count == 1
+        else f"{unread_count} unread homework notifications"
+    )
+
     st.sidebar.markdown(
-        f"<div class='sidebar-profile'><b>{st.session_state.get('student','Student')}</b>"
-        f"<span>{unread_count} unread homework notification{'s' if unread_count != 1 else ''}</span></div>",
+        f"""
+        <div class='sidebar-profile'>
+            <b>{st.session_state.get('student','Student')}</b>
+            <span>{notification_text}</span>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
 
     st.sidebar.markdown("<div class='nav-label'>Learn</div>", unsafe_allow_html=True)
     _nav_button("Student Mission", "Student Mission")
-    _nav_button(f"My Homework  {unread_count if unread_count else ''}".rstrip(), "My Homework")
+    _nav_button("My Homework", "My Homework")
     _nav_button("Ask Preluma AI", "Ask Preluma AI")
 
     st.sidebar.markdown("<div class='nav-label'>Teach</div>", unsafe_allow_html=True)
@@ -565,10 +576,12 @@ def sidebar():
     presentation = st.sidebar.toggle("Presentation Mode", value=True)
 
     st.sidebar.markdown(
-        "<div class='sidebar-status'>"
-        "<div class='status-title'>Preluma AI ready</div>"
-        "<div class='status-copy'>Adaptive explanation, mission context, provider fallback.</div>"
-        "</div>",
+        """
+        <div class='sidebar-status'>
+            <div class='status-title'>Preluma AI ready</div>
+            <div class='status-copy'>Adaptive explanation, mission context, provider fallback.</div>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
 
@@ -658,67 +671,162 @@ def chip_row():
 # ── Mission Control ───────────────────────────────────────────────────────────
 
 def mission_control():
-    st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(56,189,248,.12);'>🎯</div>
-      <div><div class='sec-title'>Mission Control</div><div class='sec-sub'>Choose your topic and start your pre-class mission</div></div>
-    </div>""", unsafe_allow_html=True)
+    st.markdown("""
+    <div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(56,189,248,.12);'>MC</div>
+      <div>
+        <div class='sec-title'>Mission Control</div>
+        <div class='sec-sub'>Choose your topic and start your pre-class mission</div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    preset = st.selectbox("Demo preset", ["Manual Input","AI Class Demo","Python Exam Demo","Statistics Viva Demo"], index=0)
+    preset = st.selectbox(
+        "Demo preset",
+        ["Manual Input", "AI Class Demo", "Python Exam Demo", "Statistics Viva Demo"],
+        index=0,
+    )
+
     preset_data = {
-        "AI Class Demo":        ("Amir",  "Neural Network",      "Tomorrow 9 AM", "Coach Mode",  "Deep Understanding"),
-        "Python Exam Demo":     ("Jia",   "Python Programming",  "Tomorrow 9 AM", "Normal Mode", "Exam/Viva Mode"),
-        "Statistics Viva Demo": ("Nadia", "Statistics",          "Tomorrow 9 AM", "Coach Mode",  "Exam/Viva Mode"),
+        "AI Class Demo": (
+            "Amir",
+            "Neural Network",
+            "Tomorrow 9 AM",
+            "Coach Mode",
+            "Deep Understanding",
+        ),
+        "Python Exam Demo": (
+            "Jia",
+            "Python Programming",
+            "Tomorrow 9 AM",
+            "Normal Mode",
+            "Exam/Viva Mode",
+        ),
+        "Statistics Viva Demo": (
+            "Nadia",
+            "Statistics",
+            "Tomorrow 9 AM",
+            "Coach Mode",
+            "Exam/Viva Mode",
+        ),
     }
-    ds, dt, dtime, dp, dm = preset_data.get(preset, (
-        st.session_state.student, st.session_state.topic, "Tomorrow 9 AM", st.session_state.persona, "Fast Review"))
+
+    ds, dt, dtime, dp, dm = preset_data.get(
+        preset,
+        (
+            st.session_state.student,
+            st.session_state.topic,
+            "Tomorrow 9 AM",
+            st.session_state.persona,
+            "Fast Review",
+        ),
+    )
 
     with st.form("mission_form", border=False):
-        st.markdown("<div class='card-glass' style='padding:24px;'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-glass' style='padding:22px;'>", unsafe_allow_html=True)
+
         c1, c2, c3 = st.columns([1.4, 1, 0.9])
+
         with c1:
-            student      = st.text_input("Your name", value=ds)
-            topic_choice = st.selectbox("Lecture topic", TOPIC_OPTIONS,
-                index=TOPIC_OPTIONS.index(dt) if dt in TOPIC_OPTIONS else 0)
-            topic = st.text_input("Custom topic", placeholder="e.g. Reinforcement Learning") \
-                    if topic_choice == "Custom Topic" else topic_choice
+            student = st.text_input("Your name", value=ds)
+
+            topic_choice = st.selectbox(
+                "Lecture topic",
+                TOPIC_OPTIONS,
+                index=TOPIC_OPTIONS.index(dt) if dt in TOPIC_OPTIONS else 0,
+            )
+
+            if topic_choice == "Custom Topic":
+                topic = st.text_input(
+                    "Custom topic",
+                    placeholder="e.g. Reinforcement Learning",
+                )
+            else:
+                topic = topic_choice
+
             lecture_time = st.text_input("Lecture time", value=dtime)
+
         with c2:
-            persona       = st.radio("Tutor personality", ["Normal Mode","Coach Mode","Roast Mode"],
-                captions=["Clear & direct","Warm & motivating","Funny pressure"],
-                index=["Normal Mode","Coach Mode","Roast Mode"].index(dp) if dp in ["Normal Mode","Coach Mode","Roast Mode"] else 0)
-            learning_mode = st.selectbox("Learning mode",["Fast Review","Deep Understanding","Exam/Viva Mode"],
-                index=["Fast Review","Deep Understanding","Exam/Viva Mode"].index(dm) if dm in ["Fast Review","Deep Understanding","Exam/Viva Mode"] else 0)
+            persona = st.radio(
+                "Tutor personality",
+                ["Normal Mode", "Coach Mode", "Roast Mode"],
+                captions=[
+                    "Clear and direct",
+                    "Warm and motivating",
+                    "Light humour",
+                ],
+                index=["Normal Mode", "Coach Mode", "Roast Mode"].index(dp)
+                if dp in ["Normal Mode", "Coach Mode", "Roast Mode"]
+                else 0,
+            )
+
+            learning_mode = st.selectbox(
+                "Learning mode",
+                ["Fast Review", "Deep Understanding", "Exam/Viva Mode"],
+                index=["Fast Review", "Deep Understanding", "Exam/Viva Mode"].index(dm)
+                if dm in ["Fast Review", "Deep Understanding", "Exam/Viva Mode"]
+                else 0,
+            )
+
         with c3:
             use_wiki = st.checkbox("Wikipedia real data", value=True)
-            st.markdown("**You will get:**")
-            for item in ["AI Brain Brief","All concepts in tabs","Quiz + skill check","Mistake clinic","UltraTutor answers","Smart class questions"]:
-                st.markdown(f"<div style='font-size:13px;color:#94a3b8;padding:2px 0;'>→ {item}</div>", unsafe_allow_html=True)
+
+            st.markdown("**Mission output**")
+            for item in [
+                "Brain Brief",
+                "Concept explanation",
+                "Practice step",
+                "Mini mock test",
+                "Final overview",
+            ]:
+                st.markdown(
+                    f"<div style='font-size:13px;color:#94a3b8;padding:2px 0;'>{item}</div>",
+                    unsafe_allow_html=True,
+                )
+
         st.markdown("</div>", unsafe_allow_html=True)
-        start = st.form_submit_button("Start Pre-Class Mission", use_container_width=True)
+
+        start = st.form_submit_button(
+            "Start Pre-Class Mission",
+            use_container_width=True,
+        )
 
     if start:
         if not topic or not topic.strip():
             st.warning("Please enter a topic first.")
             return
+
         with st.spinner("Building your AI-powered learning mission..."):
             pack = build_pack(topic, use_wikipedia=use_wiki)
             brief = build_brain_brief(pack)
             questions = make_questions(pack)
+
             try:
                 from engine import build_enriched_class_questions
                 class_qs = build_enriched_class_questions(pack)
             except Exception:
                 class_qs = pack.get("class_questions", [])
-        st.session_state.update({
-            "student": student, "topic": topic, "persona": persona,
-            "lecture_time": lecture_time,
-            "learning_mode": learning_mode, "use_wiki": use_wiki,
-            "pack": pack, "brief": brief, "questions": questions,
-            "class_questions": class_qs, "quiz_result": None,
-            "latest_session": None, "tutor_history": [],
-            "mission_started": True, "mission_step": 1,
-            "practice_reflection": "",
-        })
+
+        st.session_state.update(
+            {
+                "student": student,
+                "topic": topic,
+                "persona": persona,
+                "learning_mode": learning_mode,
+                "use_wiki": use_wiki,
+                "pack": pack,
+                "brief": brief,
+                "questions": questions,
+                "class_questions": class_qs,
+                "quiz_result": None,
+                "latest_session": None,
+                "tutor_history": [],
+                "mission_started": True,
+                "mission_step": 1,
+                "practice_reflection": "",
+            }
+        )
+
         st.rerun()
 
 
@@ -1264,16 +1372,15 @@ def mission_overview_screen() -> None:
 
 
 def student_mission(presentation):
-    hero()
-    chip_row()
-
     if not st.session_state.get("mission_started") or "pack" not in st.session_state:
+        hero()
         mission_control()
         if presentation:
             how_it_works()
         return
 
     step = st.session_state.get("mission_step", 1)
+
     if step == 1:
         mission_brain_brief_screen()
     elif step == 2:
@@ -1284,7 +1391,6 @@ def student_mission(presentation):
         mission_mock_test_screen()
     else:
         mission_overview_screen()
-
 
 
 # ── Teacher Studio
@@ -1506,26 +1612,45 @@ def ask_preluma_ai_page():
     st.markdown("</div>", unsafe_allow_html=True)
 
 
+def _reset_homework_flow(homework_id: str) -> None:
+    st.session_state.hw_active_id = str(homework_id)
+    st.session_state.hw_step = 0
+    st.session_state.hw_answers = {}
+    st.session_state.homework_result = None
+
+
+def _homework_progress(current: int, total: int) -> None:
+    value = (current + 1) / total if total else 0
+    st.progress(value, text=f"Question {current + 1} of {total}")
+
+
 def my_homework_page():
     student = st.session_state.get("student", "Student")
+
     page_intro(
         "homework",
         "Student assignment desk",
         f"My Homework — {student}",
-        "Review deadlines, complete assigned work, inspect mistakes, and return to weak concepts with focused support.",
+        "Complete homework one question at a time, review your answers, submit, and learn from captured mistakes.",
     )
 
     notifications = notifications_for_student(student)
+
     if notifications:
-        with st.expander(f"Notifications ({len(notifications)})", expanded=True):
+        with st.expander(f"Notifications ({len(notifications)})", expanded=False):
             for note in reversed(notifications[-5:]):
                 st.markdown(
-                    f"<div class='card-glass'><div class='albl lbl-blue'>{note.get('Title')}</div>"
-                    f"<div class='atxt'>{note.get('Message')}</div></div>",
+                    f"""
+                    <div class='assignment-card'>
+                      <div class='albl lbl-blue'>{note.get('Title')}</div>
+                      <div class='atxt'>{note.get('Message')}</div>
+                    </div>
+                    """,
                     unsafe_allow_html=True,
                 )
 
     homework_rows = homework_for_student(student)
+
     if not homework_rows:
         st.info("No homework has been assigned to this student yet.")
         return
@@ -1534,78 +1659,203 @@ def my_homework_page():
         f"#{row['Homework ID']} · {row['Title']} · Due {row['Due Date']}": row
         for row in homework_rows
     }
+
     selected_label = st.selectbox("Choose homework", list(labels))
     selected = labels[selected_label]
-    homework_id = selected["Homework ID"]
-    st.session_state.selected_homework_id = homework_id
+    homework_id = str(selected["Homework ID"])
 
-    st.markdown(f"""
-    <div class='card-glass'>
-      <div class='albl lbl-purple'>{selected.get('Topic')}</div>
-      <div class='atxt'><b>{selected.get('Title')}</b><br>{selected.get('Instructions')}</div>
-      <div style='margin-top:12px;color:#94a3b8;font-size:13px;'>
-        Due: {selected.get('Due Date')} · Difficulty: {selected.get('Difficulty')}
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    if st.session_state.get("hw_active_id") != homework_id:
+        _reset_homework_flow(homework_id)
 
     questions = load_questions(homework_id)
-    with st.form(f"homework_form_{homework_id}", border=False):
-        answers = {}
-        for question in questions:
-            question_id = int(question["Question ID"])
-            st.markdown(
-                f"<div class='card-glass'><div class='albl lbl-yellow'>"
-                f"Question {question_id} · {question.get('Concept')}</div>"
-                f"<div class='atxt'>{question.get('Question')}</div></div>",
-                unsafe_allow_html=True,
-            )
-            answers[question_id] = st.radio(
-                "Choose one",
-                question["Options"],
-                key=f"homework_{homework_id}_{question_id}",
-                label_visibility="collapsed",
-            )
-        submitted = st.form_submit_button("Submit Homework", use_container_width=True)
 
-    if submitted:
-        st.session_state.homework_result = submit_homework(homework_id, student, answers)
-        st.rerun()
+    if not questions:
+        st.warning("This homework has no questions.")
+        return
+
+    st.markdown(
+        f"""
+        <div class='assignment-card'>
+          <div class='albl lbl-purple'>{selected.get('Topic')}</div>
+          <div class='atxt'>
+            <b>{selected.get('Title')}</b><br>
+            {selected.get('Instructions')}
+          </div>
+          <div style='margin-top:12px;color:#94a3b8;font-size:13px;'>
+            Due: {selected.get('Due Date')} · Difficulty: {selected.get('Difficulty')}
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     result = st.session_state.get("homework_result")
+
     if result:
         st.success(
             f"Homework submitted · Attempt {result['attempt']} · "
             f"{result['score']}/{result['total']} · {result['percentage']}%"
         )
-        for detail in result["details"]:
-            if detail["correct"]:
-                continue
-            with st.expander(f"Review: {detail['concept']}", expanded=True):
-                st.write(f"Your answer: {detail['chosen']}")
-                st.write(f"Correct answer: {detail['correct_answer']}")
-                st.info(detail["explanation"])
-                if st.button(
-                    f"Ask Preluma AI about {detail['concept']}",
-                    key=f"ask_mistake_{detail['question_id']}",
-                ):
-                    st.session_state.ai_context_note = (
-                        f"Homework mistake. Topic: {selected.get('Topic')}. "
-                        f"Question: {detail['question']} "
-                        f"Student answer: {detail['chosen']}. "
-                        f"Correct answer: {detail['correct_answer']}."
+
+        if result["mistakes"]:
+            st.markdown("### Mistake Review")
+
+            for detail in result["details"]:
+                if detail["correct"]:
+                    continue
+
+                with st.expander(f"Review: {detail['concept']}", expanded=True):
+                    st.write(f"Your answer: {detail['chosen']}")
+                    st.write(f"Correct answer: {detail['correct_answer']}")
+                    st.info(detail["explanation"])
+
+                    if st.button(
+                        f"Ask Preluma AI about {detail['concept']}",
+                        key=f"ask_mistake_{detail['question_id']}",
+                    ):
+                        st.session_state.ai_context_note = (
+                            f"Homework mistake. Topic: {selected.get('Topic')}. "
+                            f"Question: {detail['question']} "
+                            f"Student answer: {detail['chosen']}. "
+                            f"Correct answer: {detail['correct_answer']}."
+                        )
+                        st.session_state.active_page = "Ask Preluma AI"
+                        st.rerun()
+        else:
+            st.success("Excellent. No mistakes were captured in this attempt.")
+
+        if st.button("Try this homework again", use_container_width=True):
+            _reset_homework_flow(homework_id)
+            st.rerun()
+
+        return
+
+    step = int(st.session_state.get("hw_step", 0))
+    total = len(questions)
+
+    if step >= total:
+        st.markdown("### Review Answers Before Submit")
+
+        missing = []
+
+        for question in questions:
+            question_id = int(question["Question ID"])
+            chosen = st.session_state.hw_answers.get(question_id, "")
+
+            if not chosen:
+                missing.append(question_id)
+
+            st.markdown(
+                f"""
+                <div class='assignment-card'>
+                  <div class='albl lbl-yellow'>
+                    Question {question_id} · {question.get('Concept')}
+                  </div>
+                  <div class='atxt'>{question.get('Question')}</div>
+                  <div style='margin-top:10px;color:#cbd5e1;font-size:14px;'>
+                    Your answer: <b>{chosen or 'Not answered yet'}</b>
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        c1, c2, c3 = st.columns([1, 2, 1])
+
+        with c1:
+            if st.button("Back", use_container_width=True):
+                st.session_state.hw_step = max(0, total - 1)
+                st.rerun()
+
+        with c2:
+            if missing:
+                st.warning(
+                    f"Please answer question(s): {', '.join(map(str, missing))}"
+                )
+            else:
+                if st.button("Submit Homework", use_container_width=True):
+                    st.session_state.homework_result = submit_homework(
+                        homework_id,
+                        student,
+                        st.session_state.hw_answers,
                     )
-                    st.info("Open “Ask Preluma AI” from the sidebar. The mistake context is ready.")
+                    st.rerun()
+
+        with c3:
+            if st.button("Reset", use_container_width=True):
+                _reset_homework_flow(homework_id)
+                st.rerun()
+
+        return
+
+    question = questions[step]
+    question_id = int(question["Question ID"])
+
+    _homework_progress(step, total)
+
+    st.markdown(
+        f"""
+        <div class='assignment-card' style='border-color:rgba(245,158,11,.34);'>
+          <div class='albl lbl-yellow'>
+            Question {question_id} · {question.get('Concept')}
+          </div>
+          <div class='atxt' style='font-size:18px;font-weight:700;'>
+            {question.get('Question')}
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    current_answer = st.session_state.hw_answers.get(question_id, "")
+    options = question["Options"]
+
+    try:
+        selected_index = options.index(current_answer)
+    except ValueError:
+        selected_index = 0
+
+    selected_answer = st.radio(
+        "Choose one answer",
+        options,
+        index=selected_index,
+        key=f"homework_step_{homework_id}_{question_id}",
+    )
+
+    if selected_answer:
+        st.session_state.hw_answers[question_id] = selected_answer
+
+    c1, c2, c3 = st.columns([1, 2, 1])
+
+    with c1:
+        if st.button("Back", disabled=step == 0, use_container_width=True):
+            st.session_state.hw_step = max(0, step - 1)
+            st.rerun()
+
+    with c2:
+        st.caption(
+            "Answer the current question, then continue. Only one question is shown at a time."
+        )
+
+    with c3:
+        button_label = "Review" if step == total - 1 else "Next"
+
+        if st.button(button_label, use_container_width=True):
+            if not st.session_state.hw_answers.get(question_id):
+                st.warning("Please choose an answer first.")
+            else:
+                st.session_state.hw_step = step + 1
+                st.rerun()
 
     mistakes = load_student_mistakes(student)
+
     if mistakes:
-        with st.expander("My captured weak areas"):
+        with st.expander("My captured weak areas", expanded=False):
             for mistake in mistakes[-8:]:
                 st.write(
-                    f"• {mistake.get('Weak Concept')} — "
+                    f"{mistake.get('Weak Concept')} — "
                     f"{mistake.get('Question')}"
                 )
-
 
 def _default_homework_questions(topic: str) -> list[dict]:
     return [
