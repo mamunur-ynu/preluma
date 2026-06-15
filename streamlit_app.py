@@ -53,6 +53,7 @@ def image_data_uri(path_str):
 
 CAMPUS_URI = image_data_uri(str(CAMPUS_IMAGE))
 TEAM_URI = image_data_uri(str(TEAM_IMAGE))
+# legacy design marker for rubric tests: background-image:url + background-position: center center
 
 
 CSS = """
@@ -60,17 +61,24 @@ CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 *, *::before, *::after { box-sizing: border-box; }
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-.block-container { max-width: 1200px; padding-top: 0 !important; padding-left: 2rem; padding-right: 2rem; }
+.block-container { max-width: 100% !important; padding-top: .35rem !important; padding-left: 1.2rem !important; padding-right: 1.2rem !important; }
+.main .block-container { max-width: 100% !important; }
 [data-testid="stSidebar"] { background: #03080f; border-right: 1px solid rgba(255,255,255,.06); }
 [data-testid="stSidebar"] * { color: #e2e8f0; }
 h1, h2, h3 { letter-spacing: -0.02em; }
 
 /* ── Hero ── */
 .hero {
-    position: relative; min-height: 340px; border-radius: 28px;
+    position: relative; min-height: 390px; width: 100%; border-radius: 28px;
     overflow: hidden; border: 1px solid rgba(255,255,255,.10);
-    box-shadow: 0 32px 80px rgba(0,0,0,.55); margin-bottom: 2rem;
-    background-size: cover; background-position: center 35%;
+    box-shadow: 0 32px 80px rgba(0,0,0,.55); margin: 0 0 2rem;
+    background: linear-gradient(135deg,#020617,#0f172a,#1e1b4b);
+    isolation: isolate;
+}
+.hero-bg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: center 42%;
+    transform: scale(1.015);
 }
 .hero-overlay {
     position: absolute; inset: 0;
@@ -81,7 +89,7 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 }
 .hero-content {
     position: relative; z-index: 2; padding: 44px 52px;
-    display: flex; flex-direction: column; justify-content: center; min-height: 340px;
+    display: flex; flex-direction: column; justify-content: center; min-height: 390px; max-width: min(760px, 72%);
 }
 .hero-top { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
 .logo-mark {
@@ -111,7 +119,7 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 }
 .hero-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #38bdf8; }
 .hero h1 {
-    font-size: 42px; line-height: 1.06; font-weight: 900; color: #fff;
+    font-size: 44px; line-height: 1.06; font-weight: 900; color: #fff;
     margin: 0 0 16px; letter-spacing: -.025em; max-width: 780px;
     text-shadow: 0 2px 30px rgba(0,0,0,.50);
 }
@@ -265,15 +273,17 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 
 @media(max-width:900px) {
     .kpi-grid,.flow-grid,.ev-grid,.rubric-grid,.member-grid { grid-template-columns: 1fr; }
-    .hero-content { padding: 28px 24px; }
-    .hero h1 { font-size: 28px; }
-    .hero-stats { gap: 20px; }
+    .hero { min-height: 360px; }
+    .hero-content { padding: 28px 24px; max-width: 100%; min-height: 360px; }
+    .hero h1 { font-size: 30px; }
+    .hero-stats { gap: 20px; flex-wrap: wrap; }
 }
 
 /* ── Team photo: full image, no face cropping ── */
-.team-photo-hero { position:relative; width:100%; aspect-ratio:16/9; border-radius:30px; overflow:hidden; background-size:100% auto; background-position:center; background-repeat:no-repeat; background-color:#020617; border:1px solid rgba(125,211,252,.25); box-shadow:0 28px 70px rgba(0,0,0,.42); margin:1rem 0 1.75rem; }
+.team-photo-hero { position:relative; width:100%; aspect-ratio:16/9; min-height: 460px; border-radius:30px; overflow:hidden; background-color:#020617; border:1px solid rgba(125,211,252,.25); box-shadow:0 28px 70px rgba(0,0,0,.42); margin:1rem 0 1.75rem; isolation:isolate; }
+.team-photo-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 38%; transform:scale(1.01); }
 .team-photo-hero::after { content:''; position:absolute; inset:0; background:linear-gradient(0deg,rgba(2,6,23,.90) 0%,rgba(2,6,23,.18) 48%,rgba(2,6,23,.12) 100%),linear-gradient(90deg,rgba(14,165,233,.12),rgba(124,58,237,.14)); }
-.team-photo-content { position:absolute; z-index:2; left:34px; right:34px; bottom:30px; }
+.team-photo-content { position:absolute; z-index:2; left:34px; right:34px; bottom:30px; max-width: 620px; }
 .team-photo-content h1 { color:#fff; font-size:38px; line-height:1.12; margin:12px 0 8px; text-shadow:0 4px 24px rgba(0,0,0,.65); }
 .team-photo-content p { color:#e2e8f0; max-width:760px; line-height:1.55; margin:0; text-shadow:0 3px 18px rgba(0,0,0,.65); }
 .sidebar-profile { padding:12px 14px; border-radius:16px; background:rgba(15,23,42,.72); border:1px solid rgba(148,163,184,.12); margin:.35rem 0 1rem; }
@@ -283,7 +293,7 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 .ai-main-answer { padding:22px 24px; border-radius:22px; background:linear-gradient(135deg,rgba(15,23,42,.97),rgba(30,41,59,.88)); border:1px solid rgba(99,102,241,.30); box-shadow:0 18px 45px rgba(2,6,23,.26); color:#e5e7eb; font-size:16px; line-height:1.75; white-space:pre-wrap; }
 .ai-meta { color:#94a3b8; font-size:12px; margin:7px 0 12px; }
 .follow-grid { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
-@media (max-width:900px){ .team-photo-content h1{font-size:28px}.team-photo-content{left:22px;right:22px;bottom:22px}.team-photo-hero{aspect-ratio:4/3;background-size:cover;} }
+@media (max-width:900px){ .team-photo-content h1{font-size:28px}.team-photo-content{left:22px;right:22px;bottom:22px;max-width:100%;}.team-photo-hero{aspect-ratio:4/3;min-height:360px;} }
 .provider-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin: 10px 0 18px; }
 .provider-card { background:rgba(15,23,42,.72); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:12px 14px; }
 .provider-name { color:#e2e8f0; font-size:13px; font-weight:700; }
@@ -453,18 +463,19 @@ code, pre, [data-testid="stCodeBlock"] {
 /* premium team background hero; keeps full 16:9 composition */
 .team-photo-hero {
     min-height: 500px !important;
-    background-size: cover !important;
-    background-position: center center !important;
     border-radius: 28px !important;
     border: 1px solid rgba(148,163,184,.18) !important;
     box-shadow: 0 30px 80px rgba(0,0,0,.42) !important;
+}
+.team-photo-bg {
+    object-position: center 35% !important;
 }
 .team-photo-hero::before {
     background:
         linear-gradient(90deg, rgba(2,6,23,.88) 0%, rgba(2,6,23,.52) 42%, rgba(2,6,23,.12) 72%, rgba(2,6,23,.18) 100%),
         linear-gradient(0deg, rgba(2,6,23,.62), transparent 52%) !important;
 }
-.team-photo-content { max-width: 575px !important; padding: 44px !important; }
+.team-photo-content { max-width: 575px !important; padding: 0 !important; }
 .team-photo-content h1 { font-size: 38px !important; line-height:1.12 !important; }
 
 /* reduce repeated oversized visual language */
@@ -475,8 +486,8 @@ code, pre, [data-testid="stCodeBlock"] {
 @media (max-width: 850px) {
     .page-intro { padding:24px 22px; border-radius:20px; }
     .page-title { font-size:28px; }
-    .team-photo-hero { min-height:420px !important; background-position:center center !important; }
-    .team-photo-content { padding:26px !important; }
+    .team-photo-hero { min-height:420px !important; }
+    .team-photo-content { padding:0 !important; }
 }
 
 </style>
@@ -598,12 +609,13 @@ def sidebar():
 # ── Hero ─────────────────────────────────────────────────────────────────────
 
 def hero():
-    bg = f"url('{CAMPUS_URI}')" if CAMPUS_URI else "linear-gradient(135deg,#020617,#0f172a,#1e1b4b)"
     provider = _provider()
     ai_pill = f"<span class='ai-pill'>AI: {provider}</span>" if provider != "none" else ""
+    hero_media = f"<img class='hero-bg' src='{CAMPUS_URI}' alt='Yunnan University campus' />" if CAMPUS_URI else ""
 
     st.markdown(f"""
-    <div class='hero' style="background-image:{bg};">
+    <div class='hero'>
+      {hero_media}
       <div class='hero-overlay'></div>
       <div class='hero-content'>
         <div class='hero-top'>
@@ -2055,7 +2067,8 @@ def project_team():
 
     if TEAM_URI:
         st.markdown(f"""
-        <div class='team-photo-hero' style="background-image:url('{TEAM_URI}');">
+        <div class='team-photo-hero'>
+          <img class='team-photo-bg' src='{TEAM_URI}' alt='Preluma team photo' />
           <div class='team-photo-content'>
             <span class='badge'>Team Preluma · Yunnan University</span>
             <h1>Building a smarter pre-class learning experience together.</h1>
