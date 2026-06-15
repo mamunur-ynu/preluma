@@ -67,59 +67,83 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 
 /* ── Hero ── */
 .hero {
-    position: relative; min-height: 340px; border-radius: 28px;
-    overflow: hidden; border: 1px solid rgba(255,255,255,.10);
-    box-shadow: 0 32px 80px rgba(0,0,0,.55); margin-bottom: 2rem;
-    background-size: cover; background-position: center 35%;
+    position: relative;
+    min-height: 340px;
+    border-radius: 28px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.10);
+    box-shadow: 0 32px 80px rgba(0,0,0,.55);
+    margin-bottom: 2rem;
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
+
 .hero-overlay {
-    position: absolute; inset: 0;
-    background:
-        linear-gradient(105deg, rgba(2,6,23,.92) 0%, rgba(7,14,35,.78) 38%,
-        rgba(15,23,62,.55) 65%, rgba(55,10,120,.40) 100%),
-        radial-gradient(ellipse at 15% 50%, rgba(56,189,248,.18) 0%, transparent 50%);
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+
+    background: linear-gradient(
+        90deg,
+        rgba(2,6,23,.88) 0%,
+        rgba(2,6,23,.60) 40%,
+        rgba(2,6,23,.25) 70%,
+        rgba(2,6,23,.45) 100%
+    );
 }
+
 .hero-content {
-    position: relative; z-index: 2; padding: 44px 52px;
-    display: flex; flex-direction: column; justify-content: center; min-height: 340px;
+    position: relative;
+    z-index: 2;
+    padding: 44px 52px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 340px;
 }
-.hero-top { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-.logo-mark {
-    width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0;
-    background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #a78bfa 100%);
-    box-shadow: 0 8px 24px rgba(56,189,248,.30);
-    display: flex; align-items: center; justify-content: center;
+
+/* ── TEAM FIX (clean premium look) ── */
+
+.team-photo-hero {
+    position: relative;
+    min-height: 500px !important;
+    background-size: cover !important;
+    background-position: center !important;
+    border-radius: 28px !important;
+    overflow: hidden;
+    border: 1px solid rgba(148,163,184,.18) !important;
+    box-shadow: 0 30px 80px rgba(0,0,0,.42) !important;
 }
-.logo-mark svg { width: 22px; height: 22px; }
-.brand-name { font-size: 17px; font-weight: 800; color: #fff; }
-.brand-tag  { font-size: 12px; color: #93c5fd; margin-top: 1px; }
-.uni-pill {
-    margin-left: auto; padding: 6px 14px; border-radius: 999px;
-    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.20);
-    color: #e2e8f0; font-size: 12px; font-weight: 600;
+
+.team-photo-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+
+    background: linear-gradient(
+        90deg,
+        rgba(2,6,23,.88) 0%,
+        rgba(2,6,23,.55) 45%,
+        rgba(2,6,23,.20) 70%,
+        rgba(2,6,23,.40) 100%
+    );
 }
-.ai-pill {
-    padding: 6px 12px; border-radius: 999px; margin-left: 8px;
-    background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.25);
-    color: #6ee7b7; font-size: 11px; font-weight: 700;
+
+.team-photo-content {
+    position: relative;
+    z-index: 2;
+    padding: 44px;
+    max-width: 600px;
 }
-.hero-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 7px 14px; border-radius: 999px; margin-bottom: 18px;
-    background: rgba(56,189,248,.15); border: 1px solid rgba(56,189,248,.35);
-    color: #7dd3fc; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+
+.team-photo-content h1 {
+    color: #fff;
+    font-size: 38px;
+    line-height: 1.1;
 }
-.hero-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #38bdf8; }
-.hero h1 {
-    font-size: 42px; line-height: 1.06; font-weight: 900; color: #fff;
-    margin: 0 0 16px; letter-spacing: -.025em; max-width: 780px;
-    text-shadow: 0 2px 30px rgba(0,0,0,.50);
-}
-.hero h1 span { color: #7dd3fc; }
-.hero-sub { font-size: 16px; color: #cbd5e1; line-height: 1.65; max-width: 640px; }
-.hero-stats { display: flex; gap: 32px; margin-top: 28px; }
-.hero-stat-num { font-size: 22px; font-weight: 800; color: #fff; }
-.hero-stat-lbl { font-size: 11px; color: #94a3b8; margin-top: 2px; font-weight: 500; }
 
 /* ── Progress ── */
 .progress-wrap {
