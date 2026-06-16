@@ -109,3 +109,13 @@ Preluma Audit Log
 2026-06-16T18:08:56 | op=linear_search | target=Mamunur | n=2 | elapsed_ns=1802 | matches=1
 2026-06-16T18:08:56 | op=binary_search | target=Mamunur | n=2 | elapsed_ns=3578 | matches=1
 2026-06-16T18:08:56 | op=merge_sort_for_binary_search | n=2 | elapsed_ns=2653
+2026-06-16T18:24:25 | op=merge_sort_readiness | n=2 | elapsed_ns=3189
+2026-06-16T18:24:25 | op=merge_sort_name | n=2 | elapsed_ns=2148
+2026-06-16T18:24:25 | op=linear_search | target=Mamunur | n=2 | elapsed_ns=1650 | matches=1
+2026-06-16T18:24:25 | op=binary_search | target=Mamunur | n=2 | elapsed_ns=3987 | matches=1
+2026-06-16T18:24:25 | op=merge_sort_for_binary_search | n=2 | elapsed_ns=2062
+2026-06-16T18:24:25 | op=merge_sort_readiness | n=2 | elapsed_ns=3360
+2026-06-16T18:24:25 | op=merge_sort_name | n=2 | elapsed_ns=2078
+2026-06-16T18:24:25 | op=linear_search | target=Mamunur | n=2 | elapsed_ns=1869 | matches=1
+2026-06-16T18:24:25 | op=binary_search | target=Mamunur | n=2 | elapsed_ns=2624 | matches=1
+2026-06-16T18:24:25 | op=merge_sort_for_binary_search | n=2 | elapsed_ns=1982

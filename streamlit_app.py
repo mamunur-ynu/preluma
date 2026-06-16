@@ -26,7 +26,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "28.0 Study Home + Real Tutor Polish"
+APP_VERSION = "28.1 Cinematic Home + Team Fit Final"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -63,7 +63,7 @@ CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 *, *::before, *::after { box-sizing: border-box; }
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-.block-container { max-width: 1200px; padding-top: .65rem !important; padding-left: 1.8rem; padding-right: 1.8rem; }
+.block-container { max-width: 1200px; padding-top: 1.45rem !important; padding-left: 1.8rem; padding-right: 1.8rem; }
 [data-testid="stSidebar"] {
     background:
         linear-gradient(180deg, rgba(2,6,23,.12) 0%, rgba(2,6,23,.18) 24%, rgba(2,6,23,.30) 52%, rgba(2,6,23,.46) 100%),
@@ -959,6 +959,104 @@ code, pre, [data-testid="stCodeBlock"] {
     background-position: center, center, 50% 102% !important;
 }
 
+
+
+/* V28.1 final cinematic landing and safe image fitting */
+.hero {
+    aspect-ratio: 16 / 9 !important;
+    min-height: 470px !important;
+    max-height: 690px !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    margin-top: .15rem !important;
+}
+.hero-home {
+    min-height: 570px !important;
+    box-shadow: 0 34px 90px rgba(0,0,0,.55), inset 0 0 0 1px rgba(125,211,252,.08) !important;
+}
+.hero-home .hero-content {
+    min-height: 570px !important;
+    padding: 54px 58px !important;
+}
+.hero-home .hero-overlay {
+    background:
+        linear-gradient(105deg, rgba(2,6,23,.94) 0%, rgba(7,14,35,.80) 36%, rgba(15,23,62,.44) 66%, rgba(55,10,120,.26) 100%),
+        radial-gradient(ellipse at 20% 24%, rgba(56,189,248,.20) 0%, transparent 42%),
+        radial-gradient(ellipse at 88% 12%, rgba(167,139,250,.16) 0%, transparent 36%) !important;
+}
+.hero-signature {
+    position: absolute;
+    right: 34px;
+    bottom: 28px;
+    z-index: 3;
+    padding: 12px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(2,6,23,.38);
+    backdrop-filter: blur(12px);
+    color: #dbeafe;
+    font-size: 12px;
+    line-height: 1.45;
+    text-align: right;
+    box-shadow: 0 16px 36px rgba(0,0,0,.24);
+}
+.hero-signature b { display:block; color:#f8fafc; font-size:13px; }
+.home-clean-note {
+    margin: 18px 2px 0;
+    color: #64748b;
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+.page-intro { margin-top: .15rem !important; }
+.sec-head { margin-top: 1.2rem !important; }
+.team-photo-hero {
+    aspect-ratio: 16 / 9 !important;
+    min-height: 520px !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    margin-top: .3rem !important;
+}
+.team-photo-hero::before {
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+    background:
+      linear-gradient(90deg, rgba(2,6,23,.62) 0%, rgba(2,6,23,.30) 28%, rgba(2,6,23,.06) 58%, rgba(2,6,23,.12) 100%),
+      linear-gradient(0deg, rgba(2,6,23,.30), transparent 52%) !important;
+}
+.team-photo-content {
+    top: 34px !important;
+    left: 34px !important;
+    bottom: auto !important;
+    right: auto !important;
+    max-width: 470px !important;
+    padding: 22px 24px !important;
+    border-radius: 22px !important;
+    border: 1px solid rgba(255,255,255,.16) !important;
+    background: rgba(2,6,23,.38) !important;
+    backdrop-filter: blur(12px) !important;
+    box-shadow: 0 18px 42px rgba(0,0,0,.26) !important;
+}
+.team-photo-content h1 {
+    font-size: 34px !important;
+    line-height: 1.08 !important;
+    margin: 10px 0 8px !important;
+}
+.team-photo-content p { font-size: 13px !important; line-height:1.58 !important; max-width:420px !important; }
+.team-school-line { color:#93c5fd; font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+@media(max-width:900px){
+    .hero, .hero-home { aspect-ratio:auto !important; min-height: 510px !important; }
+    .hero-home .hero-content { min-height: 510px !important; padding: 34px 26px !important; }
+    .hero-signature { left: 24px; right:24px; text-align:left; bottom:22px; }
+    .team-photo-hero { aspect-ratio: 4/3 !important; min-height: 430px !important; }
+    .team-photo-content { top:22px !important; left:22px !important; right:22px !important; max-width:none !important; }
+}
+
 </style>
 """
 CSS = CSS.replace("__SIDEBAR_BG__", SIDEBAR_URI or CAMPUS_URI)
@@ -1105,13 +1203,16 @@ def sidebar():
 
 # ── Hero ─────────────────────────────────────────────────────────────────────
 
-def hero():
+def hero(show_signature: bool = False, home: bool = False):
     bg = f"url('{CAMPUS_URI}')" if CAMPUS_URI else "linear-gradient(135deg,#020617,#0f172a,#1e1b4b)"
     provider = _provider()
     ai_pill = f"<span class='ai-pill'>AI: {provider}</span>" if provider != "none" else ""
 
+    signature = """<div class='hero-signature'><b>School of Software and Artificial Intelligence</b>Yunnan University</div>""" if show_signature else ""
+    hero_class = "hero hero-home" if home else "hero"
+
     st.markdown(f"""
-    <div class='hero' style="background-image:{bg};">
+    <div class='{hero_class}' style="background-image:{bg};">
       <div class='hero-overlay'></div>
       <div class='hero-content'>
         <div class='hero-top'>
@@ -1134,6 +1235,7 @@ def hero():
           <div><div class='hero-stat-num'>CSV</div><div class='hero-stat-lbl'>Data Persistence</div></div>
         </div>
       </div>
+      {signature}
     </div>""", unsafe_allow_html=True)
 
 
@@ -1262,7 +1364,7 @@ def mission_control():
 
         with c1:
             st.markdown("**Student setup**")
-            student = st.text_input("Your name", value=ds, placeholder="Please write your name")
+            student = st.text_input("Your name", value="" if ds == "Student" else ds, placeholder="Please write your name")
 
             topic_choice = st.selectbox(
                 "Lecture topic",
@@ -1941,44 +2043,14 @@ def mission_overview_screen() -> None:
 
 
 def home_page(presentation=True):
-    hero()
+    """Landing page only: brand impression, not duplicate navigation."""
+    hero(show_signature=True, home=True)
     st.markdown(
         """
-        <div class='study-home-grid'>
-            <section class='study-panel'>
-                <div class='study-kicker'>Study dashboard</div>
-                <div class='study-title'>Choose how you want to prepare before class.</div>
-                <div class='study-copy'>Preluma separates the main landing page from the learning workspace. Start a mission for guided study, open homework for assignments, or ask the AI tutor when you need a quick explanation.</div>
-                <div class='study-flow'>
-                    <div class='study-flow-step'><small>01</small><div>Prepare</div></div>
-                    <div class='study-flow-step'><small>02</small><div>Practice</div></div>
-                    <div class='study-flow-step'><small>03</small><div>Ask AI</div></div>
-                    <div class='study-flow-step'><small>04</small><div>Review</div></div>
-                </div>
-            </section>
-            <section class='study-panel'>
-                <div class='study-kicker'>Today’s focus</div>
-                <div class='study-action-card'><b>Learning mission</b><span>Turn a lecture topic into a 5-step study path with brief, example, practice, mock test, and final overview.</span></div>
-                <div style='height:12px'></div>
-                <div class='study-action-card'><b>AI tutor room</b><span>Ask naturally. Greetings stay natural; academic questions become clear explanations, examples, or quiz practice.</span></div>
-            </section>
-        </div>
+        <div class='home-clean-note'>Use the sidebar to enter Learn, Teach, or Project workspaces.</div>
         """,
         unsafe_allow_html=True,
     )
-    c1, c2, c3 = st.columns(3)
-    if c1.button("Start Student Mission", use_container_width=True, type="primary"):
-        st.session_state.active_page = "Student Mission"
-        st.session_state.nav_group = "Learn"
-        st.rerun()
-    if c2.button("Open AI Tutor", use_container_width=True):
-        st.session_state.active_page = "Ask Preluma AI"
-        st.session_state.nav_group = "Learn"
-        st.rerun()
-    if c3.button("Go to Homework", use_container_width=True):
-        st.session_state.active_page = "My Homework"
-        st.session_state.nav_group = "Learn"
-        st.rerun()
 
 
 def student_mission(presentation):
@@ -2685,20 +2757,14 @@ def professor_defense():
 # ── Project Team ──────────────────────────────────────────────────────────────
 
 def project_team():
-    page_intro(
-        "defense",
-        "Student product team",
-        "Project Team",
-        "A balanced collaboration combining core application development, testing, topic support, and presentation preparation.",
-    )
-
     if TEAM_URI:
         st.markdown(f"""
         <div class='team-photo-hero' style="background-image:url('{TEAM_URI}');">
           <div class='team-photo-content'>
-            <span class='badge'>Team Preluma · Yunnan University</span>
+            <span class='badge'>Project Team · Team Preluma</span>
             <h1>Building a smarter pre-class learning experience together.</h1>
             <p>Three students combined core development, testing, topic data, and presentation support to shape Preluma into a working Python Streamlit prototype.</p>
+            <div class='team-school-line'>School of Software and Artificial Intelligence · Yunnan University</div>
           </div>
         </div>
         """, unsafe_allow_html=True)
