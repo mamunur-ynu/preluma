@@ -25,7 +25,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "27.2 Sidebar Visual + Team Fit Polish"
+APP_VERSION = "27.4 Real Clock Tower Sidebar"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -37,6 +37,7 @@ TEAM_MEMBERS = [
 
 CAMPUS_IMAGE = Path("assets/ynu_campus.jpg")
 TEAM_IMAGE = Path("assets/team_preluma.jpg")
+SIDEBAR_IMAGE = Path("assets/sidebar_clocktower.jpg")
 
 st.set_page_config(page_title="Preluma — Light Up Before Class", page_icon=None, layout="wide")
 
@@ -53,6 +54,7 @@ def image_data_uri(path_str):
 
 CAMPUS_URI = image_data_uri(str(CAMPUS_IMAGE))
 TEAM_URI = image_data_uri(str(TEAM_IMAGE))
+SIDEBAR_URI = image_data_uri(str(SIDEBAR_IMAGE)) or CAMPUS_URI
 
 
 CSS = """
@@ -61,7 +63,17 @@ CSS = """
 *, *::before, *::after { box-sizing: border-box; }
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 .block-container { max-width: 1200px; padding-top: .65rem !important; padding-left: 1.8rem; padding-right: 1.8rem; }
-[data-testid="stSidebar"] { background: #03080f; border-right: 1px solid rgba(255,255,255,.06); }
+[data-testid="stSidebar"] {
+    background:
+        linear-gradient(180deg, rgba(2,6,23,.50) 0%, rgba(2,6,23,.72) 34%, rgba(2,6,23,.88) 100%),
+        radial-gradient(circle at 45% 22%, rgba(59,130,246,.10), transparent 35%),
+        url('__SIDEBAR_BG__');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    border-right: 1px solid rgba(255,255,255,.08);
+    box-shadow: inset -1px 0 0 rgba(255,255,255,.04);
+}
 [data-testid="stSidebar"] * { color: #e2e8f0; }
 h1, h2, h3 { letter-spacing: -0.02em; }
 
@@ -311,90 +323,72 @@ code, pre, [data-testid="stCodeBlock"] {
 
 /* compact sidebar */
 [data-testid="stSidebar"] {
-    background:
-        radial-gradient(circle at 20% 0%, rgba(59,130,246,.09), transparent 35%),
-        #050a12;
     border-right: 1px solid rgba(148,163,184,.10);
 }
-[data-testid="stSidebar"] > div:first-child { padding-top: 1.15rem; }
+[data-testid="stSidebar"] > div:first-child {
+    padding-top: 1.15rem;
+    background: linear-gradient(180deg, rgba(2,6,23,.18), rgba(2,6,23,.25));
+    backdrop-filter: blur(3px);
+}
 [data-testid="stSidebar"] .stButton > button {
-    min-height: 43px !important;
-    border-radius: 12px !important;
+    min-height: 44px !important;
+    border-radius: 14px !important;
     justify-content: flex-start !important;
-    padding: .62rem .78rem !important;
-    background: transparent !important;
-    border: 1px solid transparent !important;
-    box-shadow: none !important;
-    color: #cbd5e1 !important;
+    padding: .66rem .84rem !important;
+    background: rgba(2,6,23,.20) !important;
+    border: 1px solid rgba(255,255,255,.04) !important;
+    box-shadow: 0 8px 22px rgba(0,0,0,.08) !important;
+    color: #e2e8f0 !important;
     font-weight: 600 !important;
     font-size: 14px !important;
-    transition: .18s ease;
+    transition: background .25s ease, border-color .25s ease, transform .25s ease, box-shadow .25s ease;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
-    background: rgba(59,130,246,.08) !important;
-    border-color: rgba(96,165,250,.16) !important;
+    background: rgba(59,130,246,.16) !important;
+    border-color: rgba(96,165,250,.28) !important;
     color: #fff !important;
-    transform: translateX(2px);
+    transform: translateX(3px);
+    box-shadow: 0 12px 28px rgba(37,99,235,.14) !important;
 }
 [data-testid="stSidebar"] .stButton > button[kind="primary"] {
-    background: rgba(37,99,235,.16) !important;
-    border-color: rgba(96,165,250,.35) !important;
-    color: #bfdbfe !important;
+    background: rgba(37,99,235,.18) !important;
+    border-color: rgba(96,165,250,.36) !important;
+    color: #dbeafe !important;
 }
 .nav-label {
-    margin: 1.05rem 0 .35rem;
-    color: #64748b !important;
+    margin: 1.05rem 0 .4rem;
+    color: #bfdbfe !important;
     font-size: 10px !important;
     letter-spacing: .17em;
     font-weight: 800;
     text-transform: uppercase;
+    text-shadow: 0 1px 10px rgba(0,0,0,.18);
 }
 .sidebar-profile {
-    border-radius: 16px;
-    padding: 14px 15px;
-    margin: .75rem 0 1rem;
-    border: 1px solid rgba(96,165,250,.16);
-    background: linear-gradient(145deg, rgba(15,23,42,.88), rgba(8,15,27,.96));
-}
-.sidebar-profile b { font-size: 14px; color: #f8fafc; }
-.sidebar-profile span { display:block; margin-top:5px; color:#7c8da5; font-size:12px; }
-
-.sidebar-visual {
-    position: relative;
-    overflow: hidden;
     border-radius: 18px;
-    min-height: 142px;
-    margin: .35rem 0 1rem;
+    padding: 15px 16px;
+    margin: .85rem 0 1rem;
     border: 1px solid rgba(96,165,250,.18);
-    background-size: cover;
-    background-position: 78% center;
-    background-repeat: no-repeat;
-    box-shadow: 0 16px 36px rgba(0,0,0,.22);
+    background: linear-gradient(145deg, rgba(15,23,42,.78), rgba(8,15,27,.88));
+    box-shadow: 0 14px 30px rgba(0,0,0,.16);
+    transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
 }
-.sidebar-visual::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(2,6,23,.15) 0%, rgba(2,6,23,.32) 45%, rgba(2,6,23,.80) 100%);
-}
-.sidebar-visual-copy {
-    position: absolute;
-    left: 14px;
-    right: 14px;
-    bottom: 12px;
-    z-index: 1;
-}
-.sidebar-visual-copy b { color: #f8fafc; font-size: 13px; display:block; }
-.sidebar-visual-copy span { color: #cbd5e1; font-size: 11px; display:block; margin-top:3px; }
+.sidebar-profile:hover { transform: translateY(-1px); border-color: rgba(125,211,252,.28); box-shadow: 0 18px 34px rgba(0,0,0,.22); }
+.sidebar-profile b { font-size: 14px; color: #f8fafc; }
+.sidebar-profile span { display:block; margin-top:5px; color:#cbd5e1; font-size:12px; }
+
 .sidebar-status {
     margin-top: 1rem;
-    border: 1px solid rgba(45,212,191,.16);
-    background: rgba(13,148,136,.055);
+    border: 1px solid rgba(45,212,191,.18);
+    background: linear-gradient(145deg, rgba(13,148,136,.12), rgba(2,6,23,.50));
     padding: 12px 13px;
-    border-radius: 14px;
+    border-radius: 16px;
+    box-shadow: 0 12px 28px rgba(0,0,0,.14);
+    transition: transform .25s ease, border-color .25s ease;
 }
+.sidebar-status:hover { transform: translateY(-1px); border-color: rgba(110,231,183,.28); }
 .sidebar-status .status-title { color:#ccfbf1; font-size:12px; font-weight:700; }
-.sidebar-status .status-copy { color:#6f8799; font-size:11px; line-height:1.5; margin-top:4px; }
+.sidebar-status .status-copy { color:#cbd5e1; font-size:11px; line-height:1.5; margin-top:4px; }
 
 /* reusable unique page header */
 .page-intro {
@@ -477,6 +471,23 @@ code, pre, [data-testid="stCodeBlock"] {
     white-space:pre-wrap;
 }
 .context-chip { background:rgba(139,92,246,.08) !important; border-color:rgba(167,139,250,.20) !important; }
+
+
+
+[data-testid="stSidebar"] h2 {
+    color: #f8fafc !important;
+    text-shadow: 0 3px 18px rgba(0,0,0,.55);
+    letter-spacing: -.02em;
+}
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
+    color: #dbeafe !important;
+    text-shadow: 0 2px 12px rgba(0,0,0,.45);
+}
+
+@keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
 /* premium team background hero; keeps full 16:9 composition */
 .team-photo-hero {
@@ -835,9 +846,10 @@ code, pre, [data-testid="stCodeBlock"] {
     border-top: 0 !important;
 }
 .nav-submenu {
-    margin: 7px 0 4px 12px !important;
-    padding: 4px 0 4px 13px !important;
+    margin: 7px 0 6px 12px !important;
+    padding: 6px 0 6px 13px !important;
     border-left: 1px solid rgba(96,165,250,.25) !important;
+    animation: fadeSlideIn .24s ease;
 }
 @media(max-width:900px) {
     .hero {
@@ -854,6 +866,7 @@ code, pre, [data-testid="stCodeBlock"] {
 
 </style>
 """
+CSS = CSS.replace("__SIDEBAR_BG__", SIDEBAR_URI)
 st.markdown(CSS, unsafe_allow_html=True)
 
 
@@ -926,20 +939,6 @@ def sidebar():
     st.sidebar.caption("Light Up Before Class")
     st.session_state.setdefault("active_page", "Student Mission")
     st.session_state.setdefault("nav_group", "")
-
-    sidebar_visual = f"url('{CAMPUS_URI}')" if CAMPUS_URI else "linear-gradient(135deg,#0f172a,#1e3a8a)"
-    st.sidebar.markdown(
-        f"""
-        <div class='sidebar-visual' style="background-image:{sidebar_visual};">
-            <div class='sidebar-visual-copy'>
-                <b>YNU Clock Tower</b>
-                <span>Campus landmark · Preluma home</span>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     unread_count = len(
         notifications_for_student(
             st.session_state.get("student", "Student"),
