@@ -49,13 +49,13 @@ Preluma Audit Log
 2026-06-16T07:16:04 | op=linear_search | target=Mamunur | n=2 | elapsed_ns=1061 | matches=1
 2026-06-16T07:16:04 | op=binary_search | target=Mamunur | n=2 | elapsed_ns=2073 | matches=1
 2026-06-16T07:16:04 | op=merge_sort_for_binary_search | n=2 | elapsed_ns=1682
-2026-06-16T07:27:36 | op=merge_sort_readiness | n=2 | elapsed_ns=2363
-2026-06-16T07:27:36 | op=merge_sort_name | n=2 | elapsed_ns=1442
-2026-06-16T07:27:36 | op=linear_search | target=Mamunur | n=2 | elapsed_ns=7141 | matches=1
-2026-06-16T07:27:36 | op=binary_search | target=Mamunur | n=2 | elapsed_ns=4266 | matches=1
-2026-06-16T07:27:36 | op=merge_sort_for_binary_search | n=2 | elapsed_ns=3615
-2026-06-16T07:27:36 | op=merge_sort_readiness | n=2 | elapsed_ns=3145
-2026-06-16T07:27:36 | op=merge_sort_name | n=2 | elapsed_ns=1642
-2026-06-16T07:27:36 | op=linear_search | target=Mamunur | n=2 | elapsed_ns=1322 | matches=1
-2026-06-16T07:27:36 | op=binary_search | target=Mamunur | n=2 | elapsed_ns=2644 | matches=1
-2026-06-16T07:27:36 | op=merge_sort_for_binary_search | n=2 | elapsed_ns=2935
+2026-06-16T07:36:06 | op=merge_sort_readiness | n=2 | elapsed_ns=2424
+2026-06-16T07:36:06 | op=merge_sort_name | n=2 | elapsed_ns=1702
+2026-06-16T07:36:06 | op=linear_search | target=Mamunur | n=2 | elapsed_ns=2283 | matches=1
+2026-06-16T07:36:06 | op=binary_search | target=Mamunur | n=2 | elapsed_ns=4126 | matches=1
+2026-06-16T07:36:06 | op=merge_sort_for_binary_search | n=2 | elapsed_ns=3836
+2026-06-16T07:36:06 | op=merge_sort_readiness | n=2 | elapsed_ns=2614
+2026-06-16T07:36:06 | op=merge_sort_name | n=2 | elapsed_ns=1633
+2026-06-16T07:36:06 | op=linear_search | target=Mamunur | n=2 | elapsed_ns=1632 | matches=1
+2026-06-16T07:36:06 | op=binary_search | target=Mamunur | n=2 | elapsed_ns=3535 | matches=1
+2026-06-16T07:36:06 | op=merge_sort_for_binary_search | n=2 | elapsed_ns=2504

@@ -25,7 +25,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "27.4 Real Clock Tower Sidebar"
+APP_VERSION = "27.4 Real Clock Tower Sidebar Premium"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -54,7 +54,7 @@ def image_data_uri(path_str):
 
 CAMPUS_URI = image_data_uri(str(CAMPUS_IMAGE))
 TEAM_URI = image_data_uri(str(TEAM_IMAGE))
-SIDEBAR_URI = image_data_uri(str(SIDEBAR_IMAGE)) or CAMPUS_URI
+SIDEBAR_URI = image_data_uri(str(SIDEBAR_IMAGE))
 
 
 CSS = """
@@ -65,14 +65,15 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 .block-container { max-width: 1200px; padding-top: .65rem !important; padding-left: 1.8rem; padding-right: 1.8rem; }
 [data-testid="stSidebar"] {
     background:
-        linear-gradient(180deg, rgba(2,6,23,.50) 0%, rgba(2,6,23,.72) 34%, rgba(2,6,23,.88) 100%),
-        radial-gradient(circle at 45% 22%, rgba(59,130,246,.10), transparent 35%),
+        radial-gradient(circle at 50% 72%, rgba(251,191,36,.18) 0%, rgba(251,191,36,.06) 16%, transparent 34%),
+        linear-gradient(180deg, rgba(2,6,23,.38) 0%, rgba(2,6,23,.46) 24%, rgba(2,6,23,.56) 46%, rgba(2,6,23,.72) 72%, rgba(2,6,23,.84) 100%),
+        radial-gradient(circle at 18% 0%, rgba(59,130,246,.14), transparent 34%),
         url('__SIDEBAR_BG__');
-    background-size: cover;
-    background-position: center center;
+    background-size: auto, auto, auto, 190% auto;
+    background-position: center, center, center, 50% 78%;
     background-repeat: no-repeat;
     border-right: 1px solid rgba(255,255,255,.08);
-    box-shadow: inset -1px 0 0 rgba(255,255,255,.04);
+    box-shadow: inset -1px 0 0 rgba(255,255,255,.03);
 }
 [data-testid="stSidebar"] * { color: #e2e8f0; }
 h1, h2, h3 { letter-spacing: -0.02em; }
@@ -327,50 +328,53 @@ code, pre, [data-testid="stCodeBlock"] {
 }
 [data-testid="stSidebar"] > div:first-child {
     padding-top: 1.15rem;
-    background: linear-gradient(180deg, rgba(2,6,23,.18), rgba(2,6,23,.25));
-    backdrop-filter: blur(3px);
+    background: linear-gradient(180deg, rgba(2,6,23,.08), rgba(2,6,23,.14));
+    backdrop-filter: blur(8px);
 }
 [data-testid="stSidebar"] .stButton > button {
-    min-height: 44px !important;
-    border-radius: 14px !important;
+    min-height: 46px !important;
+    border-radius: 16px !important;
     justify-content: flex-start !important;
-    padding: .66rem .84rem !important;
-    background: rgba(2,6,23,.20) !important;
-    border: 1px solid rgba(255,255,255,.04) !important;
-    box-shadow: 0 8px 22px rgba(0,0,0,.08) !important;
-    color: #e2e8f0 !important;
-    font-weight: 600 !important;
+    padding: .7rem .9rem !important;
+    background: rgba(2,6,23,.26) !important;
+    border: 1px solid rgba(255,255,255,.06) !important;
+    box-shadow: 0 10px 24px rgba(0,0,0,.12) !important;
+    color: #f1f5f9 !important;
+    font-weight: 650 !important;
     font-size: 14px !important;
-    transition: background .25s ease, border-color .25s ease, transform .25s ease, box-shadow .25s ease;
+    backdrop-filter: blur(10px);
+    transition: background .28s ease, border-color .28s ease, transform .28s ease, box-shadow .28s ease, color .28s ease;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
-    background: rgba(59,130,246,.16) !important;
-    border-color: rgba(96,165,250,.28) !important;
+    background: rgba(59,130,246,.18) !important;
+    border-color: rgba(125,211,252,.32) !important;
     color: #fff !important;
-    transform: translateX(3px);
-    box-shadow: 0 12px 28px rgba(37,99,235,.14) !important;
+    transform: translateX(4px);
+    box-shadow: 0 14px 30px rgba(37,99,235,.18) !important;
 }
 [data-testid="stSidebar"] .stButton > button[kind="primary"] {
-    background: rgba(37,99,235,.18) !important;
-    border-color: rgba(96,165,250,.36) !important;
-    color: #dbeafe !important;
+    background: linear-gradient(135deg, rgba(37,99,235,.34), rgba(124,58,237,.28)) !important;
+    border-color: rgba(125,211,252,.38) !important;
+    color: #ffffff !important;
+    box-shadow: 0 14px 34px rgba(59,130,246,.18) !important;
 }
 .nav-label {
-    margin: 1.05rem 0 .4rem;
-    color: #bfdbfe !important;
+    margin: 1.12rem 0 .48rem;
+    color: #dbeafe !important;
     font-size: 10px !important;
-    letter-spacing: .17em;
-    font-weight: 800;
+    letter-spacing: .19em;
+    font-weight: 900;
     text-transform: uppercase;
-    text-shadow: 0 1px 10px rgba(0,0,0,.18);
+    text-shadow: 0 1px 12px rgba(0,0,0,.22);
 }
 .sidebar-profile {
     border-radius: 18px;
     padding: 15px 16px;
     margin: .85rem 0 1rem;
-    border: 1px solid rgba(96,165,250,.18);
-    background: linear-gradient(145deg, rgba(15,23,42,.78), rgba(8,15,27,.88));
-    box-shadow: 0 14px 30px rgba(0,0,0,.16);
+    border: 1px solid rgba(125,211,252,.22);
+    background: linear-gradient(145deg, rgba(15,23,42,.70), rgba(8,15,27,.80));
+    box-shadow: 0 16px 34px rgba(0,0,0,.18);
+    backdrop-filter: blur(10px);
     transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
 }
 .sidebar-profile:hover { transform: translateY(-1px); border-color: rgba(125,211,252,.28); box-shadow: 0 18px 34px rgba(0,0,0,.22); }
@@ -379,11 +383,12 @@ code, pre, [data-testid="stCodeBlock"] {
 
 .sidebar-status {
     margin-top: 1rem;
-    border: 1px solid rgba(45,212,191,.18);
-    background: linear-gradient(145deg, rgba(13,148,136,.12), rgba(2,6,23,.50));
+    border: 1px solid rgba(45,212,191,.20);
+    background: linear-gradient(145deg, rgba(13,148,136,.12), rgba(2,6,23,.34));
     padding: 12px 13px;
     border-radius: 16px;
-    box-shadow: 0 12px 28px rgba(0,0,0,.14);
+    box-shadow: 0 14px 30px rgba(0,0,0,.16);
+    backdrop-filter: blur(10px);
     transition: transform .25s ease, border-color .25s ease;
 }
 .sidebar-status:hover { transform: translateY(-1px); border-color: rgba(110,231,183,.28); }
@@ -472,17 +477,6 @@ code, pre, [data-testid="stCodeBlock"] {
 }
 .context-chip { background:rgba(139,92,246,.08) !important; border-color:rgba(167,139,250,.20) !important; }
 
-
-
-[data-testid="stSidebar"] h2 {
-    color: #f8fafc !important;
-    text-shadow: 0 3px 18px rgba(0,0,0,.55);
-    letter-spacing: -.02em;
-}
-[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
-    color: #dbeafe !important;
-    text-shadow: 0 2px 12px rgba(0,0,0,.45);
-}
 
 @keyframes fadeSlideIn {
     from { opacity: 0; transform: translateY(-4px); }
@@ -846,9 +840,9 @@ code, pre, [data-testid="stCodeBlock"] {
     border-top: 0 !important;
 }
 .nav-submenu {
-    margin: 7px 0 6px 12px !important;
-    padding: 6px 0 6px 13px !important;
-    border-left: 1px solid rgba(96,165,250,.25) !important;
+    margin: 7px 0 8px 12px !important;
+    padding: 8px 0 8px 13px !important;
+    border-left: 1px solid rgba(125,211,252,.28) !important;
     animation: fadeSlideIn .24s ease;
 }
 @media(max-width:900px) {
@@ -866,7 +860,7 @@ code, pre, [data-testid="stCodeBlock"] {
 
 </style>
 """
-CSS = CSS.replace("__SIDEBAR_BG__", SIDEBAR_URI)
+CSS = CSS.replace("__SIDEBAR_BG__", SIDEBAR_URI or CAMPUS_URI)
 st.markdown(CSS, unsafe_allow_html=True)
 
 
@@ -901,7 +895,8 @@ def reset_session():
 
 
 def _nav_button(label: str, page_name: str) -> None:
-    if st.sidebar.button(label, key=f"nav_{page_name}", use_container_width=True):
+    is_active = st.session_state.get("active_page") == page_name
+    if st.sidebar.button(label, key=f"nav_{page_name}", use_container_width=True, type="primary" if is_active else "secondary"):
         st.session_state.active_page = page_name
         st.session_state.nav_group = _page_to_group(page_name)
         st.rerun()
@@ -922,7 +917,8 @@ def _page_to_group(page_name: str) -> str:
 def _nav_group_button(group_name: str) -> None:
     current_group = st.session_state.get("nav_group", "")
     label = f"Open {group_name} {'▾' if current_group == group_name else '▸'}"
-    if st.sidebar.button(label, key=f"nav_group_{group_name}", use_container_width=True):
+    is_open = current_group == group_name
+    if st.sidebar.button(label, key=f"nav_group_{group_name}", use_container_width=True, type="primary" if is_open else "secondary"):
         st.session_state.nav_group = "" if current_group == group_name else group_name
         st.rerun()
 
