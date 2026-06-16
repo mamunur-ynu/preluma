@@ -26,7 +26,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "28.2 Cinematic Full Home + Safe Team Overlay"
+APP_VERSION = "28.4 Team Photo Face Safe Final"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -1170,6 +1170,196 @@ code, pre, [data-testid="stCodeBlock"] {
     .hero-signature { left: 24px !important; right: 24px !important; text-align:left !important; }
     .team-photo-hero { min-height: 470px !important; background-position: center 35% !important; }
     .team-photo-content { left: 18px !important; right:18px !important; bottom:18px !important; max-width:none !important; }
+}
+
+
+/* V28.3 final: fix home hero clipping, remove boxed feeling, and keep all text visible */
+.block-container {
+    padding-top: 1.4rem !important;
+    padding-left: 1.55rem !important;
+    padding-right: 1.55rem !important;
+}
+.hero-home {
+    width: 100% !important;
+    min-height: 650px !important;
+    max-height: none !important;
+    aspect-ratio: auto !important;
+    margin: 18px auto 0 !important;
+    border-radius: 26px !important;
+    border: 1px solid rgba(125,211,252,.12) !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    box-shadow: 0 28px 80px rgba(0,0,0,.50) !important;
+    overflow: hidden !important;
+}
+.hero-home .hero-overlay {
+    background:
+        linear-gradient(100deg, rgba(2,6,23,.88) 0%, rgba(2,6,23,.66) 34%, rgba(15,23,42,.28) 64%, rgba(15,23,42,.05) 100%),
+        radial-gradient(ellipse at 18% 26%, rgba(56,189,248,.16) 0%, transparent 42%) !important;
+}
+.hero-home .hero-content {
+    min-height: 650px !important;
+    height: auto !important;
+    padding: 68px 58px 92px !important;
+    max-width: 880px !important;
+    justify-content: center !important;
+    overflow: visible !important;
+}
+.hero-home .hero-top {
+    margin-top: 0 !important;
+    margin-bottom: 26px !important;
+    overflow: visible !important;
+}
+.hero-home .logo-mark { width: 46px !important; height: 46px !important; }
+.hero-home .brand-name { display: block !important; font-size: 18px !important; line-height: 1.15 !important; }
+.hero-home .brand-tag { display: block !important; }
+.hero-home .hero-badge { margin: 0 0 26px !important; max-width: 720px !important; }
+.hero-home h1 {
+    font-size: clamp(46px, 4.7vw, 74px) !important;
+    line-height: 1.02 !important;
+    margin: 0 0 24px !important;
+    max-width: 900px !important;
+}
+.hero-home .hero-sub {
+    max-width: 760px !important;
+    font-size: 18px !important;
+    line-height: 1.68 !important;
+    margin-top: 0 !important;
+}
+.hero-home .hero-stats {
+    margin-top: 34px !important;
+    margin-bottom: 0 !important;
+}
+.hero-signature {
+    right: 30px !important;
+    bottom: 30px !important;
+    padding: 12px 16px !important;
+    max-width: 360px !important;
+}
+.team-photo-hero {
+    min-height: 560px !important;
+    aspect-ratio: 16/9 !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    border-radius: 26px !important;
+    overflow: hidden !important;
+}
+.team-photo-content {
+    top: auto !important;
+    left: 28px !important;
+    right: 28px !important;
+    bottom: 24px !important;
+    max-width: 620px !important;
+    padding: 14px 18px !important;
+    border-radius: 18px !important;
+    background: rgba(2,6,23,.34) !important;
+    backdrop-filter: blur(10px) !important;
+}
+.team-photo-content h1 {
+    font-size: 24px !important;
+    line-height: 1.12 !important;
+    margin: 6px 0 6px !important;
+    max-width: 560px !important;
+}
+.team-photo-content p {
+    font-size: 11.5px !important;
+    line-height: 1.45 !important;
+    max-width: 580px !important;
+}
+.team-school-line { font-size: 10px !important; }
+@media(max-width:900px){
+    .hero-home { min-height: 590px !important; }
+    .hero-home .hero-content { min-height: 590px !important; padding: 42px 26px 120px !important; }
+    .hero-home h1 { font-size: 38px !important; }
+    .hero-home .hero-sub { font-size: 15px !important; }
+    .hero-home .hero-stats { width: 100% !important; flex-wrap: wrap !important; }
+    .hero-signature { left: 22px !important; right: 22px !important; bottom: 22px !important; text-align: left !important; }
+}
+
+
+
+/* V28.4 FINAL: face-safe team photo and cleaner cinematic fit */
+.hero-home {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 auto !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    border-radius: 30px !important;
+}
+.hero-home .hero-content {
+    padding-top: 72px !important;
+    padding-bottom: 84px !important;
+}
+.team-photo-hero {
+    width: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    border-radius: 28px !important;
+    border: 1px solid rgba(226,232,240,.28) !important;
+    box-shadow: 0 32px 85px rgba(0,0,0,.42) !important;
+    margin: 0 0 18px !important;
+    overflow: hidden !important;
+}
+.team-photo-hero::before {
+    background: linear-gradient(0deg, rgba(2,6,23,.34) 0%, rgba(2,6,23,.04) 38%, rgba(2,6,23,.00) 72%) !important;
+}
+.team-photo-hero::after {
+    background: transparent !important;
+}
+.team-photo-content {
+    display: none !important;
+}
+.team-caption-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 22px;
+    margin: 0 0 26px;
+    border-radius: 22px;
+    border: 1px solid rgba(125,211,252,.18);
+    background: linear-gradient(135deg, rgba(15,23,42,.88), rgba(17,24,39,.70));
+    box-shadow: 0 18px 50px rgba(0,0,0,.25);
+}
+.team-caption-kicker {
+    color: #7dd3fc;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    margin-bottom: 6px;
+}
+.team-caption-title {
+    color: #f8fafc;
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1.16;
+    letter-spacing: -.03em;
+}
+.team-caption-copy {
+    color: #cbd5e1;
+    font-size: 13px;
+    line-height: 1.55;
+    max-width: 560px;
+}
+.team-caption-school {
+    color: #93c5fd;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+@media(max-width:900px){
+    .hero-home .hero-content { padding-top: 52px !important; padding-bottom: 72px !important; }
+    .team-photo-hero { aspect-ratio: 4 / 3 !important; background-position: center center !important; }
+    .team-caption-panel { flex-direction: column; align-items: flex-start; }
+    .team-caption-school { white-space: normal; }
 }
 
 </style>
@@ -2868,13 +3058,14 @@ def professor_defense():
 def project_team():
     if TEAM_URI:
         st.markdown(f"""
-        <div class='team-photo-hero' style="background-image:url('{TEAM_URI}');">
-          <div class='team-photo-content'>
-            <span class='badge'>Project Team · Team Preluma</span>
-            <h1>Building a smarter pre-class learning experience together.</h1>
-            <p>Three students combined core development, testing, topic data, and presentation support to shape Preluma into a working Python Streamlit prototype.</p>
-            <div class='team-school-line'>School of Software and Artificial Intelligence · Yunnan University</div>
+        <div class='team-photo-hero' style="background-image:url('{TEAM_URI}');"></div>
+        <div class='team-caption-panel'>
+          <div>
+            <div class='team-caption-kicker'>Project Team · Team Preluma</div>
+            <div class='team-caption-title'>Building a smarter pre-class learning experience together.</div>
           </div>
+          <div class='team-caption-copy'>Three students combined core development, testing, topic data, and presentation support to shape Preluma into a working Python Streamlit prototype.</div>
+          <div class='team-caption-school'>School of Software and Artificial Intelligence · Yunnan University</div>
         </div>
         """, unsafe_allow_html=True)
     else:
