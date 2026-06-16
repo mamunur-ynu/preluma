@@ -25,7 +25,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "27.0 Navigation + Mission UI Polish"
+APP_VERSION = "27.1 Sidebar Sections + Stable Hero Fit"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -772,6 +772,58 @@ code, pre, [data-testid="stCodeBlock"] {
     .mission-metric-grid, .journey-grid { grid-template-columns:1fr; }
 }
 
+
+/* ─────────────────────────────────────────────────────────────────────
+   V27.1 STABILITY FIX
+   Separate Learn / Teach / Project blocks and lock the campus hero to
+   the original 16:9 image ratio so the background does not jump/crop.
+   ───────────────────────────────────────────────────────────────────── */
+.hero {
+    aspect-ratio: 16 / 9 !important;
+    min-height: 0 !important;
+    max-height: 640px !important;
+    width: 100% !important;
+    background-size: 100% 100% !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+}
+.hero-content {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-width: 780px !important;
+}
+.hero-overlay {
+    background:
+        linear-gradient(105deg, rgba(2,6,23,.90) 0%, rgba(7,14,35,.76) 38%,
+        rgba(15,23,62,.50) 66%, rgba(55,10,120,.34) 100%),
+        radial-gradient(ellipse at 15% 50%, rgba(56,189,248,.16) 0%, transparent 50%) !important;
+}
+[data-testid="stSidebar"] .nav-label {
+    margin-top: 1.35rem !important;
+    padding-top: .9rem !important;
+    border-top: 1px solid rgba(148,163,184,.08) !important;
+}
+[data-testid="stSidebar"] .nav-label:first-of-type {
+    border-top: 0 !important;
+}
+.nav-submenu {
+    margin: 7px 0 4px 12px !important;
+    padding: 4px 0 4px 13px !important;
+    border-left: 1px solid rgba(96,165,250,.25) !important;
+}
+@media(max-width:900px) {
+    .hero {
+        aspect-ratio: auto !important;
+        min-height: 430px !important;
+        background-size: cover !important;
+    }
+    .hero-content {
+        min-height: 430px !important;
+        height: auto !important;
+        max-width: 100% !important;
+    }
+}
+
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -827,7 +879,7 @@ def _page_to_group(page_name: str) -> str:
 
 def _nav_group_button(group_name: str) -> None:
     current_group = st.session_state.get("nav_group", "")
-    label = f"{group_name} {'▾' if current_group == group_name else '▸'}"
+    label = f"Open {group_name} {'▾' if current_group == group_name else '▸'}"
     if st.sidebar.button(label, key=f"nav_group_{group_name}", use_container_width=True):
         st.session_state.nav_group = "" if current_group == group_name else group_name
         st.rerun()
@@ -879,8 +931,8 @@ def sidebar():
         unsafe_allow_html=True,
     )
 
-    st.sidebar.markdown("<div class='nav-submenu-note'>Sections</div>", unsafe_allow_html=True)
-
+    # Three separated navigation groups.
+    # Only the clicked group opens; sub-pages are hidden until the group is opened.
     nav_groups = {
         "Learn": [
             ("Student Mission", "Student Mission"),
@@ -900,10 +952,20 @@ def sidebar():
         ],
     }
 
-    for group_name, items in nav_groups.items():
-        _nav_group_button(group_name)
-        if st.session_state.get("nav_group") == group_name:
-            _nav_submenu(items)
+    st.sidebar.markdown("<div class='nav-label'>Learn</div>", unsafe_allow_html=True)
+    _nav_group_button("Learn")
+    if st.session_state.get("nav_group") == "Learn":
+        _nav_submenu(nav_groups["Learn"])
+
+    st.sidebar.markdown("<div class='nav-label'>Teach</div>", unsafe_allow_html=True)
+    _nav_group_button("Teach")
+    if st.session_state.get("nav_group") == "Teach":
+        _nav_submenu(nav_groups["Teach"])
+
+    st.sidebar.markdown("<div class='nav-label'>Project</div>", unsafe_allow_html=True)
+    _nav_group_button("Project")
+    if st.session_state.get("nav_group") == "Project":
+        _nav_submenu(nav_groups["Project"])
 
     presentation = st.sidebar.toggle("Presentation Mode", value=True)
 
