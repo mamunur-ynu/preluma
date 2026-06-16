@@ -25,7 +25,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "27.1 Sidebar Sections + Stable Hero Fit"
+APP_VERSION = "27.2 Sidebar Visual + Team Fit Polish"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -60,7 +60,7 @@ CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 *, *::before, *::after { box-sizing: border-box; }
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-.block-container { max-width: 1200px; padding-top: 0 !important; padding-left: 2rem; padding-right: 2rem; }
+.block-container { max-width: 1200px; padding-top: .65rem !important; padding-left: 1.8rem; padding-right: 1.8rem; }
 [data-testid="stSidebar"] { background: #03080f; border-right: 1px solid rgba(255,255,255,.06); }
 [data-testid="stSidebar"] * { color: #e2e8f0; }
 h1, h2, h3 { letter-spacing: -0.02em; }
@@ -358,6 +358,34 @@ code, pre, [data-testid="stCodeBlock"] {
 }
 .sidebar-profile b { font-size: 14px; color: #f8fafc; }
 .sidebar-profile span { display:block; margin-top:5px; color:#7c8da5; font-size:12px; }
+
+.sidebar-visual {
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    min-height: 142px;
+    margin: .35rem 0 1rem;
+    border: 1px solid rgba(96,165,250,.18);
+    background-size: cover;
+    background-position: 78% center;
+    background-repeat: no-repeat;
+    box-shadow: 0 16px 36px rgba(0,0,0,.22);
+}
+.sidebar-visual::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(2,6,23,.15) 0%, rgba(2,6,23,.32) 45%, rgba(2,6,23,.80) 100%);
+}
+.sidebar-visual-copy {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 12px;
+    z-index: 1;
+}
+.sidebar-visual-copy b { color: #f8fafc; font-size: 13px; display:block; }
+.sidebar-visual-copy span { color: #cbd5e1; font-size: 11px; display:block; margin-top:3px; }
 .sidebar-status {
     margin-top: 1rem;
     border: 1px solid rgba(45,212,191,.16);
@@ -852,7 +880,7 @@ def reset_session():
         "questions", "quiz_result", "latest_session", "tutor_history",
         "score_history", "class_questions", "mission_started",
         "mission_step", "practice_reflection", "homework_result",
-        "selected_homework_id", "ai_context_note",
+        "selected_homework_id", "ai_context_note", "nav_group",
     ]
     for key in keys:
         st.session_state.pop(key, None)
@@ -862,6 +890,7 @@ def reset_session():
 def _nav_button(label: str, page_name: str) -> None:
     if st.sidebar.button(label, key=f"nav_{page_name}", use_container_width=True):
         st.session_state.active_page = page_name
+        st.session_state.nav_group = _page_to_group(page_name)
         st.rerun()
 
 
@@ -898,15 +927,18 @@ def sidebar():
     st.session_state.setdefault("active_page", "Student Mission")
     st.session_state.setdefault("nav_group", "")
 
-    student_name = st.sidebar.text_input(
-        "Active student",
-        value=st.session_state.get("student", "Student"),
-        key="sidebar_student_identity",
-        label_visibility="collapsed",
-        placeholder="Student name",
+    sidebar_visual = f"url('{CAMPUS_URI}')" if CAMPUS_URI else "linear-gradient(135deg,#0f172a,#1e3a8a)"
+    st.sidebar.markdown(
+        f"""
+        <div class='sidebar-visual' style="background-image:{sidebar_visual};">
+            <div class='sidebar-visual-copy'>
+                <b>YNU Clock Tower</b>
+                <span>Campus landmark · Preluma home</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    if student_name.strip():
-        st.session_state.student = student_name.strip()
 
     unread_count = len(
         notifications_for_student(
@@ -933,6 +965,9 @@ def sidebar():
 
     # Three separated navigation groups.
     # Only the clicked group opens; sub-pages are hidden until the group is opened.
+    if not st.session_state.get("nav_group"):
+        st.session_state.nav_group = _page_to_group(st.session_state.get("active_page", "Student Mission"))
+
     nav_groups = {
         "Learn": [
             ("Student Mission", "Student Mission"),
@@ -1833,6 +1868,8 @@ def student_mission(presentation):
         return
 
     step = st.session_state.get("mission_step", 1)
+
+    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 
     if step == 1:
         mission_brain_brief_screen()
