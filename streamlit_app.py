@@ -26,7 +26,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "27.9 Final Logic + UI Clean Polish"
+APP_VERSION = "28.0 Study Home + Real Tutor Polish"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -1004,6 +1004,8 @@ def _nav_button(label: str, page_name: str) -> None:
 
 
 def _page_to_group(page_name: str) -> str:
+    if page_name == "Home":
+        return ""
     groups = {
         "Learn": {"Student Mission", "My Homework", "Ask Preluma AI"},
         "Teach": {"Teacher Studio", "Homework Center"},
@@ -1012,7 +1014,7 @@ def _page_to_group(page_name: str) -> str:
     for group_name, pages in groups.items():
         if page_name in pages:
             return group_name
-    return "Learn"
+    return ""
 
 
 def _nav_group_button(group_name: str) -> None:
@@ -1034,12 +1036,12 @@ def _nav_submenu(items: list[tuple[str, str]]) -> None:
 def sidebar():
     st.sidebar.markdown("## Preluma")
     st.sidebar.caption("Light Up Before Class")
-    st.session_state.setdefault("active_page", "Student Mission")
+    st.session_state.setdefault("active_page", "Home")
     st.session_state.setdefault("nav_group", "")
     # Three separated navigation groups.
     # Only the clicked group opens; sub-pages are hidden until the group is opened.
     if not st.session_state.get("nav_group"):
-        st.session_state.nav_group = _page_to_group(st.session_state.get("active_page", "Student Mission"))
+        st.session_state.nav_group = _page_to_group(st.session_state.get("active_page", "Home"))
 
     nav_groups = {
         "Learn": [
@@ -1059,6 +1061,11 @@ def sidebar():
             ("Future Roadmap", "Future Roadmap"),
         ],
     }
+
+    if st.sidebar.button("Home", key="nav_home", use_container_width=True, type="primary" if st.session_state.get("active_page") == "Home" else "secondary"):
+        st.session_state.active_page = "Home"
+        st.session_state.nav_group = ""
+        st.rerun()
 
     st.sidebar.markdown("<div class='nav-label'>Learn</div>", unsafe_allow_html=True)
     _nav_group_button("Learn")
@@ -1089,7 +1096,7 @@ def sidebar():
 
     if st.sidebar.button("Reset session", use_container_width=True):
         reset_session()
-        st.session_state.active_page = "Student Mission"
+        st.session_state.active_page = "Home"
         st.session_state.nav_group = ""
         st.rerun()
 
@@ -1241,7 +1248,7 @@ def mission_control():
     ds, dt, dtime, dp, dm = preset_data.get(
         preset,
         (
-            st.session_state.student,
+            "",
             st.session_state.topic,
             "Tomorrow 9 AM",
             st.session_state.persona,
@@ -1255,7 +1262,7 @@ def mission_control():
 
         with c1:
             st.markdown("**Student setup**")
-            student = st.text_input("Your name", value=ds)
+            student = st.text_input("Your name", value=ds, placeholder="Please write your name")
 
             topic_choice = st.selectbox(
                 "Lecture topic",
@@ -1337,7 +1344,7 @@ def mission_control():
 
         st.session_state.update(
             {
-                "student": student,
+                "student": student.strip() or "Learner",
                 "topic": topic,
                 "persona": persona,
                 "learning_mode": learning_mode,
@@ -1932,9 +1939,56 @@ def mission_overview_screen() -> None:
             st.rerun()
 
 
+
+def home_page(presentation=True):
+    hero()
+    st.markdown(
+        """
+        <div class='study-home-grid'>
+            <section class='study-panel'>
+                <div class='study-kicker'>Study dashboard</div>
+                <div class='study-title'>Choose how you want to prepare before class.</div>
+                <div class='study-copy'>Preluma separates the main landing page from the learning workspace. Start a mission for guided study, open homework for assignments, or ask the AI tutor when you need a quick explanation.</div>
+                <div class='study-flow'>
+                    <div class='study-flow-step'><small>01</small><div>Prepare</div></div>
+                    <div class='study-flow-step'><small>02</small><div>Practice</div></div>
+                    <div class='study-flow-step'><small>03</small><div>Ask AI</div></div>
+                    <div class='study-flow-step'><small>04</small><div>Review</div></div>
+                </div>
+            </section>
+            <section class='study-panel'>
+                <div class='study-kicker'>Today’s focus</div>
+                <div class='study-action-card'><b>Learning mission</b><span>Turn a lecture topic into a 5-step study path with brief, example, practice, mock test, and final overview.</span></div>
+                <div style='height:12px'></div>
+                <div class='study-action-card'><b>AI tutor room</b><span>Ask naturally. Greetings stay natural; academic questions become clear explanations, examples, or quiz practice.</span></div>
+            </section>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    c1, c2, c3 = st.columns(3)
+    if c1.button("Start Student Mission", use_container_width=True, type="primary"):
+        st.session_state.active_page = "Student Mission"
+        st.session_state.nav_group = "Learn"
+        st.rerun()
+    if c2.button("Open AI Tutor", use_container_width=True):
+        st.session_state.active_page = "Ask Preluma AI"
+        st.session_state.nav_group = "Learn"
+        st.rerun()
+    if c3.button("Go to Homework", use_container_width=True):
+        st.session_state.active_page = "My Homework"
+        st.session_state.nav_group = "Learn"
+        st.rerun()
+
+
 def student_mission(presentation):
     if not st.session_state.get("mission_started") or "pack" not in st.session_state:
-        hero()
+        page_intro(
+            "teacher",
+            "Learning workspace",
+            "Student Mission",
+            "Build a focused study route before class. Enter your name, choose a lecture topic, and start a guided mission."
+        )
         mission_control()
         if presentation:
             how_it_works()
@@ -2114,9 +2168,9 @@ def ask_preluma_ai_page():
 
     top1, top2, top3 = st.columns([1.2, 1, 1])
     with top1:
-        use_context = st.toggle("Use current mission context", value=True)
+        use_context = st.toggle("Use current study context", value=True)
     with top2:
-        mode = st.selectbox("Teaching style", ["Auto-detect", "Explain like I am 5", "Friendly Tutor", "Step-by-Step", "Exam/Viva Answer", "Give More Examples"])
+        mode = st.selectbox("Tutor style", ["Auto-detect", "Explain like I am 5", "Friendly Tutor", "Step-by-Step", "Exam/Viva Answer", "Give More Examples"])
     with top3:
         depth = st.selectbox("Answer depth", ["Balanced", "Short", "Deep"])
 
@@ -2188,7 +2242,7 @@ def ask_preluma_ai_page():
     for index, item in enumerate(st.session_state.get("tutor_history", [])[-8:]):
         st.markdown(f"<div class='chat-user'>{item['question']}</div>", unsafe_allow_html=True)
         if not item.get("casual"):
-            st.markdown(f"<div class='ai-meta'>{item['topic']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='ai-meta'>Tutor response · {item['topic']}</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='ai-main-answer'>{item.get('answer_text','')}</div>", unsafe_allow_html=True)
         if not item.get("clarification") and not item.get("casual"):
             response = item.get("response", {})
@@ -2739,8 +2793,8 @@ def main():
         return
 
     pages = {
+        "Home": lambda: home_page(presentation),
         "Student Mission": lambda: student_mission(presentation),
-        "Ask Preluma AI": ask_preluma_ai_page,
         "Ask Preluma AI": ask_preluma_ai_page,
         "Teacher Studio": teacher_studio,
         "Homework Center": homework_center_page,
@@ -2750,7 +2804,7 @@ def main():
         "Demo Guide": demo_guide,
         "Future Roadmap": roadmap,
     }
-    pages.get(page, lambda: student_mission(presentation))()
+    pages.get(page, lambda: home_page(presentation))()
 
 
 

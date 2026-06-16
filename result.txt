@@ -7,7 +7,7 @@ Lowest readiness: 68.0
 Highest readiness: 92.0
 Population variance: 76.14
 Most common weak skill: None
-Timed analysis operation: 37671 ns
+Timed analysis operation: 34814 ns
 
 Manual Merge Sort ranking:
 1. Jia | Neural Network | readiness=92.0
