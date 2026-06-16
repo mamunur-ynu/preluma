@@ -26,7 +26,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "28.1 Cinematic Home + Team Fit Final"
+APP_VERSION = "28.2 Cinematic Full Home + Safe Team Overlay"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -1057,6 +1057,121 @@ code, pre, [data-testid="stCodeBlock"] {
     .team-photo-content { top:22px !important; left:22px !important; right:22px !important; max-width:none !important; }
 }
 
+
+/* V28.2 cinematic home: one strong visual, no boxed/text-dump feeling */
+.hero-home {
+    min-height: calc(100vh - 92px) !important;
+    border-radius: 34px !important;
+    border: 1px solid rgba(125,211,252,.16) !important;
+    box-shadow: 0 38px 100px rgba(0,0,0,.62), inset 0 0 80px rgba(2,6,23,.28) !important;
+    margin: 0 auto 0 !important;
+    background-position: center center !important;
+}
+.hero-home .hero-content {
+    min-height: calc(100vh - 92px) !important;
+    padding: 56px 58px !important;
+    max-width: 820px !important;
+}
+.hero-home .hero-overlay {
+    background:
+        linear-gradient(100deg, rgba(2,6,23,.96) 0%, rgba(2,6,23,.82) 30%, rgba(15,23,42,.48) 58%, rgba(15,23,42,.12) 100%),
+        radial-gradient(ellipse at 18% 22%, rgba(56,189,248,.22) 0%, transparent 42%),
+        radial-gradient(ellipse at 88% 16%, rgba(167,139,250,.18) 0%, transparent 38%) !important;
+}
+.hero-home .hero-badge { margin-top: 6px !important; }
+.hero-home h1 {
+    font-size: clamp(42px, 5vw, 76px) !important;
+    max-width: 880px !important;
+    line-height: .98 !important;
+    margin-top: 28px !important;
+}
+.hero-home .hero-sub {
+    max-width: 720px !important;
+    font-size: 18px !important;
+    line-height: 1.72 !important;
+    color: #e2e8f0 !important;
+    margin-top: 22px !important;
+}
+.hero-home .hero-stats {
+    margin-top: 42px !important;
+    gap: 18px !important;
+    padding: 12px !important;
+    width: fit-content !important;
+    border-radius: 22px !important;
+    background: rgba(2,6,23,.28) !important;
+    border: 1px solid rgba(255,255,255,.08) !important;
+    backdrop-filter: blur(10px) !important;
+}
+.hero-home .hero-stats > div {
+    min-width: 108px !important;
+    padding: 8px 12px !important;
+    border-radius: 16px !important;
+    background: rgba(15,23,42,.30) !important;
+}
+.hero-signature {
+    right: 34px !important;
+    bottom: 30px !important;
+    background: linear-gradient(145deg, rgba(15,23,42,.48), rgba(2,6,23,.34)) !important;
+    border-color: rgba(255,255,255,.16) !important;
+}
+.home-clean-note { display: none !important; }
+
+/* V28.2 team page: keep all faces visible, make text small and low */
+.team-photo-hero {
+    min-height: 560px !important;
+    aspect-ratio: 16 / 9 !important;
+    background-size: cover !important;
+    background-position: center 38% !important;
+    border-radius: 32px !important;
+    overflow: hidden !important;
+}
+.team-photo-hero::before {
+    background:
+        linear-gradient(0deg, rgba(2,6,23,.68) 0%, rgba(2,6,23,.18) 38%, rgba(2,6,23,.02) 70%),
+        linear-gradient(90deg, rgba(2,6,23,.18) 0%, rgba(2,6,23,.04) 35%, rgba(2,6,23,.02) 100%) !important;
+}
+.team-photo-hero::after {
+    background: linear-gradient(0deg, rgba(2,6,23,.62), transparent 48%) !important;
+}
+.team-photo-content {
+    top: auto !important;
+    left: 32px !important;
+    bottom: 28px !important;
+    right: auto !important;
+    max-width: 500px !important;
+    padding: 18px 20px !important;
+    border-radius: 20px !important;
+    background: rgba(2,6,23,.36) !important;
+    border: 1px solid rgba(255,255,255,.13) !important;
+    backdrop-filter: blur(12px) !important;
+}
+.team-photo-content h1 {
+    font-size: 28px !important;
+    line-height: 1.1 !important;
+    margin: 8px 0 8px !important;
+    max-width: 460px !important;
+}
+.team-photo-content p {
+    font-size: 12px !important;
+    line-height: 1.55 !important;
+    max-width: 440px !important;
+    color: #e2e8f0 !important;
+}
+.team-school-line { font-size: 10.5px !important; margin-top: 7px !important; }
+
+/* keep page starts clean; no header cuts */
+.page-intro { margin-top: .65rem !important; padding-top: 34px !important; }
+.sec-head { margin-top: 1.6rem !important; }
+
+@media(max-width:900px){
+    .hero-home, .hero-home .hero-content { min-height: 560px !important; }
+    .hero-home .hero-content { padding: 36px 26px !important; }
+    .hero-home .hero-stats { width: 100% !important; flex-wrap: wrap !important; }
+    .hero-signature { left: 24px !important; right: 24px !important; text-align:left !important; }
+    .team-photo-hero { min-height: 470px !important; background-position: center 35% !important; }
+    .team-photo-content { left: 18px !important; right:18px !important; bottom:18px !important; max-width:none !important; }
+}
+
 </style>
 """
 CSS = CSS.replace("__SIDEBAR_BG__", SIDEBAR_URI or CAMPUS_URI)
@@ -2043,14 +2158,8 @@ def mission_overview_screen() -> None:
 
 
 def home_page(presentation=True):
-    """Landing page only: brand impression, not duplicate navigation."""
+    """Landing page only: one cinematic brand impression."""
     hero(show_signature=True, home=True)
-    st.markdown(
-        """
-        <div class='home-clean-note'>Use the sidebar to enter Learn, Teach, or Project workspaces.</div>
-        """,
-        unsafe_allow_html=True,
-    )
 
 
 def student_mission(presentation):
