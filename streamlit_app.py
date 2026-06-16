@@ -21,11 +21,12 @@ from homework_core import (
     load_questions,
     load_student_mistakes,
     notifications_for_student,
+    mark_homework_notifications_read,
     seed_homework_demo,
     submit_homework,
 )
 
-APP_VERSION = "27.4 Real Clock Tower Sidebar Premium"
+APP_VERSION = "27.9 Final Logic + UI Clean Polish"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -65,15 +66,14 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 .block-container { max-width: 1200px; padding-top: .65rem !important; padding-left: 1.8rem; padding-right: 1.8rem; }
 [data-testid="stSidebar"] {
     background:
-        radial-gradient(circle at 50% 72%, rgba(251,191,36,.18) 0%, rgba(251,191,36,.06) 16%, transparent 34%),
-        linear-gradient(180deg, rgba(2,6,23,.38) 0%, rgba(2,6,23,.46) 24%, rgba(2,6,23,.56) 46%, rgba(2,6,23,.72) 72%, rgba(2,6,23,.84) 100%),
-        radial-gradient(circle at 18% 0%, rgba(59,130,246,.14), transparent 34%),
+        linear-gradient(180deg, rgba(2,6,23,.12) 0%, rgba(2,6,23,.18) 24%, rgba(2,6,23,.30) 52%, rgba(2,6,23,.46) 100%),
+        radial-gradient(circle at 50% 61%, rgba(251,191,36,.22) 0%, rgba(251,191,36,.08) 20%, transparent 42%),
         url('__SIDEBAR_BG__');
-    background-size: auto, auto, auto, 190% auto;
-    background-position: center, center, center, 50% 78%;
+    background-size: auto, auto, 250% auto;
+    background-position: center center, center center, 50% 62%;
     background-repeat: no-repeat;
-    border-right: 1px solid rgba(255,255,255,.08);
-    box-shadow: inset -1px 0 0 rgba(255,255,255,.03);
+    border-right: 1px solid rgba(255,255,255,.10);
+    box-shadow: inset -1px 0 0 rgba(255,255,255,.05);
 }
 [data-testid="stSidebar"] * { color: #e2e8f0; }
 h1, h2, h3 { letter-spacing: -0.02em; }
@@ -328,8 +328,8 @@ code, pre, [data-testid="stCodeBlock"] {
 }
 [data-testid="stSidebar"] > div:first-child {
     padding-top: 1.15rem;
-    background: linear-gradient(180deg, rgba(2,6,23,.08), rgba(2,6,23,.14));
-    backdrop-filter: blur(8px);
+    background: linear-gradient(180deg, rgba(2,6,23,.02), rgba(2,6,23,.05));
+    backdrop-filter: blur(1px);
 }
 [data-testid="stSidebar"] .stButton > button {
     min-height: 46px !important;
@@ -858,6 +858,107 @@ code, pre, [data-testid="stCodeBlock"] {
     }
 }
 
+/* V27.8 cleanup: remove inactive student notification panel */
+.sidebar-profile { display: none !important; }
+[data-testid="stSidebar"] .nav-label { color:#f8fafc !important; text-shadow:0 2px 16px rgba(0,0,0,.85) !important; }
+[data-testid="stSidebar"] .stButton > button { background: rgba(2,6,23,.34) !important; backdrop-filter: blur(8px); }
+[data-testid="stSidebar"] .stButton > button:hover { background: rgba(59,130,246,.20) !important; }
+
+
+
+/* V27.7 final sidebar + page polish */
+[data-testid="stSidebar"] {
+    background:
+        linear-gradient(180deg, rgba(2,6,23,.24) 0%, rgba(2,6,23,.32) 28%, rgba(2,6,23,.46) 58%, rgba(2,6,23,.62) 100%),
+        radial-gradient(circle at 50% 73%, rgba(251,191,36,.32) 0%, rgba(251,191,36,.14) 18%, transparent 38%),
+        url('__SIDEBAR_BG__') !important;
+    background-size: auto, auto, auto 106% !important;
+    background-position: center, center, 50% 100% !important;
+    background-repeat: no-repeat !important;
+}
+[data-testid="stSidebar"] > div:first-child {
+    background: linear-gradient(180deg, rgba(2,6,23,.02), rgba(2,6,23,.08)) !important;
+    backdrop-filter: none !important;
+}
+.sidebar-profile { display:none !important; }
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] .stMarkdown h2 {
+    font-size: 22px !important;
+    letter-spacing: -.025em !important;
+    margin-top: 10px !important;
+    text-shadow: 0 3px 18px rgba(0,0,0,.75) !important;
+}
+[data-testid="stSidebar"] .stCaptionContainer,
+[data-testid="stSidebar"] p {
+    text-shadow: 0 2px 14px rgba(0,0,0,.75) !important;
+}
+[data-testid="stSidebar"] .stButton > button {
+    min-height: 45px !important;
+    border-radius: 15px !important;
+    background: rgba(3,7,18,.38) !important;
+    border: 1px solid rgba(255,255,255,.08) !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,.18) !important;
+    backdrop-filter: blur(5px) !important;
+}
+[data-testid="stSidebar"] .stButton > button:hover {
+    background: rgba(37,99,235,.26) !important;
+    border-color: rgba(125,211,252,.38) !important;
+    transform: translateX(4px) scale(1.01) !important;
+}
+[data-testid="stSidebar"] .stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, rgba(37,99,235,.52), rgba(124,58,237,.44)) !important;
+    border: 1px solid rgba(147,197,253,.52) !important;
+    box-shadow: 0 16px 38px rgba(37,99,235,.24) !important;
+}
+[data-testid="stSidebar"] .nav-label {
+    margin-top: 1.45rem !important;
+    color: #e0f2fe !important;
+    text-shadow: 0 3px 18px rgba(0,0,0,.95) !important;
+}
+.nav-submenu {
+    border-left: 1px solid rgba(147,197,253,.36) !important;
+    animation: fadeSlideIn .22s ease !important;
+}
+.sidebar-status {
+    background: rgba(3,7,18,.28) !important;
+    border-color: rgba(110,231,183,.16) !important;
+    backdrop-filter: blur(5px) !important;
+}
+
+/* clean page polish for weaker screens */
+.ai-chat-shell {
+    border: 1px solid rgba(125,211,252,.14) !important;
+    background: linear-gradient(145deg, rgba(8,13,28,.96), rgba(15,23,42,.82)) !important;
+    border-radius: 26px !important;
+    padding: 22px !important;
+}
+.chat-user {
+    box-shadow: 0 14px 34px rgba(79,70,229,.26) !important;
+}
+.ai-main-answer {
+    max-width: 86% !important;
+    border-color: rgba(125,211,252,.16) !important;
+    background: linear-gradient(145deg, rgba(15,23,42,.95), rgba(30,41,59,.70)) !important;
+}
+.assignment-card {
+    border-color: rgba(125,211,252,.16) !important;
+    background: linear-gradient(145deg, rgba(15,23,42,.88), rgba(8,13,28,.96)) !important;
+    box-shadow: 0 20px 46px rgba(0,0,0,.16) !important;
+}
+[data-testid="stExpander"] {
+    border: 1px solid rgba(125,211,252,.14) !important;
+    border-radius: 16px !important;
+    background: rgba(15,23,42,.52) !important;
+}
+
+
+/* V27.9 hard clean: remove unused sidebar notification/profile block completely from view */
+.sidebar-profile, div.sidebar-profile { display: none !important; height:0 !important; min-height:0 !important; margin:0 !important; padding:0 !important; border:0 !important; overflow:hidden !important; }
+[data-testid="stSidebar"] {
+    background-size: auto, auto, auto 112% !important;
+    background-position: center, center, 50% 102% !important;
+}
+
 </style>
 """
 CSS = CSS.replace("__SIDEBAR_BG__", SIDEBAR_URI or CAMPUS_URI)
@@ -935,29 +1036,6 @@ def sidebar():
     st.sidebar.caption("Light Up Before Class")
     st.session_state.setdefault("active_page", "Student Mission")
     st.session_state.setdefault("nav_group", "")
-    unread_count = len(
-        notifications_for_student(
-            st.session_state.get("student", "Student"),
-            unread_only=True,
-        )
-    )
-
-    notification_text = (
-        f"{unread_count} unread homework notification"
-        if unread_count == 1
-        else f"{unread_count} unread homework notifications"
-    )
-
-    st.sidebar.markdown(
-        f"""
-        <div class='sidebar-profile'>
-            <b>{st.session_state.get('student','Student')}</b>
-            <span>{notification_text}</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     # Three separated navigation groups.
     # Only the clicked group opens; sub-pages are hidden until the group is opened.
     if not st.session_state.get("nav_group"):
@@ -1003,7 +1081,7 @@ def sidebar():
         """
         <div class='sidebar-status'>
             <div class='status-title'>Preluma AI ready</div>
-            <div class='status-copy'>Adaptive explanation, mission context, provider fallback.</div>
+            <div class='status-copy'>Ready for lessons, homework help, and exam preparation.</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -1958,6 +2036,30 @@ def _question_needs_clarification(question: str) -> bool:
     }
     return cleaned in ambiguous_only
 
+def _is_casual_query(question: str) -> bool:
+    """Return True for greetings or social chat that should not be routed as a lesson topic."""
+    cleaned = " ".join(str(question).strip().casefold().replace("?", "").replace("!", "").split())
+    casual_phrases = {
+        "hi", "hello", "hey", "hi there", "hello there",
+        "how are you", "hi how are you", "hello how are you",
+        "good morning", "good afternoon", "good evening", "thanks", "thank you",
+    }
+    return cleaned in casual_phrases
+
+
+def _casual_ai_answer(question: str) -> str:
+    cleaned = " ".join(str(question).strip().casefold().split())
+    if "how are you" in cleaned:
+        return (
+            "I’m doing well and ready to help. "
+            "You can ask me about today’s lecture, a homework question, or an exam topic. "
+            "For example: ‘Explain quantum mechanics simply’ or ‘Quiz me on neural networks.’"
+        )
+    return (
+        "Hi! I’m Preluma AI. I can help you prepare before class, understand a difficult concept, "
+        "review homework mistakes, or practice exam-style questions. What topic are you studying today?"
+    )
+
 
 def _natural_answer_text(response: dict, depth: str) -> str:
     direct = str(response.get("tiny_answer", "")).strip()
@@ -2018,13 +2120,6 @@ def ask_preluma_ai_page():
     with top3:
         depth = st.selectbox("Answer depth", ["Balanced", "Short", "Deep"])
 
-    st.markdown(
-        f"<span class='context-chip'>Context: {mission_topic if use_context else 'Question only'}</span>"
-        f"<span class='context-chip'>Provider: {provider_label}</span>"
-        f"<span class='context-chip'>Fallbacks ready: {len(providers)}</span>",
-        unsafe_allow_html=True,
-    )
-
     st.session_state.setdefault("ai_question_input", "")
     question = st.text_area(
         "Your question",
@@ -2046,6 +2141,15 @@ def ask_preluma_ai_page():
     clear_col.button("Clear", use_container_width=True, on_click=_clear_ai_chat)
 
     if ask and question.strip():
+        if _is_casual_query(question):
+            st.session_state.tutor_history.append({
+                "question": question.strip(),
+                "topic": "Preluma AI",
+                "casual": True,
+                "answer_text": _casual_ai_answer(question),
+                "source": "Natural greeting",
+            })
+            st.rerun()
         detected_topic = detect_topic_from_question(question, mission_topic if use_context else "General learning")
         if _question_needs_clarification(question):
             st.session_state.tutor_history.append({
@@ -2083,9 +2187,10 @@ def ask_preluma_ai_page():
     st.markdown("<div class='ai-chat-shell'>", unsafe_allow_html=True)
     for index, item in enumerate(st.session_state.get("tutor_history", [])[-8:]):
         st.markdown(f"<div class='chat-user'>{item['question']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='ai-meta'>{item['topic']} · {item['source']}</div>", unsafe_allow_html=True)
+        if not item.get("casual"):
+            st.markdown(f"<div class='ai-meta'>{item['topic']}</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='ai-main-answer'>{item.get('answer_text','')}</div>", unsafe_allow_html=True)
-        if not item.get("clarification"):
+        if not item.get("clarification") and not item.get("casual"):
             response = item.get("response", {})
             with st.expander("Study support: mistake, exam line, and extra details"):
                 if response.get("common_mistake"):
@@ -2115,26 +2220,14 @@ def my_homework_page():
     page_intro(
         "homework",
         "Student assignment desk",
-        f"My Homework — {student}",
+        "My Homework",
         "Complete homework one question at a time, review your answers, submit, and learn from captured mistakes.",
     )
 
-    notifications = notifications_for_student(student)
-
-    if notifications:
-        with st.expander(f"Notifications ({len(notifications)})", expanded=False):
-            for note in reversed(notifications[-5:]):
-                st.markdown(
-                    f"""
-                    <div class='assignment-card'>
-                      <div class='albl lbl-blue'>{note.get('Title')}</div>
-                      <div class='atxt'>{note.get('Message')}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
     homework_rows = homework_for_student(student)
+
+    # Opening the homework desk counts as viewing homework notifications.
+    mark_homework_notifications_read(student)
 
     if not homework_rows:
         st.info("No homework has been assigned to this student yet.")
@@ -2177,9 +2270,16 @@ def my_homework_page():
     result = st.session_state.get("homework_result")
 
     if result:
-        st.success(
-            f"Homework submitted · Attempt {result['attempt']} · "
-            f"{result['score']}/{result['total']} · {result['percentage']}%"
+        st.markdown(
+            f"""
+            <div class='mission-metric-grid'>
+                <div class='mission-metric-card'><div class='metric-big'>{result['percentage']}%</div><div class='metric-label'>Accuracy</div></div>
+                <div class='mission-metric-card'><div class='metric-big'>{result['score']}/{result['total']}</div><div class='metric-label'>Score</div></div>
+                <div class='mission-metric-card'><div class='metric-big'>{result['attempt']}</div><div class='metric-label'>Attempt</div></div>
+                <div class='mission-metric-card'><div class='metric-big'>{'Ready' if not result['mistakes'] else 'Review'}</div><div class='metric-label'>Status</div></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         if result["mistakes"]:
@@ -2207,9 +2307,9 @@ def my_homework_page():
                         st.session_state.active_page = "Ask Preluma AI"
                         st.rerun()
         else:
-            st.success("Excellent. No mistakes were captured in this attempt.")
+            st.info("No mistakes were captured. This homework is complete, so the notification is cleared.")
 
-        if st.button("Try this homework again", use_container_width=True):
+        if st.button("Try this homework again"):
             _reset_homework_flow(homework_id)
             st.rerun()
 
@@ -2264,6 +2364,7 @@ def my_homework_page():
                         student,
                         st.session_state.hw_answers,
                     )
+                    mark_homework_notifications_read(student, homework_id)
                     st.rerun()
 
         with c3:

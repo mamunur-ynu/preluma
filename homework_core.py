@@ -190,6 +190,37 @@ def homework_for_student(student: str) -> list[dict[str, Any]]:
     return output
 
 
+def _student_has_submitted(homework_id: int | str, student: str) -> bool:
+    key = student.strip().casefold()
+    for row in _read_rows(SUBMISSIONS_CSV):
+        if str(row.get("Homework ID")) == str(homework_id) and str(row.get("Student", "")).strip().casefold() == key:
+            return True
+    return False
+
+
+def mark_homework_notifications_read(student: str, homework_id: int | str | None = None) -> int:
+    """Mark homework notifications as read after the student views/submits homework."""
+    ensure_homework_files()
+    rows = _read_rows(NOTIFICATIONS_CSV)
+    changed = 0
+    student_key = student.strip().casefold()
+    target_homework = None if homework_id is None else str(homework_id)
+    for row in rows:
+        target = str(row.get("Student", "")).strip().casefold()
+        is_target_student = target in ("all students", student_key)
+        is_homework_notice = str(row.get("Type", "")).strip().casefold() == "homework"
+        is_target_homework = target_homework is None or str(row.get("Reference ID")) == target_homework
+        if is_target_student and is_homework_notice and is_target_homework and row.get("Is Read") != "Yes":
+            row["Is Read"] = "Yes"
+            changed += 1
+    if changed:
+        with NOTIFICATIONS_CSV.open("w", newline="", encoding="utf-8") as file:
+            writer = csv.DictWriter(file, fieldnames=NOTIFICATION_FIELDS)
+            writer.writeheader()
+            writer.writerows({field: row.get(field, "") for field in NOTIFICATION_FIELDS} for row in rows)
+    return changed
+
+
 def notifications_for_student(student: str, unread_only: bool = False) -> list[dict[str, Any]]:
     ensure_homework_files()
     student_key = student.strip().casefold()
@@ -197,6 +228,8 @@ def notifications_for_student(student: str, unread_only: bool = False) -> list[d
     for row in _read_rows(NOTIFICATIONS_CSV):
         target = str(row.get("Student", "")).strip().casefold()
         if target in ("all students", student_key):
+            if str(row.get("Type", "")).strip().casefold() == "homework" and _student_has_submitted(row.get("Reference ID", ""), student):
+                continue
             if not unread_only or row.get("Is Read") == "No":
                 output.append(row)
     return output
@@ -270,6 +303,8 @@ def submit_homework(
         "Submitted At": now_text(),
         "Status": "Submitted",
     })
+
+    mark_homework_notifications_read(student, homework_id)
 
     return {
         "submission_id": submission_id,
