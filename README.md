@@ -1,4 +1,4 @@
-# Preluma V26 — Final Course Submission Build
+# Preluma V26.2 — Final Course Submission Build
 
 **Preluma** is a Python-based pre-class readiness platform and teacher diagnostic dashboard. It helps students prepare before class and helps teachers identify weak concepts through quiz data, statistics, sorting, searching, and visual analytics.
 

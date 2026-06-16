@@ -98,7 +98,7 @@ def ensure_pack_schema(data: Dict, requested_title: str) -> Dict:
         ]
     return pack
 
-def build_pack(topic: str, use_wikipedia: bool = True) -> Dict:
+def build_pack(topic: str, use_wikipedia: bool = False) -> Dict:
     requested = clean_text(topic) or "Machine Learning"
     key = canonical_key(requested)
     data = TOPICS.get(key)
@@ -111,8 +111,12 @@ def build_pack(topic: str, use_wikipedia: bool = True) -> Dict:
             wiki_pack = build_wiki_topic_pack(requested)
             if wiki_pack:
                 return ensure_pack_schema(wiki_pack, wiki_pack.get("title", requested.title()))
-        except Exception:
-            pass
+        except Exception as error:
+            try:
+                from storage_core import append_result_log
+                append_result_log("wiki_fallback", {"topic": requested, "error": str(error)})
+            except Exception:
+                pass
 
     return ensure_pack_schema(make_generic_fallback(requested.title()), requested.title())
 

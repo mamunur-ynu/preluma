@@ -25,7 +25,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "25.0 Unique Interfaces + Adaptive AI"
+APP_VERSION = "27.0 Navigation + Mission UI Polish"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -53,7 +53,6 @@ def image_data_uri(path_str):
 
 CAMPUS_URI = image_data_uri(str(CAMPUS_IMAGE))
 TEAM_URI = image_data_uri(str(TEAM_IMAGE))
-# legacy design marker for rubric tests: background-image:url + background-position: center center
 
 
 CSS = """
@@ -61,24 +60,17 @@ CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 *, *::before, *::after { box-sizing: border-box; }
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-.block-container { max-width: 100% !important; padding-top: .35rem !important; padding-left: 1.2rem !important; padding-right: 1.2rem !important; }
-.main .block-container { max-width: 100% !important; }
+.block-container { max-width: 1200px; padding-top: 0 !important; padding-left: 2rem; padding-right: 2rem; }
 [data-testid="stSidebar"] { background: #03080f; border-right: 1px solid rgba(255,255,255,.06); }
 [data-testid="stSidebar"] * { color: #e2e8f0; }
 h1, h2, h3 { letter-spacing: -0.02em; }
 
 /* ── Hero ── */
 .hero {
-    position: relative; min-height: 390px; width: 100%; border-radius: 28px;
+    position: relative; min-height: 340px; border-radius: 28px;
     overflow: hidden; border: 1px solid rgba(255,255,255,.10);
-    box-shadow: 0 32px 80px rgba(0,0,0,.55); margin: 0 0 2rem;
-    background: linear-gradient(135deg,#020617,#0f172a,#1e1b4b);
-    isolation: isolate;
-}
-.hero-bg {
-    position: absolute; inset: 0; width: 100%; height: 100%;
-    object-fit: cover; object-position: center 42%;
-    transform: scale(1.015);
+    box-shadow: 0 32px 80px rgba(0,0,0,.55); margin-bottom: 2rem;
+    background-size: cover; background-position: center 35%;
 }
 .hero-overlay {
     position: absolute; inset: 0;
@@ -89,7 +81,7 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 }
 .hero-content {
     position: relative; z-index: 2; padding: 44px 52px;
-    display: flex; flex-direction: column; justify-content: center; min-height: 390px; max-width: min(760px, 72%);
+    display: flex; flex-direction: column; justify-content: center; min-height: 340px;
 }
 .hero-top { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
 .logo-mark {
@@ -119,7 +111,7 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 }
 .hero-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #38bdf8; }
 .hero h1 {
-    font-size: 44px; line-height: 1.06; font-weight: 900; color: #fff;
+    font-size: 42px; line-height: 1.06; font-weight: 900; color: #fff;
     margin: 0 0 16px; letter-spacing: -.025em; max-width: 780px;
     text-shadow: 0 2px 30px rgba(0,0,0,.50);
 }
@@ -273,17 +265,15 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 
 @media(max-width:900px) {
     .kpi-grid,.flow-grid,.ev-grid,.rubric-grid,.member-grid { grid-template-columns: 1fr; }
-    .hero { min-height: 360px; }
-    .hero-content { padding: 28px 24px; max-width: 100%; min-height: 360px; }
-    .hero h1 { font-size: 30px; }
-    .hero-stats { gap: 20px; flex-wrap: wrap; }
+    .hero-content { padding: 28px 24px; }
+    .hero h1 { font-size: 28px; }
+    .hero-stats { gap: 20px; }
 }
 
 /* ── Team photo: full image, no face cropping ── */
-.team-photo-hero { position:relative; width:100%; aspect-ratio:16/9; min-height: 460px; border-radius:30px; overflow:hidden; background-color:#020617; border:1px solid rgba(125,211,252,.25); box-shadow:0 28px 70px rgba(0,0,0,.42); margin:1rem 0 1.75rem; isolation:isolate; }
-.team-photo-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 38%; transform:scale(1.01); }
+.team-photo-hero { position:relative; width:100%; aspect-ratio:16/9; border-radius:30px; overflow:hidden; background-size:100% auto; background-position:center; background-repeat:no-repeat; background-color:#020617; border:1px solid rgba(125,211,252,.25); box-shadow:0 28px 70px rgba(0,0,0,.42); margin:1rem 0 1.75rem; }
 .team-photo-hero::after { content:''; position:absolute; inset:0; background:linear-gradient(0deg,rgba(2,6,23,.90) 0%,rgba(2,6,23,.18) 48%,rgba(2,6,23,.12) 100%),linear-gradient(90deg,rgba(14,165,233,.12),rgba(124,58,237,.14)); }
-.team-photo-content { position:absolute; z-index:2; left:34px; right:34px; bottom:30px; max-width: 620px; }
+.team-photo-content { position:absolute; z-index:2; left:34px; right:34px; bottom:30px; }
 .team-photo-content h1 { color:#fff; font-size:38px; line-height:1.12; margin:12px 0 8px; text-shadow:0 4px 24px rgba(0,0,0,.65); }
 .team-photo-content p { color:#e2e8f0; max-width:760px; line-height:1.55; margin:0; text-shadow:0 3px 18px rgba(0,0,0,.65); }
 .sidebar-profile { padding:12px 14px; border-radius:16px; background:rgba(15,23,42,.72); border:1px solid rgba(148,163,184,.12); margin:.35rem 0 1rem; }
@@ -293,7 +283,7 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 .ai-main-answer { padding:22px 24px; border-radius:22px; background:linear-gradient(135deg,rgba(15,23,42,.97),rgba(30,41,59,.88)); border:1px solid rgba(99,102,241,.30); box-shadow:0 18px 45px rgba(2,6,23,.26); color:#e5e7eb; font-size:16px; line-height:1.75; white-space:pre-wrap; }
 .ai-meta { color:#94a3b8; font-size:12px; margin:7px 0 12px; }
 .follow-grid { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
-@media (max-width:900px){ .team-photo-content h1{font-size:28px}.team-photo-content{left:22px;right:22px;bottom:22px;max-width:100%;}.team-photo-hero{aspect-ratio:4/3;min-height:360px;} }
+@media (max-width:900px){ .team-photo-content h1{font-size:28px}.team-photo-content{left:22px;right:22px;bottom:22px}.team-photo-hero{aspect-ratio:4/3;background-size:cover;} }
 .provider-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin: 10px 0 18px; }
 .provider-card { background:rgba(15,23,42,.72); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:12px 14px; }
 .provider-name { color:#e2e8f0; font-size:13px; font-weight:700; }
@@ -463,19 +453,18 @@ code, pre, [data-testid="stCodeBlock"] {
 /* premium team background hero; keeps full 16:9 composition */
 .team-photo-hero {
     min-height: 500px !important;
+    background-size: cover !important;
+    background-position: center center !important;
     border-radius: 28px !important;
     border: 1px solid rgba(148,163,184,.18) !important;
     box-shadow: 0 30px 80px rgba(0,0,0,.42) !important;
-}
-.team-photo-bg {
-    object-position: center 35% !important;
 }
 .team-photo-hero::before {
     background:
         linear-gradient(90deg, rgba(2,6,23,.88) 0%, rgba(2,6,23,.52) 42%, rgba(2,6,23,.12) 72%, rgba(2,6,23,.18) 100%),
         linear-gradient(0deg, rgba(2,6,23,.62), transparent 52%) !important;
 }
-.team-photo-content { max-width: 575px !important; padding: 0 !important; }
+.team-photo-content { max-width: 575px !important; padding: 44px !important; }
 .team-photo-content h1 { font-size: 38px !important; line-height:1.12 !important; }
 
 /* reduce repeated oversized visual language */
@@ -486,8 +475,301 @@ code, pre, [data-testid="stCodeBlock"] {
 @media (max-width: 850px) {
     .page-intro { padding:24px 22px; border-radius:20px; }
     .page-title { font-size:28px; }
-    .team-photo-hero { min-height:420px !important; }
-    .team-photo-content { padding:0 !important; }
+    .team-photo-hero { min-height:420px !important; background-position:center center !important; }
+    .team-photo-content { padding:26px !important; }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────
+   V26 IMAGE FIT POLISH
+   Fixes the first-page campus hero and Project Team photo so the image
+   fills the visual frame edge-to-edge without side gaps or letterboxing.
+   Source photos are 16:9, so the cards now respect 16:9 on desktop.
+   ───────────────────────────────────────────────────────────────────── */
+.block-container {
+    max-width: 1240px !important;
+    padding-left: clamp(.85rem, 1.6vw, 1.35rem) !important;
+    padding-right: clamp(.85rem, 1.6vw, 1.35rem) !important;
+}
+.hero {
+    width: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    min-height: 420px !important;
+    max-height: 560px !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+}
+.hero-content {
+    min-height: 420px !important;
+    height: 100% !important;
+}
+.team-photo-hero {
+    width: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    min-height: unset !important;
+    height: auto !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+}
+.team-photo-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        linear-gradient(90deg, rgba(2,6,23,.90) 0%, rgba(2,6,23,.58) 43%, rgba(2,6,23,.16) 72%, rgba(2,6,23,.18) 100%),
+        linear-gradient(0deg, rgba(2,6,23,.64), rgba(2,6,23,.05) 55%) !important;
+}
+.team-photo-hero::after {
+    z-index: 1;
+    pointer-events: none;
+}
+.team-photo-content {
+    z-index: 2 !important;
+}
+@media (max-width: 900px) {
+    .hero {
+        aspect-ratio: auto !important;
+        min-height: 430px !important;
+        max-height: none !important;
+        background-position: center center !important;
+    }
+    .hero-content { min-height: 430px !important; }
+    .team-photo-hero {
+        aspect-ratio: 4 / 3 !important;
+        background-size: cover !important;
+        background-position: center center !important;
+    }
+}
+
+/* grouped sidebar navigation */
+.sidebar-group-hint {
+    color:#64748b; font-size:11px; line-height:1.45; margin:8px 0 12px;
+}
+.nav-submenu {
+    margin: 4px 0 14px 10px;
+    padding-left: 10px;
+    border-left: 1px solid rgba(96,165,250,.18);
+}
+.nav-submenu .stButton > button {
+    min-height: 38px !important;
+    font-size: 13px !important;
+    padding-left: .85rem !important;
+}
+
+
+
+/* ─────────────────────────────────────────────────────────────────────
+   V27 NAVIGATION + STUDENT MISSION POLISH
+   Makes Learn / Teach / Project real section buttons and gives the
+   Student Mission page a premium dashboard-style landing area.
+   ───────────────────────────────────────────────────────────────────── */
+.block-container {
+    max-width: 1280px !important;
+    padding-left: clamp(.9rem, 1.6vw, 1.4rem) !important;
+    padding-right: clamp(.9rem, 1.6vw, 1.4rem) !important;
+}
+[data-testid="stSidebar"] .stButton > button[key^="nav_group_"] {
+    min-height: 46px !important;
+    margin-top: 8px !important;
+    background: linear-gradient(135deg, rgba(15,23,42,.94), rgba(30,41,59,.72)) !important;
+    border: 1px solid rgba(96,165,250,.20) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04) !important;
+    color: #eaf2ff !important;
+    letter-spacing: .10em !important;
+    text-transform: uppercase !important;
+    font-size: 12px !important;
+    font-weight: 850 !important;
+}
+[data-testid="stSidebar"] .stButton > button[key^="nav_group_"]:hover {
+    background: linear-gradient(135deg, rgba(37,99,235,.28), rgba(14,165,233,.11)) !important;
+    border-color: rgba(125,211,252,.36) !important;
+}
+.nav-submenu {
+    margin: 8px 0 16px 10px !important;
+    padding: 4px 0 4px 12px !important;
+    border-left: 1px solid rgba(96,165,250,.28) !important;
+}
+.nav-submenu-note {
+    color:#64748b;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    font-weight:800;
+    margin: 12px 0 6px;
+}
+.sidebar-group-hint { display:none !important; }
+
+.mission-landing {
+    position: relative;
+    overflow: hidden;
+    border-radius: 30px;
+    padding: 28px;
+    margin: 10px 0 20px;
+    border: 1px solid rgba(125,211,252,.18);
+    background:
+        radial-gradient(circle at 12% 0%, rgba(56,189,248,.18), transparent 31%),
+        radial-gradient(circle at 85% 10%, rgba(124,58,237,.22), transparent 34%),
+        linear-gradient(145deg, rgba(8,13,28,.97), rgba(15,23,42,.92));
+    box-shadow: 0 26px 80px rgba(0,0,0,.34);
+}
+.mission-landing::after {
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background: linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 70px),
+                linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 70px);
+    mask-image: linear-gradient(135deg, black, transparent 70%);
+    opacity:.35;
+}
+.mission-landing-inner {
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns: 1.15fr .85fr;
+    gap:22px;
+    align-items:stretch;
+}
+.mission-kicker {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:rgba(56,189,248,.10);
+    border:1px solid rgba(56,189,248,.26);
+    color:#7dd3fc;
+    font-size:11px;
+    font-weight:850;
+    letter-spacing:.13em;
+    text-transform:uppercase;
+}
+.mission-title {
+    color:#f8fafc;
+    font-size:38px;
+    line-height:1.08;
+    font-weight:900;
+    margin:18px 0 12px;
+    max-width:760px;
+    letter-spacing:-.04em;
+}
+.mission-copy {
+    color:#a8b4c7;
+    font-size:15px;
+    line-height:1.75;
+    max-width:760px;
+}
+.mission-chip-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; }
+.mission-chip {
+    padding:8px 12px;
+    border-radius:999px;
+    background:rgba(15,23,42,.72);
+    border:1px solid rgba(148,163,184,.14);
+    color:#cbd5e1;
+    font-size:12px;
+    font-weight:700;
+}
+.mission-side-card {
+    border-radius:24px;
+    padding:20px;
+    background:linear-gradient(145deg, rgba(15,23,42,.88), rgba(30,41,59,.62));
+    border:1px solid rgba(148,163,184,.14);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+.side-title { color:#e2e8f0; font-size:15px; font-weight:850; margin-bottom:14px; }
+.side-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-bottom:1px solid rgba(148,163,184,.08); }
+.side-row:last-child { border-bottom:0; }
+.side-label { color:#94a3b8; font-size:12px; }
+.side-value { color:#f8fafc; font-size:13px; font-weight:800; }
+.mission-form-title {
+    margin: 26px 0 12px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+}
+.mission-form-title h3 { color:#f8fafc; font-size:24px; margin:0; }
+.mission-form-title span { color:#7c8da5; font-size:13px; }
+.mission-form-box {
+    border:1px solid rgba(96,165,250,.18);
+    border-radius:24px;
+    padding:18px 20px 8px;
+    background:linear-gradient(145deg, rgba(15,23,42,.82), rgba(8,13,28,.94));
+    box-shadow:0 20px 50px rgba(0,0,0,.20);
+    margin-bottom: 18px;
+}
+.mission-output-card {
+    border:1px solid rgba(52,211,153,.16);
+    border-radius:18px;
+    padding:16px;
+    background:rgba(6,78,59,.08);
+    margin-top:2px;
+}
+.mission-output-card b { color:#d1fae5; }
+.mission-output-card div { color:#93a4b8; font-size:13px; padding:3px 0; }
+.mission-metric-grid {
+    display:grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap:14px;
+    margin:22px 0;
+}
+.mission-metric-card {
+    position:relative;
+    overflow:hidden;
+    border-radius:22px;
+    padding:22px 20px;
+    border:1px solid rgba(125,211,252,.14);
+    background:linear-gradient(145deg, rgba(15,23,42,.92), rgba(30,41,59,.56));
+    min-height:126px;
+}
+.mission-metric-card::after {
+    content:"";
+    position:absolute;
+    width:120px; height:120px; right:-50px; top:-55px;
+    border-radius:50%; background:rgba(56,189,248,.12);
+}
+.metric-big { color:#f8fafc; font-size:34px; font-weight:950; letter-spacing:-.04em; }
+.metric-label { color:#71829a; font-size:11px; font-weight:850; text-transform:uppercase; letter-spacing:.11em; margin-top:14px; }
+.metric-desc { color:#94a3b8; font-size:12px; line-height:1.45; margin-top:7px; }
+.journey-grid {
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap:16px;
+    margin:18px 0 6px;
+}
+.journey-card {
+    position:relative;
+    overflow:hidden;
+    min-height:210px;
+    padding:24px 22px;
+    border-radius:26px;
+    border:1px solid rgba(148,163,184,.14);
+    background:linear-gradient(145deg, rgba(8,13,28,.96), rgba(15,23,42,.86));
+    box-shadow:0 20px 45px rgba(0,0,0,.18);
+}
+.journey-card::before {
+    content:attr(data-step);
+    position:absolute;
+    right:16px;
+    top:10px;
+    font-size:58px;
+    line-height:1;
+    font-weight:950;
+    color:rgba(125,211,252,.07);
+}
+.journey-step { color:#38bdf8; font-size:11px; font-weight:900; letter-spacing:.14em; text-transform:uppercase; }
+.journey-title { color:#f8fafc; font-size:22px; line-height:1.18; font-weight:900; margin:22px 0 10px; }
+.journey-desc { color:#95a3b7; font-size:14px; line-height:1.65; }
+@media(max-width:900px) {
+    .mission-landing { padding:22px; border-radius:24px; }
+    .mission-landing-inner { grid-template-columns:1fr; }
+    .mission-title { font-size:30px; }
+    .mission-metric-grid, .journey-grid { grid-template-columns:1fr; }
 }
 
 </style>
@@ -531,10 +813,38 @@ def _nav_button(label: str, page_name: str) -> None:
         st.rerun()
 
 
+def _page_to_group(page_name: str) -> str:
+    groups = {
+        "Learn": {"Student Mission", "My Homework", "Ask Preluma AI"},
+        "Teach": {"Teacher Studio", "Homework Center"},
+        "Project": {"Evidence Board", "Professor Defense", "Project Team", "Demo Guide", "Future Roadmap"},
+    }
+    for group_name, pages in groups.items():
+        if page_name in pages:
+            return group_name
+    return "Learn"
+
+
+def _nav_group_button(group_name: str) -> None:
+    current_group = st.session_state.get("nav_group", "")
+    label = f"{group_name} {'▾' if current_group == group_name else '▸'}"
+    if st.sidebar.button(label, key=f"nav_group_{group_name}", use_container_width=True):
+        st.session_state.nav_group = "" if current_group == group_name else group_name
+        st.rerun()
+
+
+def _nav_submenu(items: list[tuple[str, str]]) -> None:
+    st.sidebar.markdown("<div class='nav-submenu'>", unsafe_allow_html=True)
+    for label, page_name in items:
+        _nav_button(label, page_name)
+    st.sidebar.markdown("</div>", unsafe_allow_html=True)
+
+
 def sidebar():
     st.sidebar.markdown("## Preluma")
     st.sidebar.caption("Light Up Before Class")
     st.session_state.setdefault("active_page", "Student Mission")
+    st.session_state.setdefault("nav_group", "")
 
     student_name = st.sidebar.text_input(
         "Active student",
@@ -569,21 +879,31 @@ def sidebar():
         unsafe_allow_html=True,
     )
 
-    st.sidebar.markdown("<div class='nav-label'>Learn</div>", unsafe_allow_html=True)
-    _nav_button("Student Mission", "Student Mission")
-    _nav_button("My Homework", "My Homework")
-    _nav_button("Ask Preluma AI", "Ask Preluma AI")
+    st.sidebar.markdown("<div class='nav-submenu-note'>Sections</div>", unsafe_allow_html=True)
 
-    st.sidebar.markdown("<div class='nav-label'>Teach</div>", unsafe_allow_html=True)
-    _nav_button("Teacher Studio", "Teacher Studio")
-    _nav_button("Homework Center", "Homework Center")
+    nav_groups = {
+        "Learn": [
+            ("Student Mission", "Student Mission"),
+            ("My Homework", "My Homework"),
+            ("Ask Preluma AI", "Ask Preluma AI"),
+        ],
+        "Teach": [
+            ("Teacher Studio", "Teacher Studio"),
+            ("Homework Center", "Homework Center"),
+        ],
+        "Project": [
+            ("Evidence Board", "Evidence Board"),
+            ("Professor Defense", "Professor Defense"),
+            ("Project Team", "Project Team"),
+            ("Demo Guide", "Demo Guide"),
+            ("Future Roadmap", "Future Roadmap"),
+        ],
+    }
 
-    st.sidebar.markdown("<div class='nav-label'>Project</div>", unsafe_allow_html=True)
-    _nav_button("Evidence Board", "Evidence Board")
-    _nav_button("Professor Defense", "Professor Defense")
-    _nav_button("Project Team", "Project Team")
-    _nav_button("Demo Guide", "Demo Guide")
-    _nav_button("Future Roadmap", "Future Roadmap")
+    for group_name, items in nav_groups.items():
+        _nav_group_button(group_name)
+        if st.session_state.get("nav_group") == group_name:
+            _nav_submenu(items)
 
     presentation = st.sidebar.toggle("Presentation Mode", value=True)
 
@@ -600,22 +920,21 @@ def sidebar():
     if st.sidebar.button("Reset session", use_container_width=True):
         reset_session()
         st.session_state.active_page = "Student Mission"
+        st.session_state.nav_group = ""
         st.rerun()
 
     st.sidebar.caption(f"v{APP_VERSION}")
     return st.session_state.active_page, presentation
 
-
 # ── Hero ─────────────────────────────────────────────────────────────────────
 
 def hero():
+    bg = f"url('{CAMPUS_URI}')" if CAMPUS_URI else "linear-gradient(135deg,#020617,#0f172a,#1e1b4b)"
     provider = _provider()
     ai_pill = f"<span class='ai-pill'>AI: {provider}</span>" if provider != "none" else ""
-    hero_media = f"<img class='hero-bg' src='{CAMPUS_URI}' alt='Yunnan University campus' />" if CAMPUS_URI else ""
 
     st.markdown(f"""
-    <div class='hero'>
-      {hero_media}
+    <div class='hero' style="background-image:{bg};">
       <div class='hero-overlay'></div>
       <div class='hero-content'>
         <div class='hero-top'>
@@ -684,15 +1003,40 @@ def chip_row():
 # ── Mission Control ───────────────────────────────────────────────────────────
 
 def mission_control():
-    st.markdown("""
-    <div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(56,189,248,.12);'>MC</div>
-      <div>
-        <div class='sec-title'>Mission Control</div>
-        <div class='sec-sub'>Choose your topic and start your pre-class mission</div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    provider = _provider()
+    provider_label = provider if provider != "none" else "Offline fallback"
+
+    st.markdown(
+        f"""
+        <section class='mission-landing'>
+            <div class='mission-landing-inner'>
+                <div>
+                    <div class='mission-kicker'>Pre-class mission control</div>
+                    <div class='mission-title'>Turn a lecture topic into a guided learning mission.</div>
+                    <div class='mission-copy'>Choose a topic, select the tutor style, and Preluma prepares a Brain Brief, concept practice, mini mock test, readiness score, and class questions before the lecture starts.</div>
+                    <div class='mission-chip-row'>
+                        <span class='mission-chip'>Brain Brief</span>
+                        <span class='mission-chip'>Skill Check</span>
+                        <span class='mission-chip'>UltraTutor</span>
+                        <span class='mission-chip'>CSV Evidence</span>
+                    </div>
+                </div>
+                <div class='mission-side-card'>
+                    <div class='side-title'>Live system status</div>
+                    <div class='side-row'><span class='side-label'>AI provider</span><span class='side-value'>{provider_label}</span></div>
+                    <div class='side-row'><span class='side-label'>Data mode</span><span class='side-value'>CSV persistence</span></div>
+                    <div class='side-row'><span class='side-label'>Backend rule</span><span class='side-value'>Pure Python core</span></div>
+                    <div class='side-row'><span class='side-label'>Mission steps</span><span class='side-value'>5 stages</span></div>
+                </div>
+            </div>
+        </section>
+        <div class='mission-form-title'>
+            <h3>Build your mission</h3>
+            <span>Fast setup for student demo or manual topic input</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     preset = st.selectbox(
         "Demo preset",
@@ -735,12 +1079,12 @@ def mission_control():
         ),
     )
 
+    st.markdown("<div class='mission-form-box'>", unsafe_allow_html=True)
     with st.form("mission_form", border=False):
-        st.markdown("<div class='card-glass' style='padding:22px;'>", unsafe_allow_html=True)
-
-        c1, c2, c3 = st.columns([1.4, 1, 0.9])
+        c1, c2, c3 = st.columns([1.25, 1.05, 0.95], gap="large")
 
         with c1:
+            st.markdown("**Student setup**")
             student = st.text_input("Your name", value=ds)
 
             topic_choice = st.selectbox(
@@ -760,6 +1104,7 @@ def mission_control():
             lecture_time = st.text_input("Lecture time", value=dtime)
 
         with c2:
+            st.markdown("**Tutor behavior**")
             persona = st.radio(
                 "Tutor personality",
                 ["Normal Mode", "Coach Mode", "Roast Mode"],
@@ -782,27 +1127,27 @@ def mission_control():
             )
 
         with c3:
-            use_wiki = st.checkbox("Wikipedia real data", value=True)
-
             st.markdown("**Mission output**")
-            for item in [
-                "Brain Brief",
-                "Concept explanation",
-                "Practice step",
-                "Mini mock test",
-                "Final overview",
-            ]:
-                st.markdown(
-                    f"<div style='font-size:13px;color:#94a3b8;padding:2px 0;'>{item}</div>",
-                    unsafe_allow_html=True,
-                )
-
-        st.markdown("</div>", unsafe_allow_html=True)
+            use_wiki = st.checkbox("Wikipedia real data", value=True)
+            st.markdown(
+                """
+                <div class='mission-output-card'>
+                    <b>Output package</b>
+                    <div>01 Brain Brief</div>
+                    <div>02 Concept explanation</div>
+                    <div>03 Practice step</div>
+                    <div>04 Mini mock test</div>
+                    <div>05 Final overview</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
         start = st.form_submit_button(
             "Start Pre-Class Mission",
             use_container_width=True,
         )
+    st.markdown("</div>", unsafe_allow_html=True)
 
     if start:
         if not topic or not topic.strip():
@@ -1095,17 +1440,50 @@ def class_questions_and_download():
 # ── How it works ──────────────────────────────────────────────────────────────
 
 def how_it_works():
-    st.markdown("""<div class='kpi-grid'>
-      <div class='kpi-card'><div class='kpi-num'>18</div><div class='kpi-lbl'>Curated Topics</div></div>
-      <div class='kpi-card'><div class='kpi-num'>4</div><div class='kpi-lbl'>Skill Checks</div></div>
-      <div class='kpi-card'><div class='kpi-num'>AI</div><div class='kpi-lbl'>Smart Tutor</div></div>
-      <div class='kpi-card'><div class='kpi-num'>CSV</div><div class='kpi-lbl'>Persistent Data</div></div>
-    </div>
-    <div class='flow-grid'>
-      <div class='flow-card'><div class='flow-step'>Step 1</div><div class='flow-title'>Prime the brain</div><div class='flow-desc'>AI Brain Brief with all concepts in tabs before the lecture.</div></div>
-      <div class='flow-card'><div class='flow-step'>Step 2</div><div class='flow-title'>Find weak spots</div><div class='flow-desc'>4-question quiz detects exactly which skill needs work.</div></div>
-      <div class='flow-card'><div class='flow-step'>Step 3</div><div class='flow-title'>Ask better questions</div><div class='flow-desc'>Leave with AI-generated class questions and a readiness score.</div></div>
-    </div>""", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class='mission-metric-grid'>
+            <div class='mission-metric-card'>
+                <div class='metric-big'>18</div>
+                <div class='metric-label'>Curated topics</div>
+                <div class='metric-desc'>Ready-made academic topics for quick classroom demos.</div>
+            </div>
+            <div class='mission-metric-card'>
+                <div class='metric-big'>4</div>
+                <div class='metric-label'>Skill checks</div>
+                <div class='metric-desc'>Focused quiz items to detect weak concepts fast.</div>
+            </div>
+            <div class='mission-metric-card'>
+                <div class='metric-big'>AI</div>
+                <div class='metric-label'>Smart tutor</div>
+                <div class='metric-desc'>Adaptive explanation with local fallback support.</div>
+            </div>
+            <div class='mission-metric-card'>
+                <div class='metric-big'>CSV</div>
+                <div class='metric-label'>Evidence data</div>
+                <div class='metric-desc'>Student readiness records saved for teacher review.</div>
+            </div>
+        </div>
+        <div class='journey-grid'>
+            <div class='journey-card' data-step='01'>
+                <div class='journey-step'>Step 1</div>
+                <div class='journey-title'>Prime the brain</div>
+                <div class='journey-desc'>Preluma creates a short Brain Brief so the student enters class with the core idea already prepared.</div>
+            </div>
+            <div class='journey-card' data-step='02'>
+                <div class='journey-step'>Step 2</div>
+                <div class='journey-title'>Find weak spots</div>
+                <div class='journey-desc'>A mini quiz detects the exact concept that needs review instead of giving a random score only.</div>
+            </div>
+            <div class='journey-card' data-step='03'>
+                <div class='journey-step'>Step 3</div>
+                <div class='journey-title'>Ask better questions</div>
+                <div class='journey-desc'>The final overview gives readiness, weak skill, and class questions that prove preparation.</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # ── Student Mission ───────────────────────────────────────────────────────────
@@ -2067,8 +2445,7 @@ def project_team():
 
     if TEAM_URI:
         st.markdown(f"""
-        <div class='team-photo-hero'>
-          <img class='team-photo-bg' src='{TEAM_URI}' alt='Preluma team photo' />
+        <div class='team-photo-hero' style="background-image:url('{TEAM_URI}');">
           <div class='team-photo-content'>
             <span class='badge'>Team Preluma · Yunnan University</span>
             <h1>Building a smarter pre-class learning experience together.</h1>
