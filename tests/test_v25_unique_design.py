@@ -28,8 +28,8 @@ def test_sidebar_has_no_navigation_emoji():
 
 def test_team_photo_is_background_hero():
     assert "team-photo-hero" in APP
-    assert "TEAM_URI" in APP
-    assert "background-position: center center" in APP or "object-fit:cover" in APP
+    assert "background-image:url" in APP
+    assert "background-position: center center" in APP
 
 
 def test_adaptive_ai_paragraph_depth():

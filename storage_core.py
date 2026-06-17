@@ -6,7 +6,7 @@ from typing import Any
 
 DATA_DIR     = Path("data")
 STUDENTS_CSV = DATA_DIR / "students.csv"
-RESULT_LOG   = Path("audit_log.txt")
+RESULT_LOG   = Path("result.txt")
 FIELDNAMES   = ["Record ID","Student","Topic","Readiness","Weak Skill",
                 "Quiz Score","Quiz Total","Lecture Time","Learning Mode","Created At"]
 

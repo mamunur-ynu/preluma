@@ -21,12 +21,11 @@ from homework_core import (
     load_questions,
     load_student_mistakes,
     notifications_for_student,
-    mark_homework_notifications_read,
     seed_homework_demo,
     submit_homework,
 )
 
-APP_VERSION = "28.4 Team Photo Face Safe Final"
+APP_VERSION = "25.0 Unique Interfaces + Adaptive AI"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -38,7 +37,6 @@ TEAM_MEMBERS = [
 
 CAMPUS_IMAGE = Path("assets/ynu_campus.jpg")
 TEAM_IMAGE = Path("assets/team_preluma.jpg")
-SIDEBAR_IMAGE = Path("assets/sidebar_clocktower.jpg")
 
 st.set_page_config(page_title="Preluma — Light Up Before Class", page_icon=None, layout="wide")
 
@@ -55,314 +53,102 @@ def image_data_uri(path_str):
 
 CAMPUS_URI = image_data_uri(str(CAMPUS_IMAGE))
 TEAM_URI = image_data_uri(str(TEAM_IMAGE))
-SIDEBAR_URI = image_data_uri(str(SIDEBAR_IMAGE))
 
 
 CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@700;800;900&display=swap');
-
-/* ── Reset & Base ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 *, *::before, *::after { box-sizing: border-box; }
-html, body, [class*="css"] {
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
-    color-scheme: dark;
-}
-h1, h2, h3, .page-title, .sec-title {
-    font-family: 'Manrope', 'Inter', ui-sans-serif, sans-serif;
-}
-
-/* ── Layout ── */
-.block-container {
-    max-width: 1280px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    padding-top: 1.25rem !important;
-    padding-left: clamp(.85rem, 1.6vw, 1.4rem) !important;
-    padding-right: clamp(.85rem, 1.6vw, 1.4rem) !important;
-    width: 100% !important;
-}
-[data-testid="stAppViewContainer"] > .main {
-    width: 100% !important;
-}
-[data-testid="stMain"] {
-    width: 100% !important;
-}
-
-/* ── Sidebar ── */
-[data-testid="stSidebar"] {
-    background:
-        linear-gradient(180deg, rgba(2,6,23,.26) 0%, rgba(2,6,23,.38) 30%, rgba(2,6,23,.52) 62%, rgba(2,6,23,.70) 100%),
-        radial-gradient(circle at 50% 72%, rgba(251,191,36,.28) 0%, rgba(251,191,36,.10) 18%, transparent 38%),
-        url('__SIDEBAR_BG__');
-    background-size: auto, auto, auto 112%;
-    background-position: center, center, 50% 100%;
-    background-repeat: no-repeat;
-    border-right: 1px solid rgba(255,255,255,.06);
-}
+html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+.block-container { max-width: 1200px; padding-top: 0 !important; padding-left: 2rem; padding-right: 2rem; }
+[data-testid="stSidebar"] { background: #03080f; border-right: 1px solid rgba(255,255,255,.06); }
 [data-testid="stSidebar"] * { color: #e2e8f0; }
-[data-testid="stSidebar"] > div:first-child { padding-top: 1.1rem; }
-
-[data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] .stMarkdown h2 {
-    font-size: 20px !important;
-    font-weight: 900 !important;
-    letter-spacing: -.03em !important;
-    text-shadow: 0 2px 16px rgba(0,0,0,.80) !important;
-}
-[data-testid="stSidebar"] p,
-[data-testid="stSidebar"] .stCaptionContainer {
-    text-shadow: 0 1px 12px rgba(0,0,0,.70) !important;
-}
-
-/* Sidebar Buttons */
-[data-testid="stSidebar"] .stButton > button {
-    min-height: 44px !important;
-    border-radius: 14px !important;
-    justify-content: flex-start !important;
-    padding: .65rem .85rem !important;
-    background: rgba(3,7,18,.36) !important;
-    border: 1px solid rgba(255,255,255,.07) !important;
-    box-shadow: 0 8px 20px rgba(0,0,0,.16) !important;
-    color: #e2e8f0 !important;
-    font-weight: 700 !important;
-    font-size: 13.5px !important;
-    backdrop-filter: blur(6px) !important;
-    transition: background .22s ease, border-color .22s ease, transform .22s ease !important;
-}
-[data-testid="stSidebar"] .stButton > button:hover {
-    background: rgba(37,99,235,.22) !important;
-    border-color: rgba(125,211,252,.32) !important;
-    color: #fff !important;
-    transform: translateX(3px) !important;
-}
-[data-testid="stSidebar"] .stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, rgba(37,99,235,.46), rgba(124,58,237,.36)) !important;
-    border: 1px solid rgba(147,197,253,.45) !important;
-    color: #ffffff !important;
-    box-shadow: 0 12px 28px rgba(37,99,235,.20) !important;
-}
-
-/* Nav labels */
-.nav-label {
-    margin: 1.25rem 0 .45rem !important;
-    color: #e0f2fe !important;
-    font-size: 10px !important;
-    letter-spacing: .18em !important;
-    font-weight: 900 !important;
-    text-transform: uppercase !important;
-    text-shadow: 0 2px 16px rgba(0,0,0,.90) !important;
-    padding-top: .85rem !important;
-    border-top: 1px solid rgba(148,163,184,.08) !important;
-}
-.nav-label:first-of-type { border-top: 0 !important; }
-
-.nav-submenu {
-    margin: 6px 0 12px 10px !important;
-    padding: 6px 0 6px 12px !important;
-    border-left: 1px solid rgba(125,211,252,.30) !important;
-    animation: fadeSlideIn .20s ease !important;
-}
-.nav-submenu .stButton > button {
-    min-height: 38px !important;
-    font-size: 12.5px !important;
-    padding-left: .8rem !important;
-}
-
-/* Sidebar status */
-.sidebar-status {
-    margin-top: 1rem;
-    border: 1px solid rgba(45,212,191,.18);
-    background: rgba(13,148,136,.10);
-    padding: 11px 13px;
-    border-radius: 14px;
-    backdrop-filter: blur(8px);
-}
-.sidebar-status .status-title { color: #ccfbf1; font-size: 12px; font-weight: 800; }
-.sidebar-status .status-copy { color: #94a3b8; font-size: 11px; line-height: 1.5; margin-top: 3px; }
-.sidebar-profile { display: none !important; }
+h1, h2, h3 { letter-spacing: -0.02em; }
 
 /* ── Hero ── */
 .hero {
-    position: relative;
-    width: 100% !important;
-    min-height: 520px !important;
-    max-height: none !important;
-    aspect-ratio: auto !important;
-    border-radius: 26px !important;
-    overflow: hidden !important;
-    border: 1px solid rgba(125,211,252,.12) !important;
-    box-shadow: 0 28px 80px rgba(0,0,0,.55) !important;
-    margin-bottom: 1.5rem !important;
-    background-size: cover !important;
-    background-position: center center !important;
-    background-repeat: no-repeat !important;
+    position: relative; min-height: 340px; border-radius: 28px;
+    overflow: hidden; border: 1px solid rgba(255,255,255,.10);
+    box-shadow: 0 32px 80px rgba(0,0,0,.55); margin-bottom: 2rem;
+    background-size: cover; background-position: center 35%;
 }
 .hero-overlay {
     position: absolute; inset: 0;
     background:
-        linear-gradient(108deg, rgba(2,6,23,.96) 0%, rgba(2,6,23,.80) 30%, rgba(10,20,50,.44) 62%, rgba(15,23,62,.12) 100%),
-        radial-gradient(ellipse at 18% 30%, rgba(56,189,248,.18) 0%, transparent 42%),
-        radial-gradient(ellipse at 88% 18%, rgba(139,92,246,.14) 0%, transparent 38%);
+        linear-gradient(105deg, rgba(2,6,23,.92) 0%, rgba(7,14,35,.78) 38%,
+        rgba(15,23,62,.55) 65%, rgba(55,10,120,.40) 100%),
+        radial-gradient(ellipse at 15% 50%, rgba(56,189,248,.18) 0%, transparent 50%);
 }
-
-/* Grid texture on hero */
-.hero-overlay::after {
-    content: "";
-    position: absolute; inset: 0;
-    background-image:
-        linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
-    background-size: 48px 48px;
-    mask-image: radial-gradient(ellipse at 30% 50%, black 15%, transparent 65%);
-}
-
 .hero-content {
-    position: relative; z-index: 2;
-    padding: 52px 54px 68px !important;
-    min-height: 520px !important;
-    height: auto !important;
-    max-width: 860px !important;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    position: relative; z-index: 2; padding: 44px 52px;
+    display: flex; flex-direction: column; justify-content: center; min-height: 340px;
 }
-
-/* Hero modifier for home page — full cinematic treatment */
-.hero-home {
-    min-height: 620px !important;
-    border-radius: 30px !important;
-    box-shadow: 0 36px 96px rgba(0,0,0,.60), inset 0 0 0 1px rgba(125,211,252,.07) !important;
-}
-.hero-home .hero-content {
-    min-height: 620px !important;
-    padding: 64px 60px 80px !important;
-    max-width: 900px !important;
-}
-.hero-home .hero-overlay {
-    background:
-        linear-gradient(100deg, rgba(2,6,23,.96) 0%, rgba(2,6,23,.82) 28%, rgba(15,23,42,.42) 60%, rgba(15,23,42,.10) 100%),
-        radial-gradient(ellipse at 20% 28%, rgba(56,189,248,.20) 0%, transparent 44%),
-        radial-gradient(ellipse at 88% 16%, rgba(167,139,250,.16) 0%, transparent 38%) !important;
-}
-
-/* Hero Top Bar */
 .hero-top { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
 .logo-mark {
-    width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0;
+    width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0;
     background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #a78bfa 100%);
-    box-shadow: 0 6px 20px rgba(56,189,248,.28);
+    box-shadow: 0 8px 24px rgba(56,189,248,.30);
     display: flex; align-items: center; justify-content: center;
 }
 .logo-mark svg { width: 22px; height: 22px; }
-.brand-name { font-size: 17px; font-weight: 900; color: #fff; letter-spacing: -.02em; }
-.brand-tag  { font-size: 11px; color: #7dd3fc; margin-top: 1px; }
+.brand-name { font-size: 17px; font-weight: 800; color: #fff; }
+.brand-tag  { font-size: 12px; color: #93c5fd; margin-top: 1px; }
 .uni-pill {
     margin-left: auto; padding: 6px 14px; border-radius: 999px;
-    background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.16);
-    color: #e2e8f0; font-size: 11.5px; font-weight: 700;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.20);
+    color: #e2e8f0; font-size: 12px; font-weight: 600;
 }
 .ai-pill {
-    padding: 6px 12px; border-radius: 999px; margin-left: 6px;
-    background: rgba(52,211,153,.10); border: 1px solid rgba(52,211,153,.24);
-    color: #6ee7b7; font-size: 11px; font-weight: 800;
+    padding: 6px 12px; border-radius: 999px; margin-left: 8px;
+    background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.25);
+    color: #6ee7b7; font-size: 11px; font-weight: 700;
 }
-
-/* Hero Badge */
 .hero-badge {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 7px 14px; border-radius: 999px; margin-bottom: 20px;
-    background: rgba(56,189,248,.12); border: 1px solid rgba(56,189,248,.32);
-    color: #7dd3fc; font-size: 11px; font-weight: 800;
-    letter-spacing: .06em; text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 999px; margin-bottom: 18px;
+    background: rgba(56,189,248,.15); border: 1px solid rgba(56,189,248,.35);
+    color: #7dd3fc; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
 }
-.hero-badge::before {
-    content: ""; width: 6px; height: 6px; border-radius: 50%;
-    background: #38bdf8; flex-shrink: 0;
-}
-
-/* Hero Headline */
+.hero-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #38bdf8; }
 .hero h1 {
-    font-size: clamp(36px, 4.2vw, 64px) !important;
-    line-height: 1.03 !important;
-    font-weight: 900 !important;
-    color: #fff !important;
-    margin: 0 0 20px !important;
-    letter-spacing: -.03em !important;
-    max-width: 840px !important;
-    text-shadow: 0 2px 24px rgba(0,0,0,.40) !important;
+    font-size: 42px; line-height: 1.06; font-weight: 900; color: #fff;
+    margin: 0 0 16px; letter-spacing: -.025em; max-width: 780px;
+    text-shadow: 0 2px 30px rgba(0,0,0,.50);
 }
 .hero h1 span { color: #7dd3fc; }
-.hero-sub {
-    font-size: 16px !important;
-    color: #94a3b8 !important;
-    line-height: 1.72 !important;
-    max-width: 680px !important;
-    margin-bottom: 0 !important;
-}
+.hero-sub { font-size: 16px; color: #cbd5e1; line-height: 1.65; max-width: 640px; }
+.hero-stats { display: flex; gap: 32px; margin-top: 28px; }
+.hero-stat-num { font-size: 22px; font-weight: 800; color: #fff; }
+.hero-stat-lbl { font-size: 11px; color: #94a3b8; margin-top: 2px; font-weight: 500; }
 
-/* Hero Stats */
-.hero-stats {
-    display: flex; gap: 8px; margin-top: 32px !important;
-    padding: 10px !important;
-    width: fit-content !important;
-    border-radius: 18px !important;
-    background: rgba(2,6,23,.32) !important;
-    border: 1px solid rgba(255,255,255,.07) !important;
-    backdrop-filter: blur(12px) !important;
-}
-.hero-stats > div {
-    min-width: 96px !important;
-    padding: 9px 13px !important;
-    border-radius: 13px !important;
-    background: rgba(15,23,42,.34) !important;
-}
-.hero-stat-num { font-size: 22px; font-weight: 900; color: #fff; }
-.hero-stat-lbl { font-size: 10px; color: #475569; margin-top: 2px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
-
-/* Hero Signature Badge */
-.hero-signature {
-    position: absolute; right: 28px; bottom: 26px; z-index: 3;
-    padding: 11px 15px; border-radius: 16px;
-    border: 1px solid rgba(255,255,255,.13);
-    background: linear-gradient(145deg, rgba(15,23,42,.50), rgba(2,6,23,.38));
-    backdrop-filter: blur(12px);
-    color: #dbeafe; font-size: 11.5px; line-height: 1.45; text-align: right;
-    box-shadow: 0 12px 30px rgba(0,0,0,.22);
-}
-.hero-signature b { display: block; color: #f8fafc; font-size: 12.5px; }
-
-/* ── Progress Steps ── */
+/* ── Progress ── */
 .progress-wrap {
-    display: flex; gap: 0; margin: 0 0 1.8rem;
-    background: rgba(10,18,36,.70); border-radius: 14px;
-    padding: 5px; border: 1px solid rgba(255,255,255,.06);
+    display: flex; gap: 0; margin: 0 0 2rem;
+    background: rgba(15,23,42,.60); border-radius: 16px;
+    padding: 6px; border: 1px solid rgba(255,255,255,.07);
 }
-.progress-step {
-    flex: 1; text-align: center; padding: 9px 8px; border-radius: 11px;
-    font-size: 12px; font-weight: 700; color: #475569;
-}
-.progress-step.done   { color: #34d399; background: rgba(52,211,153,.09); }
-.progress-step.active { color: #38bdf8; background: rgba(56,189,248,.11); font-weight: 900; }
+.progress-step { flex: 1; text-align: center; padding: 10px 8px; border-radius: 12px;
+    font-size: 12px; font-weight: 600; color: #64748b; }
+.progress-step.done   { color: #34d399; background: rgba(52,211,153,.10); }
+.progress-step.active { color: #38bdf8; background: rgba(56,189,248,.12); font-weight: 800; }
 
-/* ── Section Headers ── */
-.sec-head { display: flex; align-items: center; gap: 12px; margin: 1.8rem 0 .9rem; }
+/* ── Section header ── */
+.sec-head { display: flex; align-items: center; gap: 12px; margin: 2rem 0 1rem; }
 .sec-icon {
     width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center; font-size: 16px;
 }
-.sec-title { font-size: 20px; font-weight: 900; color: #f1f5f9; letter-spacing: -.02em; }
-.sec-sub   { font-size: 13px; color: #475569; margin-top: 2px; }
+.sec-title { font-size: 20px; font-weight: 800; color: #f1f5f9; }
+.sec-sub   { font-size: 13px; color: #64748b; margin-top: 2px; }
 
-/* ── Glass Cards ── */
+/* ── Cards ── */
 .card-glass {
-    background: rgba(10,18,36,.72); border: 1px solid rgba(255,255,255,.07);
-    border-radius: 18px; padding: 18px 20px; margin: 8px 0;
-    transition: border-color .22s ease;
+    background: rgba(15,23,42,.70); border: 1px solid rgba(255,255,255,.08);
+    border-radius: 20px; padding: 20px 22px; margin: 10px 0;
 }
-.card-glass:hover { border-color: rgba(56,189,248,.20); }
-.albl { font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; margin-bottom: 8px; }
-.atxt { font-size: 14.5px; color: #e2e8f0; line-height: 1.72; }
+.card-glass:hover { border-color: rgba(56,189,248,.22); }
+.albl { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+.atxt { font-size: 15px; color: #e2e8f0; line-height: 1.7; }
 .lbl-blue   { color: #60a5fa; }
 .lbl-purple { color: #a78bfa; }
 .lbl-green  { color: #34d399; }
@@ -371,342 +157,329 @@ h1, h2, h3, .page-title, .sec-title {
 .lbl-yellow { color: #fbbf24; }
 .lbl-cyan   { color: #22d3ee; }
 
-/* ── AI Status Bar ── */
+/* ── AI bar ── */
 .ai-bar {
-    display: flex; align-items: center; gap: 10px; padding: 11px 16px;
-    border-radius: 13px; margin-bottom: 16px;
-    background: rgba(52,211,153,.07); border: 1px solid rgba(52,211,153,.22);
+    display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+    border-radius: 14px; margin-bottom: 16px;
+    background: rgba(52,211,153,.08); border: 1px solid rgba(52,211,153,.25);
 }
-.ai-dot { width: 7px; height: 7px; border-radius: 50%; background: #34d399; box-shadow: 0 0 7px #34d399; }
-.ai-txt { font-size: 13px; color: #6ee7b7; font-weight: 700; }
+.ai-dot { width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 8px #34d399; }
+.ai-txt { font-size: 13px; color: #6ee7b7; font-weight: 600; }
 
 /* ── Notice ── */
 .notice {
-    padding: 12px 16px; border-radius: 13px; margin-bottom: 14px;
-    background: rgba(56,189,248,.07); border: 1px solid rgba(56,189,248,.18);
+    padding: 13px 16px; border-radius: 14px; margin-bottom: 14px;
+    background: rgba(56,189,248,.08); border: 1px solid rgba(56,189,248,.20);
     color: #bae6fd; font-size: 14px; line-height: 1.6;
 }
 
-/* ── Score Display ── */
-.score-big { font-size: 54px; font-weight: 900; line-height: 1; }
-.score-lbl { font-size: 14px; color: #64748b; margin-top: 6px; }
+/* ── Score ── */
+.score-big { font-size: 56px; font-weight: 900; line-height: 1; }
+.score-lbl { font-size: 14px; color: #94a3b8; margin-top: 6px; }
 .r-pill { display: inline-block; padding: 6px 18px; border-radius: 999px; font-size: 14px; font-weight: 700; margin-top: 8px; }
-.pill-g { background: rgba(52,211,153,.14); color: #34d399; border: 1px solid rgba(52,211,153,.28); }
-.pill-y { background: rgba(251,191,36,.14);  color: #fbbf24; border: 1px solid rgba(251,191,36,.28); }
-.pill-r { background: rgba(248,113,113,.14); color: #f87171; border: 1px solid rgba(248,113,113,.28); }
+.pill-g { background: rgba(52,211,153,.15); color: #34d399; border: 1px solid rgba(52,211,153,.30); }
+.pill-y { background: rgba(251,191,36,.15);  color: #fbbf24; border: 1px solid rgba(251,191,36,.30); }
+.pill-r { background: rgba(248,113,113,.15); color: #f87171; border: 1px solid rgba(248,113,113,.30); }
 
-/* ── KPI Grid ── */
-.kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin: 1.4rem 0; }
+/* ── KPI ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin: 1.5rem 0; }
 .kpi-card {
-    background: rgba(10,18,36,.72); border: 1px solid rgba(255,255,255,.07);
-    border-radius: 16px; padding: 18px 16px;
+    background: rgba(15,23,42,.70); border: 1px solid rgba(255,255,255,.07);
+    border-radius: 18px; padding: 20px 18px;
 }
 .kpi-num { font-size: 30px; font-weight: 900; color: #fff; }
-.kpi-lbl { font-size: 10px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: .08em; margin-top: 6px; }
+.kpi-lbl { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .07em; margin-top: 6px; }
 
-/* ── Flow Grid ── */
-.flow-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin: 1.4rem 0; }
+/* ── Flow ── */
+.flow-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin: 1.5rem 0; }
 .flow-card {
-    background: rgba(10,18,36,.65); border: 1px solid rgba(255,255,255,.07);
-    border-radius: 16px; padding: 20px 18px;
+    background: rgba(15,23,42,.60); border: 1px solid rgba(255,255,255,.07);
+    border-radius: 18px; padding: 22px 20px;
 }
-.flow-step  { font-size: 10px; font-weight: 800; color: #38bdf8; letter-spacing: .10em; text-transform: uppercase; margin-bottom: 10px; }
-.flow-title { font-size: 17px; font-weight: 900; color: #f1f5f9; margin-bottom: 7px; letter-spacing: -.015em; }
-.flow-desc  { font-size: 13.5px; color: #64748b; line-height: 1.62; }
+.flow-step  { font-size: 11px; font-weight: 700; color: #38bdf8; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 10px; }
+.flow-title { font-size: 18px; font-weight: 800; color: #f1f5f9; margin-bottom: 8px; }
+.flow-desc  { font-size: 14px; color: #94a3b8; line-height: 1.6; }
 
-/* ── Evidence Grid ── */
-.ev-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin: 1.4rem 0; }
+/* ── Evidence ── */
+.ev-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin: 1.5rem 0; }
 .ev-card {
-    background: linear-gradient(135deg, rgba(14,165,233,.09), rgba(124,58,237,.07));
-    border: 1px solid rgba(125,211,252,.13); border-radius: 16px; padding: 16px 15px;
+    background: linear-gradient(135deg, rgba(14,165,233,.10), rgba(124,58,237,.08));
+    border: 1px solid rgba(125,211,252,.15); border-radius: 18px; padding: 18px 16px;
 }
-.ev-card h4 { font-size: 14.5px; font-weight: 800; color: #e2e8f0; margin: 0 0 7px; }
-.ev-card p  { font-size: 13px; color: #64748b; line-height: 1.62; margin: 0; }
+.ev-card h4 { font-size: 15px; font-weight: 700; color: #e2e8f0; margin: 0 0 8px; }
+.ev-card p  { font-size: 13px; color: #94a3b8; line-height: 1.6; margin: 0; }
 
-/* ── Rubric Grid ── */
-.rubric-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin: 1.4rem 0; }
+/* ── Rubric ── */
+.rubric-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; margin: 1.5rem 0; }
 .rubric-card {
-    padding: 18px; border-radius: 20px;
-    background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(14,165,233,.08));
-    border: 1px solid rgba(125,211,252,.20);
-}
-.rubric-card h4 { color: #fff; margin: 0 0 7px; font-size: 15.5px; font-weight: 800; letter-spacing: -.01em; }
-.rubric-card p  { color: #94a3b8; margin: 0; line-height: 1.58; font-size: 13.5px; }
-
-/* ── Team Photo ── */
-.team-photo-hero {
-    width: 100% !important;
-    aspect-ratio: 16 / 9 !important;
-    min-height: 0 !important;
-    height: auto !important;
-    background-size: cover !important;
-    background-position: center center !important;
-    background-repeat: no-repeat !important;
-    border-radius: 26px !important;
-    border: 1px solid rgba(226,232,240,.22) !important;
-    box-shadow: 0 28px 70px rgba(0,0,0,.40) !important;
-    margin: 0 0 16px !important;
-    overflow: hidden !important;
-    position: relative !important;
-}
-.team-photo-hero::before {
-    content: "";
-    position: absolute; inset: 0; z-index: 1; pointer-events: none;
-    background: linear-gradient(0deg, rgba(2,6,23,.32) 0%, rgba(2,6,23,.04) 40%, rgba(2,6,23,.00) 72%) !important;
-}
-.team-photo-hero::after { background: transparent !important; }
-.team-photo-content { display: none !important; }
-
-/* ── Team Caption Panel ── */
-.team-caption-panel {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 16px; padding: 18px 22px; margin: 0 0 24px;
-    border-radius: 20px; border: 1px solid rgba(125,211,252,.16);
-    background: linear-gradient(135deg, rgba(10,18,36,.90), rgba(15,23,42,.72));
-    box-shadow: 0 16px 44px rgba(0,0,0,.22);
-}
-.team-caption-kicker {
-    color: #7dd3fc; font-size: 10.5px; font-weight: 900;
-    text-transform: uppercase; letter-spacing: .15em; margin-bottom: 5px;
-}
-.team-caption-title { color: #f8fafc; font-size: 22px; font-weight: 900; line-height: 1.16; letter-spacing: -.03em; }
-.team-caption-copy { color: #94a3b8; font-size: 13px; line-height: 1.58; max-width: 520px; }
-.team-caption-school {
-    color: #93c5fd; font-size: 10.5px; font-weight: 900;
-    letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
-}
-
-/* ── Member Grid ── */
-.member-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin: 1.4rem 0; }
-.member-card {
     padding: 18px; border-radius: 22px;
-    background: linear-gradient(145deg, rgba(10,18,36,.95), rgba(20,30,52,.85));
-    border: 1px solid rgba(125,211,252,.14);
+    background: linear-gradient(135deg, rgba(34,197,94,.12), rgba(14,165,233,.10));
+    border: 1px solid rgba(125,211,252,.22);
 }
-.member-card.main {
-    border-color: rgba(96,165,250,.40);
-    background: linear-gradient(145deg, rgba(14,165,233,.15), rgba(124,58,237,.12));
-}
-.member-role { color: #93c5fd; font-weight: 900; font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; margin-bottom: 7px; }
-.member-card h3 { color: #fff; margin: 0 0 7px; font-size: 18px; font-weight: 900; letter-spacing: -.02em; }
-.member-card p  { color: #94a3b8; line-height: 1.58; margin: 0; font-size: 13.5px; }
+.rubric-card h4 { color: #fff; margin: 0 0 8px; font-size: 16px; }
+.rubric-card p  { color: #cbd5e1; margin: 0; line-height: 1.55; font-size: 14px; }
 
-/* ── Chip Row ── */
-.chip-row { display: flex; flex-wrap: wrap; gap: 7px; margin: .8rem 0 1.4rem; }
-.chip {
-    padding: 6px 13px; border-radius: 999px;
-    background: rgba(99,102,241,.10); border: 1px solid rgba(99,102,241,.22);
-    color: #a5b4fc; font-size: 11.5px; font-weight: 700;
+/* ── Team ── */
+.member-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin: 1.5rem 0; }
+.member-card {
+    padding: 20px; border-radius: 24px;
+    background: linear-gradient(135deg, rgba(15,23,42,.94), rgba(30,41,59,.82));
+    border: 1px solid rgba(125,211,252,.18);
 }
+.member-card.main { border-color: rgba(96,165,250,.45); background: linear-gradient(135deg, rgba(14,165,233,.17), rgba(124,58,237,.14)); }
+.member-role { color: #93c5fd; font-weight: 900; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+.member-card h3 { color: #fff; margin: 0 0 8px; font-size: 19px; }
+.member-card p  { color: #cbd5e1; line-height: 1.55; margin: 0; font-size: 14px; }
+.contrib-list { margin-top: 10px; padding-left: 16px; color: #94a3b8; font-size: 13px; }
+.contrib-list li { margin-bottom: 5px; }
 
-/* ── Concept Block ── */
+/* ── Chip ── */
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 1rem 0 1.5rem; }
+.chip { padding: 7px 14px; border-radius: 999px; background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.25); color: #a5b4fc; font-size: 12px; font-weight: 600; }
+
+/* ── Concept ── */
 .concept-block {
-    background: rgba(10,18,36,.60); border: 1px solid rgba(255,255,255,.07);
-    border-radius: 14px; padding: 14px 16px; margin: 7px 0;
+    background: rgba(15,23,42,.55); border: 1px solid rgba(255,255,255,.07);
+    border-radius: 16px; padding: 16px 18px; margin: 8px 0;
 }
-.concept-block-title { font-size: 10.5px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; margin-bottom: 7px; color: #818cf8; }
-.concept-block p { font-size: 13.5px; color: #cbd5e1; line-height: 1.68; margin: 3px 0; }
+.concept-block-title { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; color: #818cf8; }
+.concept-block p { font-size: 14px; color: #cbd5e1; line-height: 1.65; margin: 3px 0; }
 
-/* ── Sidebar Team Box ── */
-.team-box { background: rgba(10,18,36,.80); border: 1px solid rgba(255,255,255,.07); border-radius: 14px; padding: 13px 15px; margin-top: 14px; }
-.team-ttl { font-size: 9.5px; font-weight: 900; color: #334155; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 11px; }
-.team-row { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+/* ── Sidebar team ── */
+.team-box { background: rgba(15,23,42,.80); border: 1px solid rgba(255,255,255,.07); border-radius: 16px; padding: 14px 16px; margin-top: 16px; }
+.team-ttl { font-size: 10px; font-weight: 800; color: #475569; letter-spacing: .10em; text-transform: uppercase; margin-bottom: 12px; }
+.team-row { padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
 .team-row:last-child { border-bottom: none; }
 .team-name { font-size: 12px; font-weight: 700; color: #e2e8f0; }
-.team-role { font-size: 10.5px; color: #334155; margin-top: 2px; }
+.team-role { font-size: 11px; color: #475569; margin-top: 2px; }
 
 /* ── Buttons ── */
 .stButton > button {
-    border-radius: 13px !important; font-weight: 800 !important; font-size: 14px !important;
+    border-radius: 14px !important; font-weight: 700 !important; font-size: 14px !important;
     min-height: 50px !important; border: none !important;
     background: linear-gradient(135deg, #2563eb, #7c3aed) !important;
-    color: #fff !important; box-shadow: 0 4px 18px rgba(37,99,235,.32) !important;
-    letter-spacing: -.01em !important;
+    color: #fff !important; box-shadow: 0 4px 20px rgba(37,99,235,.35) !important;
 }
-.stButton > button:hover { opacity: .86 !important; transform: translateY(-1px) !important; }
+.stButton > button:hover { opacity: .88 !important; }
 
-/* ── Mission Landing ── */
-.mission-landing {
-    position: relative; overflow: hidden; border-radius: 28px;
-    padding: 28px; margin: 8px 0 20px;
-    border: 1px solid rgba(125,211,252,.16);
+@media(max-width:900px) {
+    .kpi-grid,.flow-grid,.ev-grid,.rubric-grid,.member-grid { grid-template-columns: 1fr; }
+    .hero-content { padding: 28px 24px; }
+    .hero h1 { font-size: 28px; }
+    .hero-stats { gap: 20px; }
+}
+
+/* ── Team photo: full image, no face cropping ── */
+.team-photo-hero { position:relative; width:100%; aspect-ratio:16/9; border-radius:30px; overflow:hidden; background-size:100% auto; background-position:center; background-repeat:no-repeat; background-color:#020617; border:1px solid rgba(125,211,252,.25); box-shadow:0 28px 70px rgba(0,0,0,.42); margin:1rem 0 1.75rem; }
+.team-photo-hero::after { content:''; position:absolute; inset:0; background:linear-gradient(0deg,rgba(2,6,23,.90) 0%,rgba(2,6,23,.18) 48%,rgba(2,6,23,.12) 100%),linear-gradient(90deg,rgba(14,165,233,.12),rgba(124,58,237,.14)); }
+.team-photo-content { position:absolute; z-index:2; left:34px; right:34px; bottom:30px; }
+.team-photo-content h1 { color:#fff; font-size:38px; line-height:1.12; margin:12px 0 8px; text-shadow:0 4px 24px rgba(0,0,0,.65); }
+.team-photo-content p { color:#e2e8f0; max-width:760px; line-height:1.55; margin:0; text-shadow:0 3px 18px rgba(0,0,0,.65); }
+.sidebar-profile { padding:12px 14px; border-radius:16px; background:rgba(15,23,42,.72); border:1px solid rgba(148,163,184,.12); margin:.35rem 0 1rem; }
+.sidebar-profile b { color:#f8fafc; font-size:13px; }
+.sidebar-profile span { color:#94a3b8; font-size:12px; }
+.nav-label { color:#64748b; font-size:10px; font-weight:900; letter-spacing:.14em; text-transform:uppercase; margin:16px 0 7px; }
+.ai-main-answer { padding:22px 24px; border-radius:22px; background:linear-gradient(135deg,rgba(15,23,42,.97),rgba(30,41,59,.88)); border:1px solid rgba(99,102,241,.30); box-shadow:0 18px 45px rgba(2,6,23,.26); color:#e5e7eb; font-size:16px; line-height:1.75; white-space:pre-wrap; }
+.ai-meta { color:#94a3b8; font-size:12px; margin:7px 0 12px; }
+.follow-grid { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+@media (max-width:900px){ .team-photo-content h1{font-size:28px}.team-photo-content{left:22px;right:22px;bottom:22px}.team-photo-hero{aspect-ratio:4/3;background-size:cover;} }
+.provider-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin: 10px 0 18px; }
+.provider-card { background:rgba(15,23,42,.72); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:12px 14px; }
+.provider-name { color:#e2e8f0; font-size:13px; font-weight:700; }
+.provider-status { color:#34d399; font-size:11px; margin-top:4px; }
+.chat-user { margin:14px 0 10px auto; max-width:80%; background:linear-gradient(135deg,#2563eb,#7c3aed); color:white; padding:14px 16px; border-radius:18px 18px 4px 18px; line-height:1.55; }
+.chat-ai { margin:10px auto 16px 0; max-width:92%; background:rgba(15,23,42,.78); border:1px solid rgba(125,211,252,.18); padding:16px 18px; border-radius:18px 18px 18px 4px; }
+.context-chip { display:inline-block; padding:7px 12px; border-radius:999px; background:rgba(56,189,248,.10); border:1px solid rgba(56,189,248,.25); color:#7dd3fc; font-size:12px; font-weight:700; margin:0 8px 8px 0; }
+@media (max-width: 900px) { .provider-grid { grid-template-columns: 1fr; } }
+
+
+/* ─────────────────────────────────────────────────────────────────────
+   V25 DESIGN SYSTEM
+   No emoji, compact sidebar, page-specific interface identities.
+   ───────────────────────────────────────────────────────────────────── */
+html, body, [class*="css"] {
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", sans-serif;
+}
+h1, h2, h3, .page-title, .sec-title {
+    font-family: Manrope, Inter, ui-sans-serif, system-ui, sans-serif;
+}
+code, pre, [data-testid="stCodeBlock"] {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+/* compact sidebar */
+[data-testid="stSidebar"] {
     background:
-        radial-gradient(circle at 12% 0%, rgba(56,189,248,.16), transparent 30%),
-        radial-gradient(circle at 86% 10%, rgba(124,58,237,.20), transparent 34%),
-        linear-gradient(145deg, rgba(8,13,28,.97), rgba(10,18,36,.92));
-    box-shadow: 0 22px 65px rgba(0,0,0,.30);
+        radial-gradient(circle at 20% 0%, rgba(59,130,246,.09), transparent 35%),
+        #050a12;
+    border-right: 1px solid rgba(148,163,184,.10);
 }
-.mission-landing::after {
-    content: "";
-    position: absolute; inset: 0; pointer-events: none;
-    background: linear-gradient(90deg, rgba(255,255,255,.04) 0 1px, transparent 1px 68px),
-                linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 68px);
-    mask-image: linear-gradient(135deg, black, transparent 68%);
-    opacity: .40;
+[data-testid="stSidebar"] > div:first-child { padding-top: 1.15rem; }
+[data-testid="stSidebar"] .stButton > button {
+    min-height: 43px !important;
+    border-radius: 12px !important;
+    justify-content: flex-start !important;
+    padding: .62rem .78rem !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    box-shadow: none !important;
+    color: #cbd5e1 !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    transition: .18s ease;
 }
-.mission-landing-inner { position: relative; z-index: 1; display: grid; grid-template-columns: 1.15fr .85fr; gap: 22px; align-items: stretch; }
-.mission-kicker {
-    display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px;
-    border-radius: 999px; background: rgba(56,189,248,.09);
-    border: 1px solid rgba(56,189,248,.24); color: #7dd3fc;
-    font-size: 10.5px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase;
+[data-testid="stSidebar"] .stButton > button:hover {
+    background: rgba(59,130,246,.08) !important;
+    border-color: rgba(96,165,250,.16) !important;
+    color: #fff !important;
+    transform: translateX(2px);
 }
-.mission-title { color: #f8fafc; font-size: 36px; line-height: 1.08; font-weight: 900; margin: 16px 0 11px; max-width: 740px; letter-spacing: -.04em; }
-.mission-copy { color: #7d8ca5; font-size: 14.5px; line-height: 1.78; max-width: 740px; }
-.mission-chip-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 18px; }
-.mission-chip { padding: 7px 12px; border-radius: 999px; background: rgba(10,18,36,.72); border: 1px solid rgba(148,163,184,.12); color: #cbd5e1; font-size: 11.5px; font-weight: 700; }
-.mission-side-card { border-radius: 22px; padding: 18px; background: linear-gradient(145deg, rgba(10,18,36,.90), rgba(20,30,52,.65)); border: 1px solid rgba(148,163,184,.12); }
-.side-title { color: #e2e8f0; font-size: 14.5px; font-weight: 900; margin-bottom: 13px; }
-.side-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(148,163,184,.08); }
-.side-row:last-child { border-bottom: 0; }
-.side-label { color: #64748b; font-size: 11.5px; }
-.side-value { color: #f8fafc; font-size: 12.5px; font-weight: 900; }
-.mission-form-title { margin: 24px 0 11px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.mission-form-title h3 { color: #f8fafc; font-size: 23px; margin: 0; font-weight: 900; letter-spacing: -.03em; }
-.mission-form-title span { color: #475569; font-size: 12.5px; }
-.mission-form-box { border: 1px solid rgba(96,165,250,.16); border-radius: 22px; padding: 18px 20px 8px; background: linear-gradient(145deg, rgba(10,18,36,.84), rgba(8,13,28,.95)); box-shadow: 0 18px 44px rgba(0,0,0,.18); margin-bottom: 16px; }
-.mission-output-card { border: 1px solid rgba(52,211,153,.14); border-radius: 16px; padding: 15px; background: rgba(6,78,59,.07); margin-top: 2px; }
-.mission-output-card b { color: #d1fae5; }
-.mission-output-card div { color: #64748b; font-size: 12.5px; padding: 3px 0; }
+[data-testid="stSidebar"] .stButton > button[kind="primary"] {
+    background: rgba(37,99,235,.16) !important;
+    border-color: rgba(96,165,250,.35) !important;
+    color: #bfdbfe !important;
+}
+.nav-label {
+    margin: 1.05rem 0 .35rem;
+    color: #64748b !important;
+    font-size: 10px !important;
+    letter-spacing: .17em;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+.sidebar-profile {
+    border-radius: 16px;
+    padding: 14px 15px;
+    margin: .75rem 0 1rem;
+    border: 1px solid rgba(96,165,250,.16);
+    background: linear-gradient(145deg, rgba(15,23,42,.88), rgba(8,15,27,.96));
+}
+.sidebar-profile b { font-size: 14px; color: #f8fafc; }
+.sidebar-profile span { display:block; margin-top:5px; color:#7c8da5; font-size:12px; }
+.sidebar-status {
+    margin-top: 1rem;
+    border: 1px solid rgba(45,212,191,.16);
+    background: rgba(13,148,136,.055);
+    padding: 12px 13px;
+    border-radius: 14px;
+}
+.sidebar-status .status-title { color:#ccfbf1; font-size:12px; font-weight:700; }
+.sidebar-status .status-copy { color:#6f8799; font-size:11px; line-height:1.5; margin-top:4px; }
 
-/* ── Mission Metric Grid ── */
-.mission-metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin: 20px 0; }
-.mission-metric-card {
-    position: relative; overflow: hidden; border-radius: 20px; padding: 20px 18px;
-    border: 1px solid rgba(125,211,252,.12);
-    background: linear-gradient(145deg, rgba(10,18,36,.94), rgba(20,30,52,.60));
-    min-height: 120px;
-}
-.mission-metric-card::after { content: ""; position: absolute; width: 110px; height: 110px; right: -48px; top: -52px; border-radius: 50%; background: rgba(56,189,248,.10); }
-.metric-big { color: #f8fafc; font-size: 34px; font-weight: 950; letter-spacing: -.04em; }
-.metric-label { color: #475569; font-size: 10.5px; font-weight: 900; text-transform: uppercase; letter-spacing: .12em; margin-top: 13px; }
-.metric-desc { color: #64748b; font-size: 11.5px; line-height: 1.48; margin-top: 6px; }
-
-/* ── Journey Grid ── */
-.journey-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; margin: 16px 0 6px; }
-.journey-card {
-    position: relative; overflow: hidden; min-height: 200px; padding: 22px 20px;
-    border-radius: 24px; border: 1px solid rgba(148,163,184,.12);
-    background: linear-gradient(145deg, rgba(8,13,28,.96), rgba(10,18,36,.88));
-    box-shadow: 0 18px 40px rgba(0,0,0,.16);
-}
-.journey-card::before { content: attr(data-step); position: absolute; right: 14px; top: 8px; font-size: 54px; line-height: 1; font-weight: 950; color: rgba(125,211,252,.06); }
-.journey-step { color: #38bdf8; font-size: 10.5px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
-.journey-title { color: #f8fafc; font-size: 21px; line-height: 1.18; font-weight: 900; margin: 20px 0 9px; letter-spacing: -.025em; }
-.journey-desc { color: #64748b; font-size: 13.5px; line-height: 1.68; }
-
-/* ── Page Intro ── */
+/* reusable unique page header */
 .page-intro {
-    position: relative; overflow: hidden; border-radius: 24px;
-    padding: 28px 32px; margin: 4px 0 22px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 26px;
+    padding: 30px 34px;
+    margin: 4px 0 24px;
     border: 1px solid var(--page-border);
-    background: linear-gradient(120deg, var(--page-bg-a), var(--page-bg-b)), #0b1220;
-    box-shadow: 0 20px 55px rgba(0,0,0,.24);
+    background:
+        linear-gradient(120deg, var(--page-bg-a), var(--page-bg-b)),
+        #0b1220;
+    box-shadow: 0 22px 60px rgba(0,0,0,.26);
 }
-.page-intro::after { content: ""; position: absolute; width: 250px; height: 250px; right: -85px; top: -120px; border-radius: 50%; background: var(--page-glow); filter: blur(4px); }
-.page-kicker { color: var(--page-accent); font-size: 10.5px; font-weight: 900; text-transform: uppercase; letter-spacing: .16em; margin-bottom: 9px; }
-.page-title { position: relative; z-index: 1; color: #f8fafc; font-size: 32px; line-height: 1.11; letter-spacing: -.04em; font-weight: 900; margin: 0; }
-.page-subtitle { position: relative; z-index: 1; max-width: 740px; color: #64748b; font-size: 13.5px; line-height: 1.72; margin-top: 9px; }
+.page-intro::after {
+    content: "";
+    position: absolute; width: 260px; height: 260px; right:-90px; top:-125px;
+    border-radius: 50%; background: var(--page-glow); filter: blur(4px);
+}
+.page-kicker {
+    color: var(--page-accent); font-size: 11px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .15em; margin-bottom: 10px;
+}
+.page-title {
+    position: relative; z-index: 1; color:#f8fafc; font-size: 34px;
+    line-height:1.12; letter-spacing:-.035em; font-weight:800; margin:0;
+}
+.page-subtitle {
+    position:relative; z-index:1; max-width:760px; color:#9fb0c6;
+    font-size:14px; line-height:1.7; margin-top:10px;
+}
+.theme-ai       { --page-accent:#c4b5fd; --page-border:rgba(139,92,246,.28); --page-bg-a:rgba(76,29,149,.32); --page-bg-b:rgba(15,23,42,.88); --page-glow:rgba(139,92,246,.18); }
+.theme-homework { --page-accent:#fbbf24; --page-border:rgba(245,158,11,.25); --page-bg-a:rgba(120,53,15,.26); --page-bg-b:rgba(15,23,42,.9); --page-glow:rgba(245,158,11,.13); }
+.theme-teacher  { --page-accent:#67e8f9; --page-border:rgba(6,182,212,.24); --page-bg-a:rgba(8,47,73,.52); --page-bg-b:rgba(15,23,42,.9); --page-glow:rgba(6,182,212,.14); }
+.theme-evidence { --page-accent:#86efac; --page-border:rgba(34,197,94,.25); --page-bg-a:rgba(5,46,22,.48); --page-bg-b:rgba(8,15,27,.95); --page-glow:rgba(34,197,94,.13); }
+.theme-defense  { --page-accent:#bfdbfe; --page-border:rgba(96,165,250,.25); --page-bg-a:rgba(30,58,138,.30); --page-bg-b:rgba(15,23,42,.93); --page-glow:rgba(59,130,246,.15); }
+.theme-demo     { --page-accent:#fdba74; --page-border:rgba(249,115,22,.24); --page-bg-a:rgba(124,45,18,.28); --page-bg-b:rgba(15,23,42,.92); --page-glow:rgba(249,115,22,.12); }
+.theme-roadmap  { --page-accent:#e9d5ff; --page-border:rgba(168,85,247,.24); --page-bg-a:rgba(88,28,135,.30); --page-bg-b:rgba(15,23,42,.92); --page-glow:rgba(168,85,247,.14); }
 
-.theme-ai       { --page-accent:#c4b5fd; --page-border:rgba(139,92,246,.26); --page-bg-a:rgba(76,29,149,.30); --page-bg-b:rgba(10,18,36,.90); --page-glow:rgba(139,92,246,.16); }
-.theme-homework { --page-accent:#fbbf24; --page-border:rgba(245,158,11,.23); --page-bg-a:rgba(120,53,15,.24); --page-bg-b:rgba(10,18,36,.92); --page-glow:rgba(245,158,11,.12); }
-.theme-teacher  { --page-accent:#67e8f9; --page-border:rgba(6,182,212,.22); --page-bg-a:rgba(8,47,73,.50); --page-bg-b:rgba(10,18,36,.92); --page-glow:rgba(6,182,212,.12); }
-.theme-evidence { --page-accent:#86efac; --page-border:rgba(34,197,94,.23); --page-bg-a:rgba(5,46,22,.46); --page-bg-b:rgba(8,15,27,.96); --page-glow:rgba(34,197,94,.12); }
-.theme-defense  { --page-accent:#bfdbfe; --page-border:rgba(96,165,250,.23); --page-bg-a:rgba(30,58,138,.28); --page-bg-b:rgba(10,18,36,.94); --page-glow:rgba(59,130,246,.14); }
-.theme-demo     { --page-accent:#fdba74; --page-border:rgba(249,115,22,.22); --page-bg-a:rgba(124,45,18,.26); --page-bg-b:rgba(10,18,36,.93); --page-glow:rgba(249,115,22,.11); }
-.theme-roadmap  { --page-accent:#e9d5ff; --page-border:rgba(168,85,247,.22); --page-bg-a:rgba(88,28,135,.28); --page-bg-b:rgba(10,18,36,.93); --page-glow:rgba(168,85,247,.13); }
+/* distinct workspace panels */
+.assignment-card {
+    border:1px solid rgba(245,158,11,.21);
+    background:linear-gradient(145deg,rgba(41,30,14,.72),rgba(12,18,29,.92));
+    border-radius:20px;padding:20px 22px;margin:12px 0;
+}
+.analytics-panel {
+    border:1px solid rgba(6,182,212,.18);
+    background:linear-gradient(145deg,rgba(8,47,73,.34),rgba(11,18,32,.94));
+    border-radius:20px;padding:18px;
+}
+.lab-panel {
+    border:1px solid rgba(34,197,94,.18);
+    background:#07110d;border-radius:18px;padding:18px;
+    box-shadow:inset 0 0 35px rgba(34,197,94,.025);
+}
+.defense-panel {
+    border:1px solid rgba(96,165,250,.20);
+    background:linear-gradient(155deg,rgba(30,58,138,.20),rgba(15,23,42,.92));
+    border-radius:20px;padding:20px;
+}
 
-/* ── Workspace Panels ── */
-.assignment-card { border: 1px solid rgba(245,158,11,.19); background: linear-gradient(145deg, rgba(32,22,10,.75),rgba(10,18,36,.93)); border-radius: 18px; padding: 18px 20px; margin: 10px 0; }
-.analytics-panel { border: 1px solid rgba(6,182,212,.16); background: linear-gradient(145deg, rgba(8,47,73,.32),rgba(8,14,30,.95)); border-radius: 18px; padding: 17px; }
-.lab-panel { border: 1px solid rgba(34,197,94,.16); background: #06100c; border-radius: 16px; padding: 17px; box-shadow: inset 0 0 30px rgba(34,197,94,.022); }
-.defense-panel { border: 1px solid rgba(96,165,250,.18); background: linear-gradient(155deg, rgba(30,58,138,.18), rgba(10,18,36,.93)); border-radius: 18px; padding: 18px; }
-
-/* ── AI Chat ── */
+/* AI chat: real conversation layout */
 .ai-chat-shell {
-    max-width: 920px; margin: 0 auto; border: 1px solid rgba(139,92,246,.16);
-    background: linear-gradient(160deg, rgba(22,16,44,.80), rgba(8,14,26,.96));
-    border-radius: 22px; padding: 18px 20px 22px;
+    max-width: 940px; margin: 0 auto; border:1px solid rgba(139,92,246,.18);
+    background:linear-gradient(160deg,rgba(24,18,46,.78),rgba(8,14,25,.95));
+    border-radius:24px;padding:18px 20px 22px;
 }
 .chat-user {
-    width: fit-content; max-width: 78%; margin: 16px 0 9px auto !important;
-    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
-    border: 0 !important; border-radius: 18px 18px 4px 18px !important;
-    padding: 12px 15px !important; color: white !important;
-    box-shadow: 0 12px 28px rgba(79,70,229,.22) !important;
+    width:fit-content; max-width:78%; margin:18px 0 10px auto !important;
+    background:linear-gradient(135deg,#4f46e5,#7c3aed) !important;
+    border:0 !important; border-radius:20px 20px 5px 20px !important;
+    padding:13px 16px !important; color:white !important;
 }
-.ai-meta { color: #475569 !important; font-size: 11px !important; margin: 0 0 5px 5px !important; }
+.ai-meta { color:#7d8ca5 !important; font-size:11px !important; margin:0 0 6px 5px !important; }
 .ai-main-answer {
-    max-width: 90%; border: 1px solid rgba(125,211,252,.14) !important;
-    border-radius: 4px 18px 18px 18px !important;
-    background: linear-gradient(145deg, rgba(10,18,36,.96), rgba(20,30,52,.72)) !important;
-    padding: 16px 18px !important; color: #d4dce8 !important;
-    font-size: 14.5px !important; line-height: 1.84 !important;
-    white-space: pre-wrap;
+    max-width:92%; border:1px solid rgba(167,139,250,.18) !important;
+    border-radius:5px 20px 20px 20px !important;
+    background:rgba(17,24,39,.88) !important; padding:18px 20px !important;
+    color:#dbe4f0 !important; font-size:15px !important; line-height:1.82 !important;
+    white-space:pre-wrap;
 }
-.context-chip { background: rgba(139,92,246,.07) !important; border-color: rgba(167,139,250,.18) !important; color: #a78bfa !important; }
+.context-chip { background:rgba(139,92,246,.08) !important; border-color:rgba(167,139,250,.20) !important; }
 
-/* ── Sidebar Nav Group Buttons ── */
-[data-testid="stSidebar"] .stButton > button[key^="nav_group_"] {
-    min-height: 44px !important;
-    margin-top: 6px !important;
-    background: linear-gradient(135deg, rgba(10,18,36,.95), rgba(20,30,52,.75)) !important;
-    border: 1px solid rgba(96,165,250,.18) !important;
-    color: #e8f0ff !important;
-    letter-spacing: .09em !important;
-    text-transform: uppercase !important;
-    font-size: 11.5px !important;
-    font-weight: 900 !important;
+/* premium team background hero; keeps full 16:9 composition */
+.team-photo-hero {
+    min-height: 500px !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    border-radius: 28px !important;
+    border: 1px solid rgba(148,163,184,.18) !important;
+    box-shadow: 0 30px 80px rgba(0,0,0,.42) !important;
 }
-[data-testid="stSidebar"] .stButton > button[key^="nav_group_"]:hover {
-    background: linear-gradient(135deg, rgba(37,99,235,.26), rgba(14,165,233,.10)) !important;
-    border-color: rgba(125,211,252,.34) !important;
+.team-photo-hero::before {
+    background:
+        linear-gradient(90deg, rgba(2,6,23,.88) 0%, rgba(2,6,23,.52) 42%, rgba(2,6,23,.12) 72%, rgba(2,6,23,.18) 100%),
+        linear-gradient(0deg, rgba(2,6,23,.62), transparent 52%) !important;
 }
+.team-photo-content { max-width: 575px !important; padding: 44px !important; }
+.team-photo-content h1 { font-size: 38px !important; line-height:1.12 !important; }
 
-/* ── Provider Grid ── */
-.provider-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 9px; margin: 9px 0 16px; }
-.provider-card { background: rgba(10,18,36,.72); border: 1px solid rgba(255,255,255,.07); border-radius: 13px; padding: 11px 13px; }
-.provider-name { color: #e2e8f0; font-size: 12.5px; font-weight: 800; }
-.provider-status { color: #34d399; font-size: 10.5px; margin-top: 3px; }
-
-/* ── Animations ── */
-@keyframes fadeSlideIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to   { opacity: 1; transform: translateY(0); }
+/* reduce repeated oversized visual language */
+.stButton > button {
+    border-radius: 12px;
+    font-weight: 650;
 }
-
-/* ── Mission Page Styles ── */
-.mission-landing { margin-top: .8rem !important; }
-.sec-head { margin-top: 1.4rem !important; }
-.page-intro { margin-top: .5rem !important; }
-
-/* ── Expander ── */
-[data-testid="stExpander"] {
-    border: 1px solid rgba(125,211,252,.12) !important;
-    border-radius: 14px !important;
-    background: rgba(10,18,36,.55) !important;
+@media (max-width: 850px) {
+    .page-intro { padding:24px 22px; border-radius:20px; }
+    .page-title { font-size:28px; }
+    .team-photo-hero { min-height:420px !important; background-position:center center !important; }
+    .team-photo-content { padding:26px !important; }
 }
 
-/* ── Responsive ── */
-@media(max-width:900px) {
-    .kpi-grid, .flow-grid, .ev-grid, .rubric-grid, .member-grid { grid-template-columns: 1fr; }
-    .hero-content { padding: 32px 26px 48px !important; }
-    .hero h1 { font-size: 30px !important; }
-    .hero-stats { gap: 6px !important; flex-wrap: wrap !important; }
-    .hero, .hero-home { min-height: 480px !important; }
-    .hero-home .hero-content { min-height: 480px !important; }
-    .hero-signature { left: 20px; right: 20px; text-align: left; bottom: 20px; }
-    .team-photo-hero { aspect-ratio: 4 / 3 !important; }
-    .team-caption-panel { flex-direction: column; align-items: flex-start; }
-    .team-caption-school { white-space: normal; }
-    .mission-landing-inner { grid-template-columns: 1fr; }
-    .mission-title { font-size: 28px; }
-    .mission-metric-grid, .journey-grid { grid-template-columns: 1fr; }
-    .provider-grid { grid-template-columns: 1fr; }
-}
 </style>
 """
-CSS = CSS.replace("__SIDEBAR_BG__", SIDEBAR_URI or CAMPUS_URI)
 st.markdown(CSS, unsafe_allow_html=True)
 
 
@@ -733,7 +506,7 @@ def reset_session():
         "questions", "quiz_result", "latest_session", "tutor_history",
         "score_history", "class_questions", "mission_started",
         "mission_step", "practice_reflection", "homework_result",
-        "selected_homework_id", "ai_context_note", "nav_group",
+        "selected_homework_id", "ai_context_note",
     ]
     for key in keys:
         st.session_state.pop(key, None)
@@ -741,125 +514,82 @@ def reset_session():
 
 
 def _nav_button(label: str, page_name: str) -> None:
-    is_active = st.session_state.get("active_page") == page_name
-    if st.sidebar.button(label, key=f"nav_{page_name}", use_container_width=True, type="primary" if is_active else "secondary"):
+    if st.sidebar.button(label, key=f"nav_{page_name}", use_container_width=True):
         st.session_state.active_page = page_name
-        st.session_state.nav_group = _page_to_group(page_name)
         st.rerun()
-
-
-def _page_to_group(page_name: str) -> str:
-    if page_name == "Home":
-        return ""
-    groups = {
-        "Learn": {"Student Mission", "My Homework", "Ask Preluma AI"},
-        "Teach": {"Teacher Studio", "Homework Center"},
-        "Project": {"Evidence Board", "Professor Defense", "Project Team", "Demo Guide", "Future Roadmap"},
-    }
-    for group_name, pages in groups.items():
-        if page_name in pages:
-            return group_name
-    return ""
-
-
-def _nav_group_button(group_name: str) -> None:
-    current_group = st.session_state.get("nav_group", "")
-    label = f"Open {group_name} {'▾' if current_group == group_name else '▸'}"
-    is_open = current_group == group_name
-    if st.sidebar.button(label, key=f"nav_group_{group_name}", use_container_width=True, type="primary" if is_open else "secondary"):
-        st.session_state.nav_group = "" if current_group == group_name else group_name
-        st.rerun()
-
-
-def _nav_submenu(items: list[tuple[str, str]]) -> None:
-    st.sidebar.markdown("<div class='nav-submenu'>", unsafe_allow_html=True)
-    for label, page_name in items:
-        _nav_button(label, page_name)
-    st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
 
 def sidebar():
     st.sidebar.markdown("## Preluma")
     st.sidebar.caption("Light Up Before Class")
-    st.session_state.setdefault("active_page", "Home")
-    st.session_state.setdefault("nav_group", "")
-    # Three separated navigation groups.
-    # Only the clicked group opens; sub-pages are hidden until the group is opened.
-    if not st.session_state.get("nav_group"):
-        st.session_state.nav_group = _page_to_group(st.session_state.get("active_page", "Home"))
+    st.session_state.setdefault("active_page", "Student Mission")
 
-    nav_groups = {
-        "Learn": [
-            ("Student Mission", "Student Mission"),
-            ("My Homework", "My Homework"),
-            ("Ask Preluma AI", "Ask Preluma AI"),
-        ],
-        "Teach": [
-            ("Teacher Studio", "Teacher Studio"),
-            ("Homework Center", "Homework Center"),
-        ],
-        "Project": [
-            ("Evidence Board", "Evidence Board"),
-            ("Professor Defense", "Professor Defense"),
-            ("Project Team", "Project Team"),
-            ("Demo Guide", "Demo Guide"),
-            ("Future Roadmap", "Future Roadmap"),
-        ],
-    }
+    student_name = st.sidebar.text_input(
+        "Active student",
+        value=st.session_state.get("student", "Student"),
+        key="sidebar_student_identity",
+        label_visibility="collapsed",
+        placeholder="Student name",
+    )
+    if student_name.strip():
+        st.session_state.student = student_name.strip()
 
-    if st.sidebar.button("Home", key="nav_home", use_container_width=True, type="primary" if st.session_state.get("active_page") == "Home" else "secondary"):
-        st.session_state.active_page = "Home"
-        st.session_state.nav_group = ""
-        st.rerun()
+    unread_count = len(
+        notifications_for_student(
+            st.session_state.get("student", "Student"),
+            unread_only=True,
+        )
+    )
+    st.sidebar.markdown(
+        f"<div class='sidebar-profile'><b>{st.session_state.get('student','Student')}</b>"
+        f"<span>{unread_count} unread homework notification{'s' if unread_count != 1 else ''}</span></div>",
+        unsafe_allow_html=True,
+    )
 
     st.sidebar.markdown("<div class='nav-label'>Learn</div>", unsafe_allow_html=True)
-    _nav_group_button("Learn")
-    if st.session_state.get("nav_group") == "Learn":
-        _nav_submenu(nav_groups["Learn"])
+    _nav_button("Student Mission", "Student Mission")
+    _nav_button(f"My Homework  {unread_count if unread_count else ''}".rstrip(), "My Homework")
+    _nav_button("Ask Preluma AI", "Ask Preluma AI")
 
     st.sidebar.markdown("<div class='nav-label'>Teach</div>", unsafe_allow_html=True)
-    _nav_group_button("Teach")
-    if st.session_state.get("nav_group") == "Teach":
-        _nav_submenu(nav_groups["Teach"])
+    _nav_button("Teacher Studio", "Teacher Studio")
+    _nav_button("Homework Center", "Homework Center")
 
     st.sidebar.markdown("<div class='nav-label'>Project</div>", unsafe_allow_html=True)
-    _nav_group_button("Project")
-    if st.session_state.get("nav_group") == "Project":
-        _nav_submenu(nav_groups["Project"])
+    _nav_button("Evidence Board", "Evidence Board")
+    _nav_button("Professor Defense", "Professor Defense")
+    _nav_button("Project Team", "Project Team")
+    _nav_button("Demo Guide", "Demo Guide")
+    _nav_button("Future Roadmap", "Future Roadmap")
 
     presentation = st.sidebar.toggle("Presentation Mode", value=True)
 
     st.sidebar.markdown(
-        """
-        <div class='sidebar-status'>
-            <div class='status-title'>Preluma AI ready</div>
-            <div class='status-copy'>Ready for lessons, homework help, and exam preparation.</div>
-        </div>
-        """,
+        "<div class='sidebar-status'>"
+        "<div class='status-title'>Preluma AI ready</div>"
+        "<div class='status-copy'>Adaptive explanation, mission context, provider fallback.</div>"
+        "</div>",
         unsafe_allow_html=True,
     )
 
     if st.sidebar.button("Reset session", use_container_width=True):
         reset_session()
-        st.session_state.active_page = "Home"
-        st.session_state.nav_group = ""
+        st.session_state.active_page = "Student Mission"
         st.rerun()
 
     st.sidebar.caption(f"v{APP_VERSION}")
     return st.session_state.active_page, presentation
 
+
 # ── Hero ─────────────────────────────────────────────────────────────────────
 
-def hero(show_signature: bool = False, home: bool = False):
+def hero():
     bg = f"url('{CAMPUS_URI}')" if CAMPUS_URI else "linear-gradient(135deg,#020617,#0f172a,#1e1b4b)"
     provider = _provider()
     ai_pill = f"<span class='ai-pill'>AI: {provider}</span>" if provider != "none" else ""
 
-    signature = """<div class='hero-signature'><b>School of Software and Artificial Intelligence</b>Yunnan University</div>""" if show_signature else ""
-    hero_class = "hero hero-home" if home else "hero"
-
     st.markdown(f"""
-    <div class='{hero_class}' style="background-image:{bg};">
+    <div class='hero' style="background-image:{bg};">
       <div class='hero-overlay'></div>
       <div class='hero-content'>
         <div class='hero-top'>
@@ -882,7 +612,6 @@ def hero(show_signature: bool = False, home: bool = False):
           <div><div class='hero-stat-num'>CSV</div><div class='hero-stat-lbl'>Data Persistence</div></div>
         </div>
       </div>
-      {signature}
     </div>""", unsafe_allow_html=True)
 
 
@@ -929,188 +658,66 @@ def chip_row():
 # ── Mission Control ───────────────────────────────────────────────────────────
 
 def mission_control():
-    provider = _provider()
-    provider_label = provider if provider != "none" else "Offline fallback"
+    st.markdown("""<div class='sec-head'>
+      <div class='sec-icon' style='background:rgba(56,189,248,.12);'>🎯</div>
+      <div><div class='sec-title'>Mission Control</div><div class='sec-sub'>Choose your topic and start your pre-class mission</div></div>
+    </div>""", unsafe_allow_html=True)
 
-    st.markdown(
-        f"""
-        <section class='mission-landing'>
-            <div class='mission-landing-inner'>
-                <div>
-                    <div class='mission-kicker'>Pre-class mission control</div>
-                    <div class='mission-title'>Turn a lecture topic into a guided learning mission.</div>
-                    <div class='mission-copy'>Choose a topic, select the tutor style, and Preluma prepares a Brain Brief, concept practice, mini mock test, readiness score, and class questions before the lecture starts.</div>
-                    <div class='mission-chip-row'>
-                        <span class='mission-chip'>Brain Brief</span>
-                        <span class='mission-chip'>Skill Check</span>
-                        <span class='mission-chip'>UltraTutor</span>
-                        <span class='mission-chip'>CSV Evidence</span>
-                    </div>
-                </div>
-                <div class='mission-side-card'>
-                    <div class='side-title'>Live system status</div>
-                    <div class='side-row'><span class='side-label'>AI provider</span><span class='side-value'>{provider_label}</span></div>
-                    <div class='side-row'><span class='side-label'>Data mode</span><span class='side-value'>CSV persistence</span></div>
-                    <div class='side-row'><span class='side-label'>Backend rule</span><span class='side-value'>Pure Python core</span></div>
-                    <div class='side-row'><span class='side-label'>Mission steps</span><span class='side-value'>5 stages</span></div>
-                </div>
-            </div>
-        </section>
-        <div class='mission-form-title'>
-            <h3>Build your mission</h3>
-            <span>Fast setup for student demo or manual topic input</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    preset = st.selectbox(
-        "Demo preset",
-        ["Manual Input", "AI Class Demo", "Python Exam Demo", "Statistics Viva Demo"],
-        index=0,
-    )
-
+    preset = st.selectbox("Demo preset", ["Manual Input","AI Class Demo","Python Exam Demo","Statistics Viva Demo"], index=0)
     preset_data = {
-        "AI Class Demo": (
-            "Amir",
-            "Neural Network",
-            "Tomorrow 9 AM",
-            "Coach Mode",
-            "Deep Understanding",
-        ),
-        "Python Exam Demo": (
-            "Jia",
-            "Python Programming",
-            "Tomorrow 9 AM",
-            "Normal Mode",
-            "Exam/Viva Mode",
-        ),
-        "Statistics Viva Demo": (
-            "Nadia",
-            "Statistics",
-            "Tomorrow 9 AM",
-            "Coach Mode",
-            "Exam/Viva Mode",
-        ),
+        "AI Class Demo":        ("Amir",  "Neural Network",      "Tomorrow 9 AM", "Coach Mode",  "Deep Understanding"),
+        "Python Exam Demo":     ("Jia",   "Python Programming",  "Tomorrow 9 AM", "Normal Mode", "Exam/Viva Mode"),
+        "Statistics Viva Demo": ("Nadia", "Statistics",          "Tomorrow 9 AM", "Coach Mode",  "Exam/Viva Mode"),
     }
+    ds, dt, dtime, dp, dm = preset_data.get(preset, (
+        st.session_state.student, st.session_state.topic, "Tomorrow 9 AM", st.session_state.persona, "Fast Review"))
 
-    ds, dt, dtime, dp, dm = preset_data.get(
-        preset,
-        (
-            "",
-            st.session_state.topic,
-            "Tomorrow 9 AM",
-            st.session_state.persona,
-            "Fast Review",
-        ),
-    )
-
-    st.markdown("<div class='mission-form-box'>", unsafe_allow_html=True)
     with st.form("mission_form", border=False):
-        c1, c2, c3 = st.columns([1.25, 1.05, 0.95], gap="large")
-
+        st.markdown("<div class='card-glass' style='padding:24px;'>", unsafe_allow_html=True)
+        c1, c2, c3 = st.columns([1.4, 1, 0.9])
         with c1:
-            st.markdown("**Student setup**")
-            student = st.text_input("Your name", value="" if ds == "Student" else ds, placeholder="Please write your name")
-
-            topic_choice = st.selectbox(
-                "Lecture topic",
-                TOPIC_OPTIONS,
-                index=TOPIC_OPTIONS.index(dt) if dt in TOPIC_OPTIONS else 0,
-            )
-
-            if topic_choice == "Custom Topic":
-                topic = st.text_input(
-                    "Custom topic",
-                    placeholder="e.g. Reinforcement Learning",
-                )
-            else:
-                topic = topic_choice
-
+            student      = st.text_input("Your name", value=ds)
+            topic_choice = st.selectbox("Lecture topic", TOPIC_OPTIONS,
+                index=TOPIC_OPTIONS.index(dt) if dt in TOPIC_OPTIONS else 0)
+            topic = st.text_input("Custom topic", placeholder="e.g. Reinforcement Learning") \
+                    if topic_choice == "Custom Topic" else topic_choice
             lecture_time = st.text_input("Lecture time", value=dtime)
-
         with c2:
-            st.markdown("**Tutor behavior**")
-            persona = st.radio(
-                "Tutor personality",
-                ["Normal Mode", "Coach Mode", "Roast Mode"],
-                captions=[
-                    "Clear and direct",
-                    "Warm and motivating",
-                    "Light humour",
-                ],
-                index=["Normal Mode", "Coach Mode", "Roast Mode"].index(dp)
-                if dp in ["Normal Mode", "Coach Mode", "Roast Mode"]
-                else 0,
-            )
-
-            learning_mode = st.selectbox(
-                "Learning mode",
-                ["Fast Review", "Deep Understanding", "Exam/Viva Mode"],
-                index=["Fast Review", "Deep Understanding", "Exam/Viva Mode"].index(dm)
-                if dm in ["Fast Review", "Deep Understanding", "Exam/Viva Mode"]
-                else 0,
-            )
-
+            persona       = st.radio("Tutor personality", ["Normal Mode","Coach Mode","Roast Mode"],
+                captions=["Clear & direct","Warm & motivating","Funny pressure"],
+                index=["Normal Mode","Coach Mode","Roast Mode"].index(dp) if dp in ["Normal Mode","Coach Mode","Roast Mode"] else 0)
+            learning_mode = st.selectbox("Learning mode",["Fast Review","Deep Understanding","Exam/Viva Mode"],
+                index=["Fast Review","Deep Understanding","Exam/Viva Mode"].index(dm) if dm in ["Fast Review","Deep Understanding","Exam/Viva Mode"] else 0)
         with c3:
-            st.markdown("**Mission output**")
             use_wiki = st.checkbox("Wikipedia real data", value=True)
-            st.markdown(
-                """
-                <div class='mission-output-card'>
-                    <b>Output package</b>
-                    <div>01 Brain Brief</div>
-                    <div>02 Concept explanation</div>
-                    <div>03 Practice step</div>
-                    <div>04 Mini mock test</div>
-                    <div>05 Final overview</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-        start = st.form_submit_button(
-            "Start Pre-Class Mission",
-            use_container_width=True,
-        )
-    st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("**You will get:**")
+            for item in ["AI Brain Brief","All concepts in tabs","Quiz + skill check","Mistake clinic","UltraTutor answers","Smart class questions"]:
+                st.markdown(f"<div style='font-size:13px;color:#94a3b8;padding:2px 0;'>→ {item}</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        start = st.form_submit_button("Start Pre-Class Mission", use_container_width=True)
 
     if start:
         if not topic or not topic.strip():
             st.warning("Please enter a topic first.")
             return
-
         with st.spinner("Building your AI-powered learning mission..."):
             pack = build_pack(topic, use_wikipedia=use_wiki)
             brief = build_brain_brief(pack)
             questions = make_questions(pack)
-
             try:
                 from engine import build_enriched_class_questions
                 class_qs = build_enriched_class_questions(pack)
             except Exception:
                 class_qs = pack.get("class_questions", [])
-
-        st.session_state.update(
-            {
-                "student": student.strip() or "Learner",
-                "topic": topic,
-                "persona": persona,
-                "learning_mode": learning_mode,
-                "use_wiki": use_wiki,
-                "pack": pack,
-                "brief": brief,
-                "questions": questions,
-                "class_questions": class_qs,
-                "quiz_result": None,
-                "latest_session": None,
-                "tutor_history": [],
-                "mission_started": True,
-                "mission_step": 1,
-                "practice_reflection": "",
-            }
-        )
-
+        st.session_state.update({
+            "student": student, "topic": topic, "persona": persona,
+            "learning_mode": learning_mode, "use_wiki": use_wiki,
+            "pack": pack, "brief": brief, "questions": questions,
+            "class_questions": class_qs, "quiz_result": None,
+            "latest_session": None, "tutor_history": [],
+            "mission_started": True, "mission_step": 1,
+            "practice_reflection": "",
+        })
         st.rerun()
 
 
@@ -1202,8 +809,7 @@ def quiz():
             "Record ID": next_record_id(), "Student": st.session_state.student,
             "Topic": st.session_state.pack["title"], "Readiness": result["pct"],
             "Weak Skill": result["weakest"], "Quiz Score": result["score"],
-            "Quiz Total": result["total"],
-            "Lecture Time": st.session_state.get("lecture_time", "Tomorrow 9 AM"),
+            "Quiz Total": result["total"], "Lecture Time": st.session_state.get("learning_mode","Fast Review"),
             "Learning Mode": st.session_state.get("learning_mode","Fast Review"), "Created At": timestamp(),
         })
         st.rerun()
@@ -1366,50 +972,17 @@ def class_questions_and_download():
 # ── How it works ──────────────────────────────────────────────────────────────
 
 def how_it_works():
-    st.markdown(
-        """
-        <div class='mission-metric-grid'>
-            <div class='mission-metric-card'>
-                <div class='metric-big'>18</div>
-                <div class='metric-label'>Curated topics</div>
-                <div class='metric-desc'>Ready-made academic topics for quick classroom demos.</div>
-            </div>
-            <div class='mission-metric-card'>
-                <div class='metric-big'>4</div>
-                <div class='metric-label'>Skill checks</div>
-                <div class='metric-desc'>Focused quiz items to detect weak concepts fast.</div>
-            </div>
-            <div class='mission-metric-card'>
-                <div class='metric-big'>AI</div>
-                <div class='metric-label'>Smart tutor</div>
-                <div class='metric-desc'>Adaptive explanation with local fallback support.</div>
-            </div>
-            <div class='mission-metric-card'>
-                <div class='metric-big'>CSV</div>
-                <div class='metric-label'>Evidence data</div>
-                <div class='metric-desc'>Student readiness records saved for teacher review.</div>
-            </div>
-        </div>
-        <div class='journey-grid'>
-            <div class='journey-card' data-step='01'>
-                <div class='journey-step'>Step 1</div>
-                <div class='journey-title'>Prime the brain</div>
-                <div class='journey-desc'>Preluma creates a short Brain Brief so the student enters class with the core idea already prepared.</div>
-            </div>
-            <div class='journey-card' data-step='02'>
-                <div class='journey-step'>Step 2</div>
-                <div class='journey-title'>Find weak spots</div>
-                <div class='journey-desc'>A mini quiz detects the exact concept that needs review instead of giving a random score only.</div>
-            </div>
-            <div class='journey-card' data-step='03'>
-                <div class='journey-step'>Step 3</div>
-                <div class='journey-title'>Ask better questions</div>
-                <div class='journey-desc'>The final overview gives readiness, weak skill, and class questions that prove preparation.</div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown("""<div class='kpi-grid'>
+      <div class='kpi-card'><div class='kpi-num'>18</div><div class='kpi-lbl'>Curated Topics</div></div>
+      <div class='kpi-card'><div class='kpi-num'>4</div><div class='kpi-lbl'>Skill Checks</div></div>
+      <div class='kpi-card'><div class='kpi-num'>AI</div><div class='kpi-lbl'>Smart Tutor</div></div>
+      <div class='kpi-card'><div class='kpi-num'>CSV</div><div class='kpi-lbl'>Persistent Data</div></div>
+    </div>
+    <div class='flow-grid'>
+      <div class='flow-card'><div class='flow-step'>Step 1</div><div class='flow-title'>Prime the brain</div><div class='flow-desc'>AI Brain Brief with all concepts in tabs before the lecture.</div></div>
+      <div class='flow-card'><div class='flow-step'>Step 2</div><div class='flow-title'>Find weak spots</div><div class='flow-desc'>4-question quiz detects exactly which skill needs work.</div></div>
+      <div class='flow-card'><div class='flow-step'>Step 3</div><div class='flow-title'>Ask better questions</div><div class='flow-desc'>Leave with AI-generated class questions and a readiness score.</div></div>
+    </div>""", unsafe_allow_html=True)
 
 
 # ── Student Mission ───────────────────────────────────────────────────────────
@@ -1688,29 +1261,17 @@ def mission_overview_screen() -> None:
             st.rerun()
 
 
-
-def home_page(presentation=True):
-    """Landing page only: one cinematic brand impression."""
-    hero(show_signature=True, home=True)
-
-
 def student_mission(presentation):
+    hero()
+    chip_row()
+
     if not st.session_state.get("mission_started") or "pack" not in st.session_state:
-        page_intro(
-            "teacher",
-            "Learning workspace",
-            "Student Mission",
-            "Build a focused study route before class. Enter your name, choose a lecture topic, and start a guided mission."
-        )
         mission_control()
         if presentation:
             how_it_works()
         return
 
     step = st.session_state.get("mission_step", 1)
-
-    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
-
     if step == 1:
         mission_brain_brief_screen()
     elif step == 2:
@@ -1721,6 +1282,7 @@ def student_mission(presentation):
         mission_mock_test_screen()
     else:
         mission_overview_screen()
+
 
 
 # ── Teacher Studio
@@ -1803,30 +1365,6 @@ def _question_needs_clarification(question: str) -> bool:
     }
     return cleaned in ambiguous_only
 
-def _is_casual_query(question: str) -> bool:
-    """Return True for greetings or social chat that should not be routed as a lesson topic."""
-    cleaned = " ".join(str(question).strip().casefold().replace("?", "").replace("!", "").split())
-    casual_phrases = {
-        "hi", "hello", "hey", "hi there", "hello there",
-        "how are you", "hi how are you", "hello how are you",
-        "good morning", "good afternoon", "good evening", "thanks", "thank you",
-    }
-    return cleaned in casual_phrases
-
-
-def _casual_ai_answer(question: str) -> str:
-    cleaned = " ".join(str(question).strip().casefold().split())
-    if "how are you" in cleaned:
-        return (
-            "I’m doing well and ready to help. "
-            "You can ask me about today’s lecture, a homework question, or an exam topic. "
-            "For example: ‘Explain quantum mechanics simply’ or ‘Quiz me on neural networks.’"
-        )
-    return (
-        "Hi! I’m Preluma AI. I can help you prepare before class, understand a difficult concept, "
-        "review homework mistakes, or practice exam-style questions. What topic are you studying today?"
-    )
-
 
 def _natural_answer_text(response: dict, depth: str) -> str:
     direct = str(response.get("tiny_answer", "")).strip()
@@ -1881,11 +1419,18 @@ def ask_preluma_ai_page():
 
     top1, top2, top3 = st.columns([1.2, 1, 1])
     with top1:
-        use_context = st.toggle("Use current study context", value=True)
+        use_context = st.toggle("Use current mission context", value=True)
     with top2:
-        mode = st.selectbox("Tutor style", ["Auto-detect", "Explain like I am 5", "Friendly Tutor", "Step-by-Step", "Exam/Viva Answer", "Give More Examples"])
+        mode = st.selectbox("Teaching style", ["Auto-detect", "Explain like I am 5", "Friendly Tutor", "Step-by-Step", "Exam/Viva Answer", "Give More Examples"])
     with top3:
         depth = st.selectbox("Answer depth", ["Balanced", "Short", "Deep"])
+
+    st.markdown(
+        f"<span class='context-chip'>Context: {mission_topic if use_context else 'Question only'}</span>"
+        f"<span class='context-chip'>Provider: {provider_label}</span>"
+        f"<span class='context-chip'>Fallbacks ready: {len(providers)}</span>",
+        unsafe_allow_html=True,
+    )
 
     st.session_state.setdefault("ai_question_input", "")
     question = st.text_area(
@@ -1908,15 +1453,6 @@ def ask_preluma_ai_page():
     clear_col.button("Clear", use_container_width=True, on_click=_clear_ai_chat)
 
     if ask and question.strip():
-        if _is_casual_query(question):
-            st.session_state.tutor_history.append({
-                "question": question.strip(),
-                "topic": "Preluma AI",
-                "casual": True,
-                "answer_text": _casual_ai_answer(question),
-                "source": "Natural greeting",
-            })
-            st.rerun()
         detected_topic = detect_topic_from_question(question, mission_topic if use_context else "General learning")
         if _question_needs_clarification(question):
             st.session_state.tutor_history.append({
@@ -1954,10 +1490,9 @@ def ask_preluma_ai_page():
     st.markdown("<div class='ai-chat-shell'>", unsafe_allow_html=True)
     for index, item in enumerate(st.session_state.get("tutor_history", [])[-8:]):
         st.markdown(f"<div class='chat-user'>{item['question']}</div>", unsafe_allow_html=True)
-        if not item.get("casual"):
-            st.markdown(f"<div class='ai-meta'>Tutor response · {item['topic']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='ai-meta'>{item['topic']} · {item['source']}</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='ai-main-answer'>{item.get('answer_text','')}</div>", unsafe_allow_html=True)
-        if not item.get("clarification") and not item.get("casual"):
+        if not item.get("clarification"):
             response = item.get("response", {})
             with st.expander("Study support: mistake, exam line, and extra details"):
                 if response.get("common_mistake"):
@@ -1969,33 +1504,26 @@ def ask_preluma_ai_page():
     st.markdown("</div>", unsafe_allow_html=True)
 
 
-def _reset_homework_flow(homework_id: str) -> None:
-    st.session_state.hw_active_id = str(homework_id)
-    st.session_state.hw_step = 0
-    st.session_state.hw_answers = {}
-    st.session_state.homework_result = None
-
-
-def _homework_progress(current: int, total: int) -> None:
-    value = (current + 1) / total if total else 0
-    st.progress(value, text=f"Question {current + 1} of {total}")
-
-
 def my_homework_page():
     student = st.session_state.get("student", "Student")
-
     page_intro(
         "homework",
         "Student assignment desk",
-        "My Homework",
-        "Complete homework one question at a time, review your answers, submit, and learn from captured mistakes.",
+        f"My Homework — {student}",
+        "Review deadlines, complete assigned work, inspect mistakes, and return to weak concepts with focused support.",
     )
 
+    notifications = notifications_for_student(student)
+    if notifications:
+        with st.expander(f"Notifications ({len(notifications)})", expanded=True):
+            for note in reversed(notifications[-5:]):
+                st.markdown(
+                    f"<div class='card-glass'><div class='albl lbl-blue'>{note.get('Title')}</div>"
+                    f"<div class='atxt'>{note.get('Message')}</div></div>",
+                    unsafe_allow_html=True,
+                )
+
     homework_rows = homework_for_student(student)
-
-    # Opening the homework desk counts as viewing homework notifications.
-    mark_homework_notifications_read(student)
-
     if not homework_rows:
         st.info("No homework has been assigned to this student yet.")
         return
@@ -2004,211 +1532,78 @@ def my_homework_page():
         f"#{row['Homework ID']} · {row['Title']} · Due {row['Due Date']}": row
         for row in homework_rows
     }
-
     selected_label = st.selectbox("Choose homework", list(labels))
     selected = labels[selected_label]
-    homework_id = str(selected["Homework ID"])
+    homework_id = selected["Homework ID"]
+    st.session_state.selected_homework_id = homework_id
 
-    if st.session_state.get("hw_active_id") != homework_id:
-        _reset_homework_flow(homework_id)
+    st.markdown(f"""
+    <div class='card-glass'>
+      <div class='albl lbl-purple'>{selected.get('Topic')}</div>
+      <div class='atxt'><b>{selected.get('Title')}</b><br>{selected.get('Instructions')}</div>
+      <div style='margin-top:12px;color:#94a3b8;font-size:13px;'>
+        Due: {selected.get('Due Date')} · Difficulty: {selected.get('Difficulty')}
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     questions = load_questions(homework_id)
-
-    if not questions:
-        st.warning("This homework has no questions.")
-        return
-
-    st.markdown(
-        f"""
-        <div class='assignment-card'>
-          <div class='albl lbl-purple'>{selected.get('Topic')}</div>
-          <div class='atxt'>
-            <b>{selected.get('Title')}</b><br>
-            {selected.get('Instructions')}
-          </div>
-          <div style='margin-top:12px;color:#94a3b8;font-size:13px;'>
-            Due: {selected.get('Due Date')} · Difficulty: {selected.get('Difficulty')}
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    result = st.session_state.get("homework_result")
-
-    if result:
-        st.markdown(
-            f"""
-            <div class='mission-metric-grid'>
-                <div class='mission-metric-card'><div class='metric-big'>{result['percentage']}%</div><div class='metric-label'>Accuracy</div></div>
-                <div class='mission-metric-card'><div class='metric-big'>{result['score']}/{result['total']}</div><div class='metric-label'>Score</div></div>
-                <div class='mission-metric-card'><div class='metric-big'>{result['attempt']}</div><div class='metric-label'>Attempt</div></div>
-                <div class='mission-metric-card'><div class='metric-big'>{'Ready' if not result['mistakes'] else 'Review'}</div><div class='metric-label'>Status</div></div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        if result["mistakes"]:
-            st.markdown("### Mistake Review")
-
-            for detail in result["details"]:
-                if detail["correct"]:
-                    continue
-
-                with st.expander(f"Review: {detail['concept']}", expanded=True):
-                    st.write(f"Your answer: {detail['chosen']}")
-                    st.write(f"Correct answer: {detail['correct_answer']}")
-                    st.info(detail["explanation"])
-
-                    if st.button(
-                        f"Ask Preluma AI about {detail['concept']}",
-                        key=f"ask_mistake_{detail['question_id']}",
-                    ):
-                        st.session_state.ai_context_note = (
-                            f"Homework mistake. Topic: {selected.get('Topic')}. "
-                            f"Question: {detail['question']} "
-                            f"Student answer: {detail['chosen']}. "
-                            f"Correct answer: {detail['correct_answer']}."
-                        )
-                        st.session_state.active_page = "Ask Preluma AI"
-                        st.rerun()
-        else:
-            st.info("No mistakes were captured. This homework is complete, so the notification is cleared.")
-
-        if st.button("Try this homework again"):
-            _reset_homework_flow(homework_id)
-            st.rerun()
-
-        return
-
-    step = int(st.session_state.get("hw_step", 0))
-    total = len(questions)
-
-    if step >= total:
-        st.markdown("### Review Answers Before Submit")
-
-        missing = []
-
+    with st.form(f"homework_form_{homework_id}", border=False):
+        answers = {}
         for question in questions:
             question_id = int(question["Question ID"])
-            chosen = st.session_state.hw_answers.get(question_id, "")
-
-            if not chosen:
-                missing.append(question_id)
-
             st.markdown(
-                f"""
-                <div class='assignment-card'>
-                  <div class='albl lbl-yellow'>
-                    Question {question_id} · {question.get('Concept')}
-                  </div>
-                  <div class='atxt'>{question.get('Question')}</div>
-                  <div style='margin-top:10px;color:#cbd5e1;font-size:14px;'>
-                    Your answer: <b>{chosen or 'Not answered yet'}</b>
-                  </div>
-                </div>
-                """,
+                f"<div class='card-glass'><div class='albl lbl-yellow'>"
+                f"Question {question_id} · {question.get('Concept')}</div>"
+                f"<div class='atxt'>{question.get('Question')}</div></div>",
                 unsafe_allow_html=True,
             )
+            answers[question_id] = st.radio(
+                "Choose one",
+                question["Options"],
+                key=f"homework_{homework_id}_{question_id}",
+                label_visibility="collapsed",
+            )
+        submitted = st.form_submit_button("Submit Homework", use_container_width=True)
 
-        c1, c2, c3 = st.columns([1, 2, 1])
+    if submitted:
+        st.session_state.homework_result = submit_homework(homework_id, student, answers)
+        st.rerun()
 
-        with c1:
-            if st.button("Back", use_container_width=True):
-                st.session_state.hw_step = max(0, total - 1)
-                st.rerun()
-
-        with c2:
-            if missing:
-                st.warning(
-                    f"Please answer question(s): {', '.join(map(str, missing))}"
-                )
-            else:
-                if st.button("Submit Homework", use_container_width=True):
-                    st.session_state.homework_result = submit_homework(
-                        homework_id,
-                        student,
-                        st.session_state.hw_answers,
-                    )
-                    mark_homework_notifications_read(student, homework_id)
-                    st.rerun()
-
-        with c3:
-            if st.button("Reset", use_container_width=True):
-                _reset_homework_flow(homework_id)
-                st.rerun()
-
-        return
-
-    question = questions[step]
-    question_id = int(question["Question ID"])
-
-    _homework_progress(step, total)
-
-    st.markdown(
-        f"""
-        <div class='assignment-card' style='border-color:rgba(245,158,11,.34);'>
-          <div class='albl lbl-yellow'>
-            Question {question_id} · {question.get('Concept')}
-          </div>
-          <div class='atxt' style='font-size:18px;font-weight:700;'>
-            {question.get('Question')}
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    current_answer = st.session_state.hw_answers.get(question_id, "")
-    options = question["Options"]
-
-    try:
-        selected_index = options.index(current_answer)
-    except ValueError:
-        selected_index = 0
-
-    selected_answer = st.radio(
-        "Choose one answer",
-        options,
-        index=selected_index,
-        key=f"homework_step_{homework_id}_{question_id}",
-    )
-
-    if selected_answer:
-        st.session_state.hw_answers[question_id] = selected_answer
-
-    c1, c2, c3 = st.columns([1, 2, 1])
-
-    with c1:
-        if st.button("Back", disabled=step == 0, use_container_width=True):
-            st.session_state.hw_step = max(0, step - 1)
-            st.rerun()
-
-    with c2:
-        st.caption(
-            "Answer the current question, then continue. Only one question is shown at a time."
+    result = st.session_state.get("homework_result")
+    if result:
+        st.success(
+            f"Homework submitted · Attempt {result['attempt']} · "
+            f"{result['score']}/{result['total']} · {result['percentage']}%"
         )
-
-    with c3:
-        button_label = "Review" if step == total - 1 else "Next"
-
-        if st.button(button_label, use_container_width=True):
-            if not st.session_state.hw_answers.get(question_id):
-                st.warning("Please choose an answer first.")
-            else:
-                st.session_state.hw_step = step + 1
-                st.rerun()
+        for detail in result["details"]:
+            if detail["correct"]:
+                continue
+            with st.expander(f"Review: {detail['concept']}", expanded=True):
+                st.write(f"Your answer: {detail['chosen']}")
+                st.write(f"Correct answer: {detail['correct_answer']}")
+                st.info(detail["explanation"])
+                if st.button(
+                    f"Ask Preluma AI about {detail['concept']}",
+                    key=f"ask_mistake_{detail['question_id']}",
+                ):
+                    st.session_state.ai_context_note = (
+                        f"Homework mistake. Topic: {selected.get('Topic')}. "
+                        f"Question: {detail['question']} "
+                        f"Student answer: {detail['chosen']}. "
+                        f"Correct answer: {detail['correct_answer']}."
+                    )
+                    st.info("Open “Ask Preluma AI” from the sidebar. The mistake context is ready.")
 
     mistakes = load_student_mistakes(student)
-
     if mistakes:
-        with st.expander("My captured weak areas", expanded=False):
+        with st.expander("My captured weak areas"):
             for mistake in mistakes[-8:]:
                 st.write(
-                    f"{mistake.get('Weak Concept')} — "
+                    f"• {mistake.get('Weak Concept')} — "
                     f"{mistake.get('Question')}"
                 )
+
 
 def _default_homework_questions(topic: str) -> list[dict]:
     return [
@@ -2392,22 +1787,27 @@ def professor_defense():
     st.code("Student Input → Topic Router → Curated Pack / Wikipedia Fallback → Brain Brief\n→ Quiz (4 skills) → Mistake Clinic → UltraTutor (AI) → Class Questions\n→ CSV Persistence → Merge Sort + Binary Search → Teacher Analytics → Export", language="text")
 
     st.markdown("### Defense Line")
-    st.success("Course permission allows third-party libraries for the product interface. Preluma uses Streamlit and Plotly only in the presentation layer; the assessed core work — CSV loading/saving, statistics, Merge Sort, Binary Search, timing, exception handling, and result.txt logging — is implemented manually with the Python standard library.")
+    st.success("Third-party libraries are allowed. Preluma uses Streamlit and Plotly for the interface, but all core algorithms — Merge Sort, Binary Search, statistics, CSV I/O — are implemented manually in Python. This proves both presentation skill and algorithmic understanding.")
 
 
 # ── Project Team ──────────────────────────────────────────────────────────────
 
 def project_team():
+    page_intro(
+        "defense",
+        "Student product team",
+        "Project Team",
+        "A balanced collaboration combining core application development, testing, topic support, and presentation preparation.",
+    )
+
     if TEAM_URI:
         st.markdown(f"""
-        <div class='team-photo-hero' style="background-image:url('{TEAM_URI}');"></div>
-        <div class='team-caption-panel'>
-          <div>
-            <div class='team-caption-kicker'>Project Team · Team Preluma</div>
-            <div class='team-caption-title'>Building a smarter pre-class learning experience together.</div>
+        <div class='team-photo-hero' style="background-image:url('{TEAM_URI}');">
+          <div class='team-photo-content'>
+            <span class='badge'>Team Preluma · Yunnan University</span>
+            <h1>Building a smarter pre-class learning experience together.</h1>
+            <p>Three students combined core development, testing, topic data, and presentation support to shape Preluma into a working Python Streamlit prototype.</p>
           </div>
-          <div class='team-caption-copy'>Three students combined core development, testing, topic data, and presentation support to shape Preluma into a working Python Streamlit prototype.</div>
-          <div class='team-caption-school'>School of Software and Artificial Intelligence · Yunnan University</div>
         </div>
         """, unsafe_allow_html=True)
     else:
@@ -2501,8 +1901,8 @@ def main():
         return
 
     pages = {
-        "Home": lambda: home_page(presentation),
         "Student Mission": lambda: student_mission(presentation),
+        "Ask Preluma AI": ask_preluma_ai_page,
         "Ask Preluma AI": ask_preluma_ai_page,
         "Teacher Studio": teacher_studio,
         "Homework Center": homework_center_page,
@@ -2512,7 +1912,7 @@ def main():
         "Demo Guide": demo_guide,
         "Future Roadmap": roadmap,
     }
-    pages.get(page, lambda: home_page(presentation))()
+    pages.get(page, lambda: student_mission(presentation))()
 
 
 
