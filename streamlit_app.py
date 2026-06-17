@@ -1904,7 +1904,7 @@ def mission_overview_screen() -> None:
         st.markdown(
             "<div style='font-size:10px;font-weight:800;color:#38bdf8;letter-spacing:.10em;"
             "text-transform:uppercase;margin:20px 0 12px;'>"
-            "3 questions ready to ask your teacher in class</div>",
+            "3 questions to ask in your next class</div>",
             unsafe_allow_html=True,
         )
         for number, question in enumerate(class_questions[:3], 1):
@@ -2034,7 +2034,7 @@ def teacher_profile_page():
         <div class="tp-card">
             <div class="tp-card-lbl">Course and Teaching</div>
             <div class="tp-row"><div class="tp-key">Course</div>
-            <div class="tp-val">Python Application Development and AI Tools</div></div>
+            <div class="tp-val">AI and Software Development</div></div>
             <div class="tp-row"><div class="tp-key">Department</div>
             <div class="tp-val">School of Software, Yunnan University</div></div>
             <div class="tp-row"><div class="tp-key">Level</div>
@@ -2062,7 +2062,7 @@ def teacher_profile_page():
     <div class="tp-card">
         <div class="tp-card-lbl">Why Preluma was built for this class</div>
         <div style="font-size:14px;color:#94a3b8;line-height:1.80;margin-top:6px;">
-            Preluma was designed specifically for students in Teacher Zhou Yujue's class.
+            Preluma was designed to help students prepare before each class.
             The platform guides students through a 5-step pre-class mission so every student
             walks into the lecture already familiar with the key ideas — meaning better questions,
             stronger engagement, and higher retention after class.
