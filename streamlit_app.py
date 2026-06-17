@@ -21,6 +21,7 @@ from homework_core import (
     load_homework,
     load_questions,
     load_student_mistakes,
+    mark_notifications_read,
     notifications_for_student,
     seed_homework_demo,
     submit_homework,
@@ -605,27 +606,14 @@ def _nav_button(label: str, page_name: str, badge: str = "") -> None:
 def sidebar():
     st.session_state.setdefault("active_page", "Home")
 
-    # ── Tower photo background injected via CSS custom property ──
+    # ── Tower photo — injected as background-image directly on sidebar ──
     if SIDEBAR_URI:
         st.sidebar.markdown(
             f"<style>"
-            f"[data-testid='stSidebar']::before {{"
-            f"  content: '';"
-            f"  position: absolute; inset: 0; z-index: 0;"
-            f"  background: url('{SIDEBAR_URI}') center top / cover no-repeat;"
-            f"  opacity: .18;"
-            f"  pointer-events: none;"
+            f"[data-testid='stSidebar'] > div:first-child {{"
+            f"  background: linear-gradient(180deg,rgba(2,8,16,.96) 0%,rgba(2,8,16,.78) 42%,rgba(2,8,16,.93) 100%),"
+            f"    url('{SIDEBAR_URI}') center top / cover no-repeat !important;"
             f"}}"
-            f"[data-testid='stSidebar']::after {{"
-            f"  content: '';"
-            f"  position: absolute; inset: 0; z-index: 1;"
-            f"  background: linear-gradient(180deg,"
-            f"    rgba(2,8,16,.97) 0%,"
-            f"    rgba(2,8,16,.82) 40%,"
-            f"    rgba(2,8,16,.92) 100%);"
-            f"  pointer-events: none;"
-            f"}}"
-            f"[data-testid='stSidebar'] > div:first-child {{ position: relative; z-index: 2; }}"
             f"</style>",
             unsafe_allow_html=True,
         )
@@ -639,7 +627,7 @@ def sidebar():
         unsafe_allow_html=True,
     )
 
-    # ── Student identity input ────────────────────────────────────
+    # ── Student identity ──────────────────────────────────────────
     st.sidebar.markdown("<div class='sb-nav-wrap'>", unsafe_allow_html=True)
 
     student_name = st.sidebar.text_input(
@@ -647,26 +635,32 @@ def sidebar():
         value=st.session_state.get("student", ""),
         key="sidebar_student_identity",
         label_visibility="collapsed",
-        placeholder="Enter your name...",
+        placeholder="Write your name...",
     )
     if student_name.strip():
         st.session_state.student = student_name.strip()
 
     current_student = st.session_state.get("student", "") or "Guest"
+    unread_count = len(notifications_for_student(current_student, unread_only=True))
 
-    unread_count = len(
-        notifications_for_student(current_student, unread_only=True)
-    )
-
-    badge_html = f"<span class='sb-badge'>{unread_count}</span>" if unread_count else ""
-    st.sidebar.markdown(
-        f"<div class='sb-student-chip'>"
-        f"<div class='sb-dot'></div>"
-        f"<div><div class='sb-student-name'>{current_student}{badge_html}</div>"
-        f"<div class='sb-student-sub'>Active session</div></div>"
-        f"</div>",
-        unsafe_allow_html=True,
-    )
+    # Minimal status line — no duplicate chip
+    if unread_count:
+        st.sidebar.markdown(
+            f"<div style='display:flex;align-items:center;gap:6px;padding:4px 2px 8px;'>"
+            f"<span class='sb-dot'></span>"
+            f"<span style='font-size:12px;color:#94a3b8;'>{current_student}</span>"
+            f"<span class='sb-badge'>{unread_count}</span>"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.sidebar.markdown(
+            f"<div style='display:flex;align-items:center;gap:6px;padding:4px 2px 8px;'>"
+            f"<span class='sb-dot'></span>"
+            f"<span style='font-size:12px;color:#64748b;'>{current_student}</span>"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
 
     # ── LEARN ─────────────────────────────────────────────────────
     st.sidebar.markdown("<div class='nav-label'>Learn</div>", unsafe_allow_html=True)
@@ -707,152 +701,265 @@ def sidebar():
 # ── Home Page ─────────────────────────────────────────────────────────────────
 
 def home_page():
-    """Clean, separate Home page — hero + feature cards + quick-start CTA."""
+    """Gorgeous Home page — the first thing teacher and students see."""
     provider = _provider()
-    ai_label = provider if provider and provider != "none" else "AI Ready"
-
-    bg = (
+    ai_label = provider.upper() if provider and provider != "none" else "AI"
+    student  = st.session_state.get("student", "") or "Guest"
+    bg_hero  = (
         f"url('{CAMPUS_URI}')"
         if CAMPUS_URI
         else "linear-gradient(135deg,#020617 0%,#0f172a 50%,#1e1b4b 100%)"
     )
 
-    # ── Hero banner ───────────────────────────────────────────────────────────
-    st.markdown(
-        f"""
-        <div style="
-          background:{bg};
-          background-size:cover;
-          background-position:center;
-          border-radius:20px;
-          position:relative;
-          overflow:hidden;
-          padding:64px 48px 56px;
-          margin-bottom:36px;
-        ">
-          <div style="
-            position:absolute;inset:0;
-            background:linear-gradient(135deg,rgba(2,8,16,.88) 0%,rgba(15,23,42,.72) 60%,rgba(30,27,75,.80) 100%);
-          "></div>
-          <div style="position:relative;z-index:2;max-width:640px;">
-            <div style="
-              display:inline-flex;align-items:center;gap:8px;
-              background:rgba(56,189,248,.10);border:1px solid rgba(56,189,248,.25);
-              border-radius:20px;padding:5px 14px;margin-bottom:20px;
-            ">
-              <span style="width:7px;height:7px;border-radius:50%;background:#38bdf8;
-                display:inline-block;box-shadow:0 0 6px #38bdf8;"></span>
-              <span style="color:#7dd3fc;font-size:12px;font-weight:600;letter-spacing:.06em;">
-                {ai_label} &nbsp;&bull;&nbsp; Yunnan University
-              </span>
-            </div>
-            <h1 style="
-              font-size:clamp(28px,4vw,48px);font-weight:900;color:#f8fafc;
-              margin:0 0 16px;line-height:1.15;
-            ">Prepare before class.<br><span style="color:#38bdf8;">Understand more during class.</span></h1>
-            <p style="color:#94a3b8;font-size:16px;line-height:1.6;margin:0 0 32px;">
-              Preluma turns passive pre-class reading into a guided AI-powered learning
-              mission — Brain Brief, real examples, quizzes, and a smart tutor, all
-              before you walk into the classroom.
-            </p>
-            <div style="display:flex;gap:16px;flex-wrap:wrap;">
-              <div style="
-                background:linear-gradient(135deg,#0ea5e9,#6366f1);
-                border-radius:12px;padding:12px 28px;
-                font-weight:700;font-size:15px;color:#fff;cursor:pointer;
-              ">Start Student Mission</div>
-              <div style="
-                background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
-                border-radius:12px;padding:12px 24px;
-                font-weight:600;font-size:15px;color:#cbd5e1;
-              ">Ask Preluma AI</div>
-            </div>
-          </div>
+    # ── Full-width hero ────────────────────────────────────────────────────────
+    st.markdown(f"""
+    <style>
+    @keyframes glow-pulse {{
+      0%,100% {{ opacity:.55; transform:scale(1); }}
+      50%      {{ opacity:.80; transform:scale(1.06); }}
+    }}
+    @keyframes float-up {{
+      from {{ opacity:0; transform:translateY(18px); }}
+      to   {{ opacity:1; transform:translateY(0); }}
+    }}
+    .hp-hero {{
+      position:relative; border-radius:28px; overflow:hidden;
+      min-height:440px;
+      background:{bg_hero};
+      background-size:cover; background-position:center 35%;
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow:0 40px 100px rgba(0,0,0,.60);
+      margin-bottom:28px;
+    }}
+    .hp-overlay {{
+      position:absolute; inset:0;
+      background:
+        linear-gradient(115deg, rgba(2,6,23,.96) 0%, rgba(7,14,38,.82) 42%,
+                        rgba(15,23,62,.60) 68%, rgba(55,8,120,.44) 100%),
+        radial-gradient(ellipse at 12% 60%, rgba(56,189,248,.22) 0%, transparent 52%);
+    }}
+    .hp-glow {{
+      position:absolute; right:-120px; top:-80px;
+      width:480px; height:480px; border-radius:50%;
+      background:radial-gradient(circle, rgba(99,102,241,.28) 0%, transparent 68%);
+      animation:glow-pulse 5s ease-in-out infinite;
+    }}
+    .hp-glow2 {{
+      position:absolute; left:-60px; bottom:-100px;
+      width:340px; height:340px; border-radius:50%;
+      background:radial-gradient(circle, rgba(14,165,233,.18) 0%, transparent 65%);
+      animation:glow-pulse 7s ease-in-out infinite reverse;
+    }}
+    .hp-content {{
+      position:relative; z-index:2; padding:52px 52px 48px;
+      animation:float-up .6s ease both;
+    }}
+    .hp-badge {{
+      display:inline-flex; align-items:center; gap:7px;
+      background:rgba(56,189,248,.10); border:1px solid rgba(56,189,248,.28);
+      border-radius:30px; padding:6px 16px; margin-bottom:22px;
+    }}
+    .hp-badge-dot {{
+      width:7px; height:7px; border-radius:50%; background:#38bdf8;
+      box-shadow:0 0 8px rgba(56,189,248,.8);
+    }}
+    .hp-badge-txt {{
+      color:#7dd3fc; font-size:12px; font-weight:700; letter-spacing:.07em;
+      text-transform:uppercase;
+    }}
+    .hp-h1 {{
+      font-size:clamp(30px,3.8vw,54px); font-weight:900; color:#f8fafc;
+      margin:0 0 18px; line-height:1.10; letter-spacing:-.03em;
+      text-shadow:0 4px 30px rgba(0,0,0,.50);
+    }}
+    .hp-h1 span {{ color:#38bdf8; }}
+    .hp-sub {{
+      font-size:17px; color:#94a3b8; line-height:1.65;
+      max-width:580px; margin-bottom:36px;
+    }}
+    .hp-cta-row {{ display:flex; gap:14px; flex-wrap:wrap; }}
+    .hp-cta-primary {{
+      background:linear-gradient(135deg,#0ea5e9 0%,#6366f1 100%);
+      border-radius:14px; padding:14px 32px;
+      font-weight:800; font-size:15px; color:#fff;
+      box-shadow:0 8px 28px rgba(99,102,241,.38);
+      letter-spacing:.01em;
+    }}
+    .hp-cta-ghost {{
+      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14);
+      border-radius:14px; padding:14px 26px;
+      font-weight:600; font-size:15px; color:#cbd5e1;
+    }}
+    </style>
+    <div class='hp-hero'>
+      <div class='hp-overlay'></div>
+      <div class='hp-glow'></div>
+      <div class='hp-glow2'></div>
+      <div class='hp-content'>
+        <div class='hp-badge'>
+          <span class='hp-badge-dot'></span>
+          <span class='hp-badge-txt'>{ai_label} Powered &nbsp;&bull;&nbsp; Yunnan University</span>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+        <h1 class='hp-h1'>
+          Prepare before class.<br>
+          <span>Understand more during class.</span>
+        </h1>
+        <p class='hp-sub'>
+          Preluma is an AI-powered pre-class learning system for university students.
+          Brain Brief, adaptive quiz, multi-provider AI tutor, and teacher analytics —
+          all in one Python app.
+        </p>
+        <div class='hp-cta-row'>
+          <div class='hp-cta-primary'>Start Learning Mission</div>
+          <div class='hp-cta-ghost'>Ask Preluma AI</div>
+        </div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # ── Stats row ─────────────────────────────────────────────────────────────
-    s1, s2, s3, s4 = st.columns(4)
-    for col, num, lbl in [
-        (s1, "18", "AI Topics"),
-        (s2, "5",  "Mission Steps"),
-        (s3, "3",  "Algorithm Proofs"),
-        (s4, "6+", "AI Providers"),
-    ]:
-        col.markdown(
-            f"""<div style="
-              background:rgba(15,23,42,.7);border:1px solid rgba(148,163,184,.10);
-              border-radius:16px;padding:20px 16px;text-align:center;
-            ">
-              <div style="font-size:32px;font-weight:900;color:#38bdf8;">{num}</div>
-              <div style="font-size:12px;color:#64748b;margin-top:4px;font-weight:600;
-                letter-spacing:.05em;text-transform:uppercase;">{lbl}</div>
-            </div>""",
-            unsafe_allow_html=True,
-        )
+    stats = [("18", "AI Topics", "#38bdf8"), ("5", "Mission Steps", "#818cf8"),
+             ("3+", "Algorithms", "#34d399"), ("6+", "AI Providers", "#fb923c")]
+    sc = st.columns(4)
+    for col, (num, lbl, color) in zip(sc, stats):
+        col.markdown(f"""
+        <div style="
+          background:linear-gradient(145deg,rgba(15,23,42,.88),rgba(8,15,30,.95));
+          border:1px solid rgba(255,255,255,.07); border-radius:20px;
+          padding:22px 16px; text-align:center;
+          box-shadow:0 8px 32px rgba(0,0,0,.30);
+        ">
+          <div style="font-size:36px;font-weight:900;color:{color};
+            text-shadow:0 0 18px {color}66;">{num}</div>
+          <div style="font-size:11px;color:#475569;margin-top:6px;font-weight:700;
+            letter-spacing:.08em;text-transform:uppercase;">{lbl}</div>
+        </div>""", unsafe_allow_html=True)
 
-    st.markdown("<div style='height:32px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:36px'></div>", unsafe_allow_html=True)
 
     # ── Feature cards ─────────────────────────────────────────────────────────
-    st.markdown(
-        "<h3 style='color:#f8fafc;font-weight:800;margin-bottom:20px;"
-        "font-size:20px;'>What you can do</h3>",
-        unsafe_allow_html=True,
-    )
+    st.markdown("""
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+      <div style="width:4px;height:28px;border-radius:4px;
+        background:linear-gradient(180deg,#38bdf8,#818cf8);"></div>
+      <h2 style="margin:0;color:#f8fafc;font-size:22px;font-weight:800;
+        letter-spacing:-.02em;">Everything in one platform</h2>
+    </div>
+    """, unsafe_allow_html=True)
 
-    cards = [
-        ("#0ea5e9", "Student Mission",
-         "5-step guided learning path — Brain Brief, examples, practice, mock test, overview."),
-        ("#6366f1", "Ask Preluma AI",
-         "Chat with the AI tutor. Adaptive style: child, deep, exam, example, or normal mode."),
-        ("#10b981", "My Homework",
-         "View teacher-assigned homework, submit answers, review AI-graded results."),
-        ("#f59e0b", "Teacher Studio",
-         "Merge Sort, Binary Search, Linear Search — live algorithm proof with timing."),
-        ("#ec4899", "Homework Center",
-         "Create homework, assign to students, review submissions and class performance."),
-        ("#8b5cf6", "Evidence Board",
-         "Algorithm proof, CSV proof, audit log, and test results — all in one place."),
+    feature_data = [
+        ("linear-gradient(135deg,#0ea5e9,#0369a1)", "01", "Student Mission",
+         "5-step AI-guided preparation: Brain Brief, real examples, practice, mock test, and class-ready overview."),
+        ("linear-gradient(135deg,#6366f1,#4338ca)", "02", "Ask Preluma AI",
+         "Multi-provider AI tutor with adaptive teaching style — child mode, exam mode, deep explanation, and more."),
+        ("linear-gradient(135deg,#10b981,#047857)", "03", "My Homework",
+         "View and complete teacher-assigned homework. Instant AI grading, mistake capture, and focused review."),
+        ("linear-gradient(135deg,#f59e0b,#b45309)", "04", "Teacher Studio",
+         "Manual Merge Sort, Binary Search, and Linear Search — live nanosecond timing, CSV proof, audit log."),
+        ("linear-gradient(135deg,#ec4899,#9d174d)", "05", "Homework Center",
+         "Publish assignments to the class, monitor submissions, and review class-wide weak concepts."),
+        ("linear-gradient(135deg,#8b5cf6,#5b21b6)", "06", "Evidence Board",
+         "Algorithm proof file, CSV persistence proof, Python module log, and 13-concept evidence table."),
     ]
 
     c1, c2, c3 = st.columns(3)
     cols = [c1, c2, c3]
-    for i, (color, title, desc) in enumerate(cards):
-        cols[i % 3].markdown(
-            f"""<div style="
-              background:rgba(15,23,42,.70);
-              border:1px solid rgba(148,163,184,.09);
-              border-top:3px solid {color};
-              border-radius:16px;padding:22px 18px;margin-bottom:16px;
-            ">
-              <div style="font-size:15px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">
-                {title}
-              </div>
-              <div style="font-size:13px;color:#64748b;line-height:1.55;">{desc}</div>
-            </div>""",
-            unsafe_allow_html=True,
-        )
+    for i, (grad, num, title, desc) in enumerate(feature_data):
+        cols[i % 3].markdown(f"""
+        <div style="
+          background:rgba(10,17,32,.82); border:1px solid rgba(148,163,184,.09);
+          border-radius:20px; padding:22px 20px; margin-bottom:14px;
+          transition:border-color .2s;
+        ">
+          <div style="
+            display:inline-flex;align-items:center;justify-content:center;
+            width:36px;height:36px;border-radius:10px;
+            background:{grad};
+            font-size:12px;font-weight:900;color:#fff;margin-bottom:14px;
+          ">{num}</div>
+          <div style="font-size:15px;font-weight:800;color:#f1f5f9;
+            margin-bottom:8px;letter-spacing:-.01em;">{title}</div>
+          <div style="font-size:13px;color:#64748b;line-height:1.60;">{desc}</div>
+        </div>""", unsafe_allow_html=True)
 
-    st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
 
-    # ── Quick start ───────────────────────────────────────────────────────────
+    # ── "How it works" strip ──────────────────────────────────────────────────
+    st.markdown("""
+    <div style="
+      background:linear-gradient(135deg,rgba(14,165,233,.08),rgba(99,102,241,.06));
+      border:1px solid rgba(56,189,248,.12); border-radius:20px;
+      padding:28px 28px 24px; margin-bottom:28px;
+    ">
+      <div style="font-size:13px;font-weight:800;color:#38bdf8;letter-spacing:.12em;
+        text-transform:uppercase;margin-bottom:16px;">How Preluma Works</div>
+      <div style="display:flex;gap:0;overflow:hidden;">
+        <div style="flex:1;padding:0 16px 0 0;border-right:1px solid rgba(255,255,255,.06);">
+          <div style="font-size:11px;font-weight:800;color:#6366f1;letter-spacing:.08em;
+            text-transform:uppercase;margin-bottom:6px;">Step 1</div>
+          <div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:4px;">
+            Choose Topic</div>
+          <div style="font-size:12px;color:#64748b;line-height:1.55;">
+            Pick your next lecture topic from 18 curated options or type your own.</div>
+        </div>
+        <div style="flex:1;padding:0 16px;border-right:1px solid rgba(255,255,255,.06);">
+          <div style="font-size:11px;font-weight:800;color:#0ea5e9;letter-spacing:.08em;
+            text-transform:uppercase;margin-bottom:6px;">Step 2</div>
+          <div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:4px;">
+            Brain Brief</div>
+          <div style="font-size:12px;color:#64748b;line-height:1.55;">
+            AI builds a 2-minute primer with Wikipedia data and concept breakdown.</div>
+        </div>
+        <div style="flex:1;padding:0 16px;border-right:1px solid rgba(255,255,255,.06);">
+          <div style="font-size:11px;font-weight:800;color:#10b981;letter-spacing:.08em;
+            text-transform:uppercase;margin-bottom:6px;">Step 3</div>
+          <div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:4px;">
+            Quiz + Practice</div>
+          <div style="font-size:12px;color:#64748b;line-height:1.55;">
+            Adaptive questions test each skill. Wrong answers trigger focused review.</div>
+        </div>
+        <div style="flex:1;padding:0 0 0 16px;">
+          <div style="font-size:11px;font-weight:800;color:#f59e0b;letter-spacing:.08em;
+            text-transform:uppercase;margin-bottom:6px;">Step 4</div>
+          <div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:4px;">
+            AI Tutor + Class Ready</div>
+          <div style="font-size:12px;color:#64748b;line-height:1.55;">
+            Ask anything. Get smart class questions you are actually ready to ask.</div>
+        </div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Quick-start buttons (real Streamlit buttons) ───────────────────────────
     st.markdown(
-        "<h3 style='color:#f8fafc;font-weight:800;margin-bottom:16px;"
-        "font-size:20px;'>Quick start</h3>",
+        "<div style='font-size:13px;font-weight:700;color:#475569;letter-spacing:.10em;"
+        "text-transform:uppercase;margin-bottom:12px;'>Jump to</div>",
         unsafe_allow_html=True,
     )
-    qs1, qs2, qs3 = st.columns(3)
-    if qs1.button("Go to Student Mission", use_container_width=True, type="primary"):
-        st.session_state.active_page = "Student Mission"
-        st.rerun()
+    qs1, qs2, qs3, qs4 = st.columns(4)
+    if qs1.button("Student Mission", use_container_width=True, type="primary"):
+        st.session_state.active_page = "Student Mission"; st.rerun()
     if qs2.button("Ask Preluma AI", use_container_width=True):
-        st.session_state.active_page = "Ask Preluma AI"
-        st.rerun()
-    if qs3.button("Teacher Studio", use_container_width=True):
-        st.session_state.active_page = "Teacher Studio"
-        st.rerun()
+        st.session_state.active_page = "Ask Preluma AI"; st.rerun()
+    if qs3.button("My Homework", use_container_width=True):
+        st.session_state.active_page = "My Homework"; st.rerun()
+    if qs4.button("Teacher Studio", use_container_width=True):
+        st.session_state.active_page = "Teacher Studio"; st.rerun()
+
+    # ── Footer tag ────────────────────────────────────────────────────────────
+    st.markdown(f"""
+    <div style="margin-top:36px;padding:18px 24px;border-radius:14px;
+      background:rgba(8,14,26,.60);border:1px solid rgba(255,255,255,.05);
+      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div style="font-size:14px;font-weight:700;color:#334155;">
+        Preluma &nbsp;&bull;&nbsp; Yunnan University &nbsp;&bull;&nbsp; Python + Streamlit
+      </div>
+      <div style="font-size:12px;color:#1e293b;">
+        Active student: <span style="color:#38bdf8;font-weight:600;">{student}</span>
+        &nbsp;·&nbsp; v{APP_VERSION}
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 # ── Hero ─────────────────────────────────────────────────────────────────────
@@ -950,7 +1057,7 @@ def mission_control():
         st.markdown("<div class='card-glass' style='padding:24px;'>", unsafe_allow_html=True)
         c1, c2, c3 = st.columns([1.4, 1, 0.9])
         with c1:
-            student      = st.text_input("Your name", value=ds)
+            student      = st.text_input("Write your name", value=ds)
             topic_choice = st.selectbox("Lecture topic", TOPIC_OPTIONS,
                 index=TOPIC_OPTIONS.index(dt) if dt in TOPIC_OPTIONS else 0)
             topic = st.text_input("Custom topic", placeholder="e.g. Reinforcement Learning") \
@@ -1536,15 +1643,20 @@ def mission_overview_screen() -> None:
 
 
 def student_mission(presentation):
-    hero()
-    chip_row()
-
     if not st.session_state.get("mission_started") or "pack" not in st.session_state:
+        page_intro(
+            "ai",
+            "Pre-class learning mission",
+            "Student Mission",
+            "Choose your topic, set your goal, and let Preluma guide you through a 5-step AI-powered preparation.",
+        )
         mission_control()
         if presentation:
             how_it_works()
         return
 
+    # Active mission — show progress
+    progress_bar()
     step = st.session_state.get("mission_step", 1)
     if step == 1:
         mission_brain_brief_screen()
@@ -1564,11 +1676,12 @@ def student_mission(presentation):
 # ── Teacher Studio ────────────────────────────────────────────────────────────
 
 def teacher_studio():
-    hero()
-    st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(56,189,248,.12);'>TS</div>
-      <div><div class='sec-title'>Teacher Studio</div><div class='sec-sub'>Manual Python algorithms: Merge Sort, Binary Search, CSV persistence, audit log</div></div>
-    </div>""", unsafe_allow_html=True)
+    page_intro(
+        "teacher",
+        "Algorithm-powered class analytics",
+        "Teacher Studio",
+        "Manual Python algorithms — Merge Sort, Binary Search, Linear Search — with live timing and CSV persistence.",
+    )
 
     rows      = build_teacher_dataframe(st.session_state.get("latest_session"))
     analytics = teacher_analytics(rows)
@@ -1786,144 +1899,333 @@ def ask_preluma_ai_page():
 
 def my_homework_page():
     student = st.session_state.get("student", "Student")
+
     page_intro(
         "homework",
         "Student assignment desk",
-        f"My Homework — {student}",
-        "Review deadlines, complete assigned work, inspect mistakes, and return to weak concepts with focused support.",
+        "My Homework",
+        "Complete your assigned work, question by question. Each answer is reviewed instantly.",
     )
 
+    # ── Notifications ─────────────────────────────────────────────────────────
     notifications = notifications_for_student(student)
     if notifications:
-        with st.expander(f"Notifications ({len(notifications)})", expanded=True):
-            for note in reversed(notifications[-5:]):
+        unread = [n for n in notifications if n.get("Is Read") == "No"]
+        label = f"Notifications ({len(notifications)})"
+        if unread:
+            label += f" — {len(unread)} new"
+        with st.expander(label, expanded=bool(unread)):
+            for note in reversed(notifications[-6:]):
+                is_new = note.get("Is Read") == "No"
+                dot = (
+                    "<span style='width:7px;height:7px;border-radius:50%;"
+                    "background:#f87171;display:inline-block;margin-right:7px;'></span>"
+                    if is_new else ""
+                )
                 st.markdown(
-                    f"<div class='card-glass'><div class='albl lbl-blue'>{note.get('Title')}</div>"
-                    f"<div class='atxt'>{note.get('Message')}</div></div>",
+                    f"<div class='assignment-card'>"
+                    f"<div class='albl lbl-blue' style='display:flex;align-items:center;'>"
+                    f"{dot}{note.get('Title', '')}</div>"
+                    f"<div class='atxt' style='margin-top:6px;'>{note.get('Message', '')}"
+                    f"</div></div>",
                     unsafe_allow_html=True,
                 )
+            if unread:
+                if st.button("Mark all as read", key="mark_read_btn"):
+                    mark_notifications_read(student)
+                    st.rerun()
 
     homework_rows = homework_for_student(student)
     if not homework_rows:
-        st.info("No homework has been assigned to this student yet.")
+        st.info("No homework assigned yet. Check back after your teacher publishes an assignment.")
         return
 
+    # ── Homework selector ─────────────────────────────────────────────────────
     labels = {
         f"#{row['Homework ID']} · {row['Title']} · Due {row['Due Date']}": row
         for row in homework_rows
     }
-    selected_label = st.selectbox("Choose homework", list(labels))
+    selected_label = st.selectbox("Choose assignment", list(labels))
     selected = labels[selected_label]
     homework_id = selected["Homework ID"]
-    st.session_state.selected_homework_id = homework_id
 
-    st.markdown(f"""
-    <div class='card-glass'>
-      <div class='albl lbl-purple'>{selected.get('Topic')}</div>
-      <div class='atxt'><b>{selected.get('Title')}</b><br>{selected.get('Instructions')}</div>
-      <div style='margin-top:12px;color:#94a3b8;font-size:13px;'>
-        Due: {selected.get('Due Date')} · Difficulty: {selected.get('Difficulty')}
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Reset step when homework changes
+    if st.session_state.get("_hw_active_id") != homework_id:
+        st.session_state["_hw_q_step"] = 0
+        st.session_state["_hw_answers"] = {}
+        st.session_state["homework_result"] = None
+        st.session_state["_hw_active_id"] = homework_id
+
+    # Assignment info card
+    st.markdown(
+        f"<div style='background:linear-gradient(145deg,rgba(120,53,15,.22),rgba(12,18,29,.92));"
+        f"border:1px solid rgba(245,158,11,.20);border-radius:20px;padding:20px 24px;margin:10px 0 20px;'>"
+        f"<div style='font-size:10px;font-weight:800;color:#f59e0b;letter-spacing:.12em;"
+        f"text-transform:uppercase;margin-bottom:8px;'>{selected.get('Topic', '')}</div>"
+        f"<div style='font-size:17px;font-weight:800;color:#f8fafc;margin-bottom:6px;'>"
+        f"{selected.get('Title', '')}</div>"
+        f"<div style='font-size:13px;color:#94a3b8;margin-bottom:10px;'>{selected.get('Instructions', '')}</div>"
+        f"<div style='display:flex;gap:16px;'>"
+        f"<span style='font-size:12px;color:#64748b;'>Due: <b style='color:#fbbf24;'>"
+        f"{selected.get('Due Date', '')}</b></span>"
+        f"<span style='font-size:12px;color:#64748b;'>Difficulty: <b style='color:#fbbf24;'>"
+        f"{selected.get('Difficulty', '')}</b></span></div></div>",
+        unsafe_allow_html=True,
+    )
 
     questions = load_questions(homework_id)
-    with st.form(f"homework_form_{homework_id}", border=False):
-        answers = {}
-        for question in questions:
-            question_id = int(question["Question ID"])
+    total_q = len(questions)
+    result = st.session_state.get("homework_result")
+
+    # ── RESULTS view ──────────────────────────────────────────────────────────
+    if result:
+        pct   = result.get("percentage", 0)
+        score = result.get("score", 0)
+        total = result.get("total", total_q)
+        grade_color = "#34d399" if pct >= 70 else "#fbbf24" if pct >= 40 else "#f87171"
+        verdict = "Excellent!" if pct >= 80 else "Good effort!" if pct >= 50 else "Review and try again"
+
+        st.markdown(
+            f"<div style='background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(8,14,26,.98));"
+            f"border:2px solid {grade_color}44;border-radius:24px;padding:32px 28px;"
+            f"text-align:center;margin-bottom:24px;'>"
+            f"<div style='font-size:64px;font-weight:900;color:{grade_color};line-height:1;"
+            f"text-shadow:0 0 30px {grade_color}66;'>{pct}%</div>"
+            f"<div style='font-size:16px;color:#94a3b8;margin-top:8px;'>"
+            f"{score} / {total} correct &nbsp;&bull;&nbsp; Attempt {result.get('attempt', 1)}</div>"
+            f"<div style='margin-top:12px;display:inline-block;background:{grade_color}20;"
+            f"border:1px solid {grade_color}50;border-radius:30px;padding:6px 20px;"
+            f"color:{grade_color};font-size:13px;font-weight:700;'>{verdict}</div></div>",
+            unsafe_allow_html=True,
+        )
+
+        for detail in result.get("details", []):
+            ok = detail["correct"]
+            bg = "rgba(52,211,153,.08)" if ok else "rgba(248,113,113,.08)"
+            br = "rgba(52,211,153,.25)" if ok else "rgba(248,113,113,.25)"
+            wrong_extra = (
+                f"<div style='font-size:13px;color:#94a3b8;margin-top:4px;'>Correct: "
+                f"<b style='color:#34d399;'>{detail.get('correct_answer', '')}</b></div>"
+                f"<div style='font-size:12px;color:#64748b;margin-top:8px;'>"
+                f"{detail.get('explanation', '')}</div>"
+            ) if not ok else ""
+            chosen_color = "#34d399" if ok else "#f87171"
             st.markdown(
-                f"<div class='card-glass'><div class='albl lbl-yellow'>"
-                f"Question {question_id} · {question.get('Concept')}</div>"
-                f"<div class='atxt'>{question.get('Question')}</div></div>",
+                f"<div style='background:{bg};border:1px solid {br};border-radius:16px;"
+                f"padding:16px 18px;margin:8px 0;'>"
+                f"<div style='font-size:11px;font-weight:800;color:#94a3b8;letter-spacing:.08em;"
+                f"text-transform:uppercase;margin-bottom:6px;'>{detail['concept']}</div>"
+                f"<div style='font-size:14px;color:#e2e8f0;margin-bottom:10px;'>"
+                f"{detail.get('question', '')}</div>"
+                f"<div style='font-size:13px;color:#94a3b8;'>Your answer: "
+                f"<b style='color:{chosen_color};'>{detail.get('chosen', '')}</b></div>"
+                f"{wrong_extra}</div>",
                 unsafe_allow_html=True,
             )
-            answers[question_id] = st.radio(
-                "Choose one",
-                question["Options"],
-                key=f"homework_{homework_id}_{question_id}",
-                label_visibility="collapsed",
+
+        col_a, col_b = st.columns(2)
+        if col_a.button("Try Again", use_container_width=True):
+            st.session_state["_hw_q_step"] = 0
+            st.session_state["_hw_answers"] = {}
+            st.session_state["homework_result"] = None
+            st.rerun()
+        if col_b.button("Ask AI about mistakes", use_container_width=True):
+            weak = [d["concept"] for d in result.get("details", []) if not d["correct"]]
+            st.session_state.ai_context_note = (
+                f"Homework topic: {selected.get('Topic')}. "
+                f"Weak concepts from wrong answers: {', '.join(weak) if weak else 'none'}."
             )
-        submitted = st.form_submit_button("Submit Homework", use_container_width=True)
+            st.session_state.active_page = "Ask Preluma AI"
+            st.rerun()
+        return
 
-    if submitted:
-        st.session_state.homework_result = submit_homework(homework_id, student, answers)
-        st.rerun()
+    # ── Sequential Q&A ────────────────────────────────────────────────────────
+    if not questions:
+        st.info("No questions found for this assignment.")
+        return
 
-    result = st.session_state.get("homework_result")
-    if result:
-        st.success(
-            f"Homework submitted · Attempt {result['attempt']} · "
-            f"{result['score']}/{result['total']} · {result['percentage']}%"
-        )
-        for detail in result["details"]:
-            if detail["correct"]:
-                continue
-            with st.expander(f"Review: {detail['concept']}", expanded=True):
-                st.write(f"Your answer: {detail['chosen']}")
-                st.write(f"Correct answer: {detail['correct_answer']}")
-                st.info(detail["explanation"])
-                if st.button(
-                    f"Ask Preluma AI about {detail['concept']}",
-                    key=f"ask_mistake_{detail['question_id']}",
-                ):
-                    st.session_state.ai_context_note = (
-                        f"Homework mistake. Topic: {selected.get('Topic')}. "
-                        f"Question: {detail['question']} "
-                        f"Student answer: {detail['chosen']}. "
-                        f"Correct answer: {detail['correct_answer']}."
-                    )
-                    st.info("Open “Ask Preluma AI” from the sidebar. The mistake context is ready.")
+    q_step   = min(st.session_state.get("_hw_q_step", 0), total_q - 1)
+    hw_answers = st.session_state.get("_hw_answers", {})
+    question = questions[q_step]
+    q_id     = int(question["Question ID"])
+    is_last  = (q_step == total_q - 1)
 
+    # Progress bar
+    pct_done = int((q_step / total_q) * 100)
+    st.markdown(
+        f"<div style='margin-bottom:18px;'>"
+        f"<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;'>"
+        f"<span style='font-size:12px;font-weight:700;color:#64748b;letter-spacing:.06em;"
+        f"text-transform:uppercase;'>Question {q_step + 1} of {total_q}</span>"
+        f"<span style='font-size:12px;color:#38bdf8;font-weight:700;'>{pct_done}% done</span></div>"
+        f"<div style='background:rgba(30,41,59,.6);border-radius:8px;height:6px;overflow:hidden;'>"
+        f"<div style='width:{pct_done}%;height:100%;"
+        f"background:linear-gradient(90deg,#0ea5e9,#6366f1);border-radius:8px;'>"
+        f"</div></div></div>",
+        unsafe_allow_html=True,
+    )
+
+    # Question card
+    st.markdown(
+        f"<div style='background:linear-gradient(145deg,rgba(15,23,42,.94),rgba(8,14,26,.98));"
+        f"border:1px solid rgba(99,102,241,.25);border-radius:24px;"
+        f"padding:28px 28px 22px;margin-bottom:18px;"
+        f"box-shadow:0 16px 50px rgba(0,0,0,.30);'>"
+        f"<div style='display:flex;align-items:center;gap:10px;margin-bottom:18px;'>"
+        f"<div style='width:36px;height:36px;border-radius:10px;"
+        f"background:linear-gradient(135deg,#6366f1,#8b5cf6);"
+        f"display:flex;align-items:center;justify-content:center;"
+        f"font-size:14px;font-weight:900;color:#fff;flex-shrink:0;'>Q{q_step + 1}</div>"
+        f"<div style='font-size:11px;font-weight:800;color:#a78bfa;letter-spacing:.09em;"
+        f"text-transform:uppercase;'>{question.get('Concept', '')}</div></div>"
+        f"<div style='font-size:17px;font-weight:700;color:#f1f5f9;line-height:1.55;'>"
+        f"{question.get('Question', '')}</div></div>",
+        unsafe_allow_html=True,
+    )
+
+    options = question.get("Options", [])
+    prev_answer = hw_answers.get(q_id)
+    default_idx = options.index(prev_answer) if prev_answer in options else 0
+
+    chosen = st.radio(
+        "Select your answer",
+        options,
+        index=default_idx,
+        key=f"hw_radio_{homework_id}_{q_step}",
+        label_visibility="collapsed",
+    )
+
+    col1, col2 = st.columns([1, 2])
+    if q_step > 0:
+        if col1.button("Previous", use_container_width=True):
+            hw_answers[q_id] = chosen
+            st.session_state["_hw_answers"] = hw_answers
+            st.session_state["_hw_q_step"] = q_step - 1
+            st.rerun()
+
+    if not is_last:
+        if col2.button("Next Question", use_container_width=True, type="primary"):
+            hw_answers[q_id] = chosen
+            st.session_state["_hw_answers"] = hw_answers
+            st.session_state["_hw_q_step"] = q_step + 1
+            st.rerun()
+    else:
+        if col2.button("Submit Homework", use_container_width=True, type="primary"):
+            hw_answers[q_id] = chosen
+            st.session_state["_hw_answers"] = hw_answers
+            final_answers = {int(k): v for k, v in hw_answers.items()}
+            result = submit_homework(homework_id, student, final_answers)
+            st.session_state["homework_result"] = result
+            st.rerun()
+
+    # Weak areas history
     mistakes = load_student_mistakes(student)
     if mistakes:
-        with st.expander("My captured weak areas"):
-            for mistake in mistakes[-8:]:
-                st.write(
-                    f"• {mistake.get('Weak Concept')} — "
-                    f"{mistake.get('Question')}"
+        with st.expander("My previous weak areas"):
+            for mistake in mistakes[-6:]:
+                st.markdown(
+                    f"<div style='font-size:13px;color:#64748b;padding:4px 0;"
+                    f"border-bottom:1px solid rgba(255,255,255,.04);'>"
+                    f"<b style='color:#f87171;'>{mistake.get('Weak Concept', '')}</b> — "
+                    f"{mistake.get('Question', '')}</div>",
+                    unsafe_allow_html=True,
                 )
 
 
+
 def _default_homework_questions(topic: str) -> list[dict]:
+    """7 default questions covering definition, application, example, analysis,
+    comparison, reflection, and exam readiness."""
     return [
         {
-            "question": f"What is the best simple definition of {topic}?",
+            "question": f"What is the most accurate definition of {topic}?",
             "options": [
-                f"The main idea and meaning of {topic}",
-                "A random unrelated fact",
-                "Only a difficult formula",
-                "Something that cannot be learned",
+                f"The core meaning and purpose of {topic}",
+                "A random process unrelated to the subject",
+                "Only a complex formula with no meaning",
+                "Something that cannot be explained simply",
             ],
-            "answer": f"The main idea and meaning of {topic}",
+            "answer": f"The core meaning and purpose of {topic}",
             "concept": "Definition",
-            "explanation": "Start with the core meaning before learning details.",
+            "explanation": "Always start with the clear definition before exploring deeper details.",
             "marks": 1,
         },
         {
-            "question": f"What is the best way to understand {topic}?",
+            "question": f"Which approach best helps a student understand {topic}?",
             "options": [
-                "Connect the definition with an example",
-                "Memorize one sentence without meaning",
-                "Skip practice",
-                "Avoid asking questions",
+                "Connect the definition with a real-world example",
+                "Memorize keywords without understanding",
+                "Skip the basics and jump to advanced parts",
+                "Avoid asking questions during class",
             ],
-            "answer": "Connect the definition with an example",
+            "answer": "Connect the definition with a real-world example",
+            "concept": "Learning Strategy",
+            "explanation": "Real examples bridge theory and practice — they make abstract ideas concrete.",
+            "marks": 1,
+        },
+        {
+            "question": f"Which is a real-world application of {topic}?",
+            "options": [
+                f"Using {topic} principles to solve a practical problem",
+                "Memorizing a single sentence about it",
+                "Ignoring it until the exam",
+                "Replacing it with an unrelated concept",
+            ],
+            "answer": f"Using {topic} principles to solve a practical problem",
             "concept": "Application",
-            "explanation": "Examples connect theory to something the learner can picture.",
+            "explanation": "Application shows you understand not just what it is, but how and why it is used.",
             "marks": 1,
         },
         {
-            "question": f"What should a student do after making a mistake in {topic}?",
+            "question": f"What is a common misconception students have about {topic}?",
             "options": [
-                "Review the weak concept and try again",
-                "Hide the mistake",
-                "Stop studying",
-                "Choose random answers",
+                "That it is more complex than it needs to be",
+                "That it requires no prior knowledge",
+                "That it has no real-world use",
+                "That it can be fully learned in one minute",
             ],
-            "answer": "Review the weak concept and try again",
+            "answer": "That it is more complex than it needs to be",
+            "concept": "Misconception",
+            "explanation": "Breaking false beliefs is a key step in deep understanding.",
+            "marks": 1,
+        },
+        {
+            "question": f"How does {topic} relate to other subjects or topics you have studied?",
+            "options": [
+                "It builds on prior knowledge and connects to related ideas",
+                "It is completely isolated from everything else",
+                "It only matters in one very specific exam",
+                "It contradicts everything learned before",
+            ],
+            "answer": "It builds on prior knowledge and connects to related ideas",
+            "concept": "Connection",
+            "explanation": "Strong learners see connections between topics — this creates a knowledge network.",
+            "marks": 1,
+        },
+        {
+            "question": f"What should a student do after making a mistake in a {topic} question?",
+            "options": [
+                "Review the weak concept and attempt a similar question",
+                "Ignore the mistake and move on",
+                "Stop studying the topic entirely",
+                "Choose random answers next time",
+            ],
+            "answer": "Review the weak concept and attempt a similar question",
             "concept": "Reflection",
-            "explanation": "Mistakes are useful when they guide the next study action.",
+            "explanation": "Mistakes guide the next learning action — they are most useful when reviewed.",
+            "marks": 1,
+        },
+        {
+            "question": f"If asked to explain {topic} in a university exam, which answer is best?",
+            "options": [
+                "Define it clearly, give one example, and state why it matters",
+                "Write only the name of the topic",
+                "Copy a formula without explaining what it means",
+                "Say it is too difficult to explain",
+            ],
+            "answer": "Define it clearly, give one example, and state why it matters",
+            "concept": "Exam Readiness",
+            "explanation": "Exam answers must show understanding: definition + example + significance.",
             "marks": 1,
         },
     ]
@@ -2075,49 +2377,85 @@ def professor_defense():
 def project_team():
     page_intro(
         "defense",
-        "Student product team",
+        "Student product team · Yunnan University",
         "Project Team",
-        "A balanced collaboration combining core application development, testing, topic support, and presentation preparation.",
+        "Three students built Preluma together — combining core Python development, algorithm testing, and topic data engineering.",
     )
 
+    # ── Team photo — full-width, proper fit ───────────────────────────────────
     if TEAM_URI:
-        st.markdown(f"""
-        <div class='team-photo-hero' style="background-image:url('{TEAM_URI}');">
-          <div class='team-photo-content'>
-            <span class='badge'>Team Preluma · Yunnan University</span>
-            <h1>Building a smarter pre-class learning experience together.</h1>
-            <p>Three students combined core development, testing, topic data, and presentation support to shape Preluma into a working Python Streamlit prototype.</p>
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            f"<div style='"
+            f"width:100%;border-radius:26px;overflow:hidden;position:relative;"
+            f"background:linear-gradient(135deg,#020617,#0f172a);"
+            f"border:1px solid rgba(148,163,184,.18);"
+            f"box-shadow:0 30px 80px rgba(0,0,0,.45);margin-bottom:28px;'>"
+            f"<img src='{TEAM_URI}' style='"
+            f"width:100%;display:block;object-fit:cover;max-height:420px;'>"
+            f"<div style='position:absolute;inset:0;"
+            f"background:linear-gradient(0deg,rgba(2,6,23,.80) 0%,transparent 55%);'></div>"
+            f"<div style='position:absolute;bottom:28px;left:32px;right:32px;z-index:2;'>"
+            f"<div style='font-size:11px;font-weight:800;color:#38bdf8;letter-spacing:.12em;"
+            f"text-transform:uppercase;margin-bottom:8px;'>Team Preluma &nbsp;&bull;&nbsp; Yunnan University</div>"
+            f"<div style='font-size:26px;font-weight:900;color:#fff;line-height:1.2;"
+            f"text-shadow:0 4px 20px rgba(0,0,0,.60);'>"
+            f"Building a smarter pre-class learning experience together.</div>"
+            f"</div></div>",
+            unsafe_allow_html=True,
+        )
     else:
-        st.warning("Team photo is missing: assets/team_preluma.jpg")
+        st.warning("Team photo missing: assets/team_preluma.jpg")
 
-    st.markdown("""
-    <div class='member-grid'>
-      <div class='member-card'>
-        <div class='member-role'>Feature Logic · Quiz Testing</div>
-        <h3>MD FAHIM</h3>
-        <p>Supported quiz checking, feature testing, and interaction feedback.</p>
-      </div>
-      <div class='member-card'>
-        <div class='member-role'>Core App · UI/UX · Integration</div>
-        <h3>MAMUNUR RASHID</h3>
-        <p>Worked on the main Python Streamlit app, interface design, module integration, and deployment flow.</p>
-      </div>
-      <div class='member-card'>
-        <div class='member-role'>Topic Data · Documentation</div>
-        <h3>MD JIARUL ISLAM</h3>
-        <p>Supported topic data organization, documentation, and presentation preparation.</p>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # ── Member cards ──────────────────────────────────────────────────────────
+    m1, m2, m3 = st.columns(3)
+    members = [
+        (m1, "#0ea5e9", "MAMUNUR RASHID",
+         "Lead Developer · Architecture · Integration",
+         "Built the full Python Streamlit app architecture, AI integration, algorithm modules, homework system, and deployment pipeline. Lead technical contributor across all 12 Python files."),
+        (m2, "#10b981", "MD FAHIM",
+         "Algorithm Testing · Quiz Module · Python Logic",
+         "Wrote and tested the quiz grading logic, validated algorithm outputs, and contributed Python code for interaction flow and session state management."),
+        (m3, "#8b5cf6", "MD JIARUL ISLAM",
+         "Data Engineering · Topics Module · Testing",
+         "Built the topic data structure used across all 18 topics, managed the topics.py module, contributed to CSV data handling and test validation."),
+    ]
+    for col, color, name, role, desc in members:
+        col.markdown(
+            f"<div style='background:linear-gradient(145deg,rgba(15,23,42,.94),rgba(8,14,26,.98));"
+            f"border:1px solid rgba(148,163,184,.09);border-top:3px solid {color};"
+            f"border-radius:20px;padding:22px 18px;height:100%;'>"
+            f"<div style='font-size:10px;font-weight:800;color:{color};letter-spacing:.10em;"
+            f"text-transform:uppercase;margin-bottom:10px;'>{role}</div>"
+            f"<div style='font-size:17px;font-weight:900;color:#f8fafc;margin-bottom:10px;'>{name}</div>"
+            f"<div style='font-size:13px;color:#64748b;line-height:1.65;'>{desc}</div>"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
 
-    st.markdown("### Work Division")
+    st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+
+    # ── Work division table ───────────────────────────────────────────────────
+    st.markdown(
+        "<div style='font-size:13px;font-weight:700;color:#475569;letter-spacing:.10em;"
+        "text-transform:uppercase;margin-bottom:12px;'>Contribution Breakdown</div>",
+        unsafe_allow_html=True,
+    )
     st.dataframe([
-        {"Member":"MAMUNUR RASHID", "Main Responsibility":"Core app, UI/UX, integration", "Contribution":"Connected the main modules into one deployed Streamlit product"},
-        {"Member":"MD FAHIM", "Main Responsibility":"Quiz testing and feature feedback", "Contribution":"Improved interaction quality and checked quiz behaviour"},
-        {"Member":"MD JIARUL ISLAM", "Main Responsibility":"Topic data and documentation", "Contribution":"Supported content organization and presentation material"},
+        {
+            "Member": "MAMUNUR RASHID",
+            "Python Files": "streamlit_app.py, engine.py, llm.py, algorithms_core.py, analytics_core.py, homework_core.py, storage_core.py, models.py, result_generator.py",
+            "Responsibility": "Core architecture, AI integration, UI/UX, full deployment",
+        },
+        {
+            "Member": "MD FAHIM",
+            "Python Files": "Quiz grading logic, teacher.py testing, session state validation",
+            "Responsibility": "Algorithm testing, quiz module, Python interaction logic",
+        },
+        {
+            "Member": "MD JIARUL ISLAM",
+            "Python Files": "topics.py, wiki_fetcher.py support, data validation",
+            "Responsibility": "Topic data engineering, documentation, test support",
+        },
     ], use_container_width=True, hide_index=True)
 
 
@@ -2155,11 +2493,12 @@ def demo_guide():
 # ── Roadmap ───────────────────────────────────────────────────────────────────
 
 def roadmap():
-    hero()
-    st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(52,211,153,.10);'>RM</div>
-      <div><div class='sec-title'>Future Roadmap</div><div class='sec-sub'>Where Preluma goes next</div></div>
-    </div>""", unsafe_allow_html=True)
+    page_intro(
+        "roadmap",
+        "Product vision",
+        "Future Roadmap",
+        "Where Preluma goes next — from prototype to real product.",
+    )
 
     st.dataframe(pd.DataFrame({
         "Phase":      ["Current","Prototype","AI Upgrade","Real Product"],

@@ -202,6 +202,25 @@ def notifications_for_student(student: str, unread_only: bool = False) -> list[d
     return output
 
 
+def mark_notifications_read(student: str) -> None:
+    """Mark all notifications for this student as read in the CSV."""
+    ensure_homework_files()
+    student_key = student.strip().casefold()
+    rows = _read_rows(NOTIFICATIONS_CSV)
+    changed = False
+    for row in rows:
+        target = str(row.get("Student", "")).strip().casefold()
+        if target in ("all students", student_key) and row.get("Is Read") == "No":
+            row["Is Read"] = "Yes"
+            changed = True
+    if changed:
+        fieldnames = list(rows[0].keys()) if rows else ["Notification ID", "Student", "Title", "Message", "Is Read", "Created At"]
+        with open(NOTIFICATIONS_CSV, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(rows)
+
+
 def submit_homework(
     homework_id: int | str,
     student: str,
