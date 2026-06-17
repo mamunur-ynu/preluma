@@ -887,6 +887,95 @@ def home_page():
 
 
 
+
+def teacher_profile_page():
+    """Teacher profile page — course teacher info for Zhou Yujue."""
+    page_intro(
+        "teacher",
+        "Course Teacher · Yunnan University",
+        "Teacher Profile",
+        "Course teacher information — department, school, and contact details.",
+    )
+
+    st.markdown("""
+    <style>
+    .tp-avatar {
+        width:88px; height:88px; border-radius:50%;
+        background:linear-gradient(135deg,#0ea5e9,#6366f1);
+        display:flex; align-items:center; justify-content:center;
+        font-size:32px; font-weight:900; color:#fff; flex-shrink:0;
+        border:3px solid rgba(56,189,248,.35);
+        box-shadow:0 8px 28px rgba(99,102,241,.40);
+    }
+    .tp-banner {
+        background:linear-gradient(135deg,rgba(14,165,233,.09),rgba(99,102,241,.07));
+        border:1px solid rgba(56,189,248,.15); border-radius:24px;
+        padding:28px 32px; margin-bottom:28px;
+        display:flex; align-items:center; gap:28px;
+    }
+    .tp-name { font-size:26px; font-weight:900; color:#f1f5f9; margin-bottom:4px; }
+    .tp-cn   { font-size:18px; font-weight:700; color:#38bdf8; margin-bottom:6px; }
+    .tp-role { font-size:13px; color:#64748b; }
+    .tp-card {
+        background:linear-gradient(145deg,rgba(10,18,36,.96),rgba(6,12,26,.98));
+        border:1px solid rgba(255,255,255,.07); border-radius:20px;
+        padding:22px 24px; margin-bottom:14px;
+    }
+    .tp-card-lbl {
+        font-size:10px; font-weight:800; color:#38bdf8;
+        letter-spacing:.10em; text-transform:uppercase; margin-bottom:10px;
+    }
+    .tp-row {
+        display:flex; gap:12px; align-items:flex-start; padding:8px 0;
+        border-bottom:1px solid rgba(255,255,255,.04);
+    }
+    .tp-row:last-child { border-bottom:none; }
+    .tp-key { min-width:130px; font-size:12px; color:#475569; font-weight:600; }
+    .tp-val { font-size:13px; color:#cbd5e1; }
+    </style>
+    <div class="tp-banner">
+        <div class="tp-avatar">ZY</div>
+        <div>
+            <div class="tp-name">Zhou Yujue</div>
+            <div class="tp-cn">周玉珏</div>
+            <div class="tp-role">
+                Lecturer &nbsp;&bull;&nbsp; School of Software &nbsp;&bull;&nbsp; Yunnan University
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("""
+        <div class="tp-card">
+            <div class="tp-card-lbl">Course and Teaching</div>
+            <div class="tp-row"><div class="tp-key">Course</div>
+            <div class="tp-val">AI and Software Development</div></div>
+            <div class="tp-row"><div class="tp-key">Department</div>
+            <div class="tp-val">School of Software, Yunnan University</div></div>
+            <div class="tp-row"><div class="tp-key">Level</div>
+            <div class="tp-val">2nd-year undergraduate</div></div>
+            <div class="tp-row"><div class="tp-key">Teaching style</div>
+            <div class="tp-val">Project-based, practical Python focus</div></div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_b:
+        st.markdown("""
+        <div class="tp-card">
+            <div class="tp-card-lbl">School and Location</div>
+            <div class="tp-row"><div class="tp-key">University</div>
+            <div class="tp-val">Yunnan University (云南大学)</div></div>
+            <div class="tp-row"><div class="tp-key">School</div>
+            <div class="tp-val">School of Software (软件学院)</div></div>
+            <div class="tp-row"><div class="tp-key">Campus</div>
+            <div class="tp-val">Chenggong Campus, Kunming, Yunnan</div></div>
+            <div class="tp-row"><div class="tp-key">Profile photo</div>
+            <div class="tp-val">To be added with teacher consent</div></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+
 # Teacher Studio: algorithm demos and class analytics
 
 def teacher_studio():
