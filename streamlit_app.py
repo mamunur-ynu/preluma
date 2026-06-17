@@ -711,16 +711,18 @@ def sidebar():
 
     # Collapsible nav sections — auto-expand based on active page
     current_page = st.session_state.get("active_page", "Home")
-    learn_pages   = {"Home", "Student Mission", "My Homework", "Ask Preluma AI"}
+    learn_pages   = {"Student Mission", "My Homework", "Ask Preluma AI"}
     teach_pages   = {"Teacher Profile", "Teacher Studio", "Homework Center"}
     project_pages = {"Evidence Board", "Professor Defense", "Project Team", "Demo Guide", "Future Roadmap"}
 
     hw_badge = f" [{unread_count}]" if unread_count else ""
 
+    # Home is a top-level standalone button — not inside any expander
+    _nav_button("Home", "Home")
+
     with st.sidebar.expander("LEARN", expanded=(current_page in learn_pages)):
         # Buttons inside expanders must use st.button (not st.sidebar.button)
         # so they render inside the collapsed section and not in the main sidebar.
-        _nav_button("Home", "Home", _in_expander=True)
         _nav_button("Student Mission", "Student Mission", _in_expander=True)
         _nav_button(f"My Homework{hw_badge}", "My Homework", _in_expander=True)
         _nav_button("Ask Preluma AI", "Ask Preluma AI", _in_expander=True)
