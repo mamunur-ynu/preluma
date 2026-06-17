@@ -75,9 +75,18 @@ h1, h2, h3, .page-title, .sec-title {
 /* ── Layout ── */
 .block-container {
     max-width: 1280px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
     padding-top: 1.25rem !important;
     padding-left: clamp(.85rem, 1.6vw, 1.4rem) !important;
     padding-right: clamp(.85rem, 1.6vw, 1.4rem) !important;
+    width: 100% !important;
+}
+[data-testid="stAppViewContainer"] > .main {
+    width: 100% !important;
+}
+[data-testid="stMain"] {
+    width: 100% !important;
 }
 
 /* ── Sidebar ── */
