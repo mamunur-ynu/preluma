@@ -36,8 +36,9 @@ TEAM_MEMBERS = [
     ("MD JIARUL ISLAM","Topic Data · Documentation · Presentation Support"),
 ]
 
-CAMPUS_IMAGE = Path("assets/ynu_campus.jpg")
-TEAM_IMAGE = Path("assets/team_preluma.jpg")
+CAMPUS_IMAGE  = Path("assets/ynu_campus.jpg")
+TEAM_IMAGE    = Path("assets/team_preluma.jpg")
+SIDEBAR_IMAGE = Path("assets/sidebar_bg.jpg")   # YNU tower night photo
 
 st.set_page_config(page_title="Preluma — Light Up Before Class", page_icon=None, layout="wide")
 
@@ -52,8 +53,9 @@ def image_data_uri(path_str):
         return f"data:image/{mime};base64,{data}"
     return ""
 
-CAMPUS_URI = image_data_uri(str(CAMPUS_IMAGE))
-TEAM_URI = image_data_uri(str(TEAM_IMAGE))
+CAMPUS_URI  = image_data_uri(str(CAMPUS_IMAGE))
+TEAM_URI    = image_data_uri(str(TEAM_IMAGE))
+SIDEBAR_URI = image_data_uri(str(SIDEBAR_IMAGE))
 
 
 CSS = """
@@ -309,64 +311,140 @@ code, pre, [data-testid="stCodeBlock"] {
     font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
-/* compact sidebar */
+/* ── SIDEBAR — Tower night photo background, ultra-clean ── */
 [data-testid="stSidebar"] {
-    background:
-        radial-gradient(circle at 20% 0%, rgba(59,130,246,.09), transparent 35%),
-        #050a12;
-    border-right: 1px solid rgba(148,163,184,.10);
+    background-color: #020810;
+    border-right: 1px solid rgba(148,163,184,.08);
+    position: relative;
+    overflow: hidden;
 }
-[data-testid="stSidebar"] > div:first-child { padding-top: 1.15rem; }
+/* Tower photo injected via JS below */
+[data-testid="stSidebar"] > div:first-child {
+    padding-top: 0 !important;
+    position: relative;
+    z-index: 2;
+}
+/* Nav buttons — ghost style, left-aligned */
 [data-testid="stSidebar"] .stButton > button {
-    min-height: 43px !important;
-    border-radius: 12px !important;
+    min-height: 40px !important;
+    border-radius: 10px !important;
     justify-content: flex-start !important;
-    padding: .62rem .78rem !important;
-    background: transparent !important;
-    border: 1px solid transparent !important;
+    padding: .52rem .82rem !important;
+    background: rgba(8,14,26,.55) !important;
+    border: 1px solid rgba(255,255,255,.06) !important;
     box-shadow: none !important;
-    color: #cbd5e1 !important;
-    font-weight: 600 !important;
-    font-size: 14px !important;
-    transition: .18s ease;
+    color: rgba(203,213,225,.85) !important;
+    font-weight: 500 !important;
+    font-size: 13.5px !important;
+    letter-spacing: .01em;
+    backdrop-filter: blur(6px);
+    transition: background .15s ease, border-color .15s ease, color .15s ease, transform .12s ease;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
-    background: rgba(59,130,246,.08) !important;
-    border-color: rgba(96,165,250,.16) !important;
-    color: #fff !important;
-    transform: translateX(2px);
+    background: rgba(56,189,248,.12) !important;
+    border-color: rgba(56,189,248,.28) !important;
+    color: #e0f2fe !important;
+    transform: translateX(3px);
 }
-[data-testid="stSidebar"] .stButton > button[kind="primary"] {
-    background: rgba(37,99,235,.16) !important;
-    border-color: rgba(96,165,250,.35) !important;
-    color: #bfdbfe !important;
+[data-testid="stSidebar"] .stButton > button:active {
+    background: rgba(56,189,248,.22) !important;
 }
+/* Hide default Streamlit widget labels inside sidebar */
+[data-testid="stSidebar"] label { display: none !important; }
+[data-testid="stSidebar"] .stTextInput input {
+    background: rgba(8,14,26,.7) !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    border-radius: 10px !important;
+    color: #e2e8f0 !important;
+    font-size: 13px !important;
+    padding: .45rem .72rem !important;
+    backdrop-filter: blur(8px);
+}
+[data-testid="stSidebar"] .stTextInput input::placeholder { color: #4a5568 !important; }
+[data-testid="stSidebar"] .stTextInput input:focus {
+    border-color: rgba(56,189,248,.40) !important;
+    box-shadow: 0 0 0 2px rgba(56,189,248,.12) !important;
+}
+/* Hide Streamlit's toggle label clutter */
+[data-testid="stSidebar"] .stToggle { display: none !important; }
+/* Version caption */
+[data-testid="stSidebar"] .stCaptionContainer { opacity: .35; }
+
+/* Nav section labels */
 .nav-label {
-    margin: 1.05rem 0 .35rem;
-    color: #64748b !important;
-    font-size: 10px !important;
-    letter-spacing: .17em;
+    margin: 1.1rem 0 .3rem .04rem;
+    color: rgba(100,116,139,.75) !important;
+    font-size: 9.5px !important;
+    letter-spacing: .2em;
     font-weight: 800;
     text-transform: uppercase;
 }
-.sidebar-profile {
-    border-radius: 16px;
-    padding: 14px 15px;
-    margin: .75rem 0 1rem;
-    border: 1px solid rgba(96,165,250,.16);
-    background: linear-gradient(145deg, rgba(15,23,42,.88), rgba(8,15,27,.96));
+
+/* Sidebar top branding panel — sits above the photo */
+.sb-brand {
+    padding: 22px 16px 14px;
+    background: linear-gradient(180deg, rgba(2,8,16,.96) 0%, rgba(2,8,16,.70) 100%);
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    margin-bottom: 4px;
 }
-.sidebar-profile b { font-size: 14px; color: #f8fafc; }
-.sidebar-profile span { display:block; margin-top:5px; color:#7c8da5; font-size:12px; }
-.sidebar-status {
-    margin-top: 1rem;
-    border: 1px solid rgba(45,212,191,.16);
-    background: rgba(13,148,136,.055);
-    padding: 12px 13px;
-    border-radius: 14px;
+.sb-brand-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -.02em;
+    line-height: 1.1;
 }
-.sidebar-status .status-title { color:#ccfbf1; font-size:12px; font-weight:700; }
-.sidebar-status .status-copy { color:#6f8799; font-size:11px; line-height:1.5; margin-top:4px; }
+.sb-brand-tag {
+    font-size: 11px;
+    color: rgba(56,189,248,.70);
+    letter-spacing: .05em;
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+/* Student identity chip */
+.sb-student-chip {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: rgba(8,14,26,.72);
+    border: 1px solid rgba(56,189,248,.15);
+    border-radius: 12px;
+    padding: 9px 12px;
+    margin: 6px 0 4px;
+    backdrop-filter: blur(10px);
+}
+.sb-student-name { color: #f8fafc; font-weight: 700; font-size: 13.5px; }
+.sb-student-sub  { color: #64748b; font-size: 11px; margin-top: 2px; }
+.sb-dot { width: 8px; height: 8px; border-radius: 50%; background: #22d3ee; flex-shrink: 0; box-shadow: 0 0 6px rgba(34,211,238,.5); }
+
+/* Unread badge */
+.sb-badge {
+    display: inline-block;
+    background: rgba(239,68,68,.85);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    border-radius: 20px;
+    padding: 1px 7px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+/* Sidebar bottom status pill */
+.sb-status {
+    margin: 12px 0 8px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(6,182,212,.06);
+    border: 1px solid rgba(6,182,212,.14);
+    backdrop-filter: blur(8px);
+}
+.sb-status-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; margin-right:7px; box-shadow: 0 0 5px rgba(16,185,129,.6); }
+.sb-status-text { color: rgba(167,243,208,.7); font-size: 11.5px; font-weight: 600; }
+
+/* Sidebar nav area padding */
+.sb-nav-wrap { padding: 0 10px 12px; }
 
 /* reusable unique page header */
 .page-intro {
@@ -514,72 +592,267 @@ def reset_session():
 
 
 
-def _nav_button(label: str, page_name: str) -> None:
-    if st.sidebar.button(label, key=f"nav_{page_name}", use_container_width=True):
+def _nav_button(label: str, page_name: str, badge: str = "") -> None:
+    display = f"{label}  {badge}".rstrip() if badge else label
+    active = st.session_state.get("active_page") == page_name
+    btn_type = "primary" if active else "secondary"
+    if st.sidebar.button(display, key=f"nav_{page_name}",
+                         use_container_width=True, type=btn_type):
         st.session_state.active_page = page_name
         st.rerun()
 
 
 def sidebar():
-    st.sidebar.markdown("## Preluma")
-    st.sidebar.caption("Light Up Before Class")
-    st.session_state.setdefault("active_page", "Student Mission")
+    st.session_state.setdefault("active_page", "Home")
 
-    student_name = st.sidebar.text_input(
-        "Active student",
-        value=st.session_state.get("student", "Student"),
-        key="sidebar_student_identity",
-        label_visibility="collapsed",
-        placeholder="Student name",
-    )
-    if student_name.strip():
-        st.session_state.student = student_name.strip()
-
-    unread_count = len(
-        notifications_for_student(
-            st.session_state.get("student", "Student"),
-            unread_only=True,
+    # ── Tower photo background injected via CSS custom property ──
+    if SIDEBAR_URI:
+        st.sidebar.markdown(
+            f"<style>"
+            f"[data-testid='stSidebar']::before {{"
+            f"  content: '';"
+            f"  position: absolute; inset: 0; z-index: 0;"
+            f"  background: url('{SIDEBAR_URI}') center top / cover no-repeat;"
+            f"  opacity: .18;"
+            f"  pointer-events: none;"
+            f"}}"
+            f"[data-testid='stSidebar']::after {{"
+            f"  content: '';"
+            f"  position: absolute; inset: 0; z-index: 1;"
+            f"  background: linear-gradient(180deg,"
+            f"    rgba(2,8,16,.97) 0%,"
+            f"    rgba(2,8,16,.82) 40%,"
+            f"    rgba(2,8,16,.92) 100%);"
+            f"  pointer-events: none;"
+            f"}}"
+            f"[data-testid='stSidebar'] > div:first-child {{ position: relative; z-index: 2; }}"
+            f"</style>",
+            unsafe_allow_html=True,
         )
-    )
+
+    # ── Branding ──────────────────────────────────────────────────
     st.sidebar.markdown(
-        f"<div class='sidebar-profile'><b>{st.session_state.get('student','Student')}</b>"
-        f"<span>{unread_count} unread homework notification{'s' if unread_count != 1 else ''}</span></div>",
-        unsafe_allow_html=True,
-    )
-
-    st.sidebar.markdown("<div class='nav-label'>Learn</div>", unsafe_allow_html=True)
-    _nav_button("Student Mission", "Student Mission")
-    _nav_button(f"My Homework  {unread_count if unread_count else ''}".rstrip(), "My Homework")
-    _nav_button("Ask Preluma AI", "Ask Preluma AI")
-
-    st.sidebar.markdown("<div class='nav-label'>Teach</div>", unsafe_allow_html=True)
-    _nav_button("Teacher Studio", "Teacher Studio")
-    _nav_button("Homework Center", "Homework Center")
-
-    st.sidebar.markdown("<div class='nav-label'>Project</div>", unsafe_allow_html=True)
-    _nav_button("Evidence Board", "Evidence Board")
-    _nav_button("Professor Defense", "Professor Defense")
-    _nav_button("Project Team", "Project Team")
-    _nav_button("Demo Guide", "Demo Guide")
-    _nav_button("Future Roadmap", "Future Roadmap")
-
-    presentation = st.sidebar.toggle("Presentation Mode", value=True)
-
-    st.sidebar.markdown(
-        "<div class='sidebar-status'>"
-        "<div class='status-title'>Preluma AI ready</div>"
-        "<div class='status-copy'>Adaptive explanation, mission context, provider fallback.</div>"
+        "<div class='sb-brand'>"
+        "<div class='sb-brand-name'>Preluma</div>"
+        "<div class='sb-brand-tag'>Light Up Before Class</div>"
         "</div>",
         unsafe_allow_html=True,
     )
 
-    if st.sidebar.button("Reset session", use_container_width=True):
-        reset_session()
-        st.session_state.active_page = "Student Mission"
-        st.rerun()
+    # ── Student identity input ────────────────────────────────────
+    st.sidebar.markdown("<div class='sb-nav-wrap'>", unsafe_allow_html=True)
+
+    student_name = st.sidebar.text_input(
+        "name",
+        value=st.session_state.get("student", ""),
+        key="sidebar_student_identity",
+        label_visibility="collapsed",
+        placeholder="Enter your name...",
+    )
+    if student_name.strip():
+        st.session_state.student = student_name.strip()
+
+    current_student = st.session_state.get("student", "") or "Guest"
+
+    unread_count = len(
+        notifications_for_student(current_student, unread_only=True)
+    )
+
+    badge_html = f"<span class='sb-badge'>{unread_count}</span>" if unread_count else ""
+    st.sidebar.markdown(
+        f"<div class='sb-student-chip'>"
+        f"<div class='sb-dot'></div>"
+        f"<div><div class='sb-student-name'>{current_student}{badge_html}</div>"
+        f"<div class='sb-student-sub'>Active session</div></div>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+    # ── LEARN ─────────────────────────────────────────────────────
+    st.sidebar.markdown("<div class='nav-label'>Learn</div>", unsafe_allow_html=True)
+    _nav_button("Home", "Home")
+    _nav_button("Student Mission", "Student Mission")
+    hw_badge = str(unread_count) if unread_count else ""
+    _nav_button("My Homework", "My Homework", badge=hw_badge)
+    _nav_button("Ask Preluma AI", "Ask Preluma AI")
+
+    # ── TEACH ─────────────────────────────────────────────────────
+    st.sidebar.markdown("<div class='nav-label'>Teach</div>", unsafe_allow_html=True)
+    _nav_button("Teacher Studio", "Teacher Studio")
+    _nav_button("Homework Center", "Homework Center")
+
+    # ── PROJECT ───────────────────────────────────────────────────
+    st.sidebar.markdown("<div class='nav-label'>Project</div>", unsafe_allow_html=True)
+    _nav_button("Evidence Board", "Evidence Board")
+    _nav_button("Professor Defense", "Professor Defense")
+    _nav_button("Project Team", "Project Team")
+
+    # ── Status pill ───────────────────────────────────────────────
+    _prov = _provider()
+    _ai_label = "AI Connected" if _prov and _prov != "none" else "AI Standby"
+    st.sidebar.markdown(
+        f"<div class='sb-status'>"
+        f"<span class='sb-status-dot'></span>"
+        f"<span class='sb-status-text'>{_ai_label}</span>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+    st.sidebar.markdown("</div>", unsafe_allow_html=True)  # close sb-nav-wrap
 
     st.sidebar.caption(f"v{APP_VERSION}")
-    return st.session_state.active_page, presentation
+    return st.session_state.active_page, True  # presentation always True
+
+
+# ── Home Page ─────────────────────────────────────────────────────────────────
+
+def home_page():
+    """Clean, separate Home page — hero + feature cards + quick-start CTA."""
+    provider = _provider()
+    ai_label = provider if provider and provider != "none" else "AI Ready"
+
+    bg = (
+        f"url('{CAMPUS_URI}')"
+        if CAMPUS_URI
+        else "linear-gradient(135deg,#020617 0%,#0f172a 50%,#1e1b4b 100%)"
+    )
+
+    # ── Hero banner ───────────────────────────────────────────────────────────
+    st.markdown(
+        f"""
+        <div style="
+          background:{bg};
+          background-size:cover;
+          background-position:center;
+          border-radius:20px;
+          position:relative;
+          overflow:hidden;
+          padding:64px 48px 56px;
+          margin-bottom:36px;
+        ">
+          <div style="
+            position:absolute;inset:0;
+            background:linear-gradient(135deg,rgba(2,8,16,.88) 0%,rgba(15,23,42,.72) 60%,rgba(30,27,75,.80) 100%);
+          "></div>
+          <div style="position:relative;z-index:2;max-width:640px;">
+            <div style="
+              display:inline-flex;align-items:center;gap:8px;
+              background:rgba(56,189,248,.10);border:1px solid rgba(56,189,248,.25);
+              border-radius:20px;padding:5px 14px;margin-bottom:20px;
+            ">
+              <span style="width:7px;height:7px;border-radius:50%;background:#38bdf8;
+                display:inline-block;box-shadow:0 0 6px #38bdf8;"></span>
+              <span style="color:#7dd3fc;font-size:12px;font-weight:600;letter-spacing:.06em;">
+                {ai_label} &nbsp;&bull;&nbsp; Yunnan University
+              </span>
+            </div>
+            <h1 style="
+              font-size:clamp(28px,4vw,48px);font-weight:900;color:#f8fafc;
+              margin:0 0 16px;line-height:1.15;
+            ">Prepare before class.<br><span style="color:#38bdf8;">Understand more during class.</span></h1>
+            <p style="color:#94a3b8;font-size:16px;line-height:1.6;margin:0 0 32px;">
+              Preluma turns passive pre-class reading into a guided AI-powered learning
+              mission — Brain Brief, real examples, quizzes, and a smart tutor, all
+              before you walk into the classroom.
+            </p>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+              <div style="
+                background:linear-gradient(135deg,#0ea5e9,#6366f1);
+                border-radius:12px;padding:12px 28px;
+                font-weight:700;font-size:15px;color:#fff;cursor:pointer;
+              ">Start Student Mission</div>
+              <div style="
+                background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+                border-radius:12px;padding:12px 24px;
+                font-weight:600;font-size:15px;color:#cbd5e1;
+              ">Ask Preluma AI</div>
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # ── Stats row ─────────────────────────────────────────────────────────────
+    s1, s2, s3, s4 = st.columns(4)
+    for col, num, lbl in [
+        (s1, "18", "AI Topics"),
+        (s2, "5",  "Mission Steps"),
+        (s3, "3",  "Algorithm Proofs"),
+        (s4, "6+", "AI Providers"),
+    ]:
+        col.markdown(
+            f"""<div style="
+              background:rgba(15,23,42,.7);border:1px solid rgba(148,163,184,.10);
+              border-radius:16px;padding:20px 16px;text-align:center;
+            ">
+              <div style="font-size:32px;font-weight:900;color:#38bdf8;">{num}</div>
+              <div style="font-size:12px;color:#64748b;margin-top:4px;font-weight:600;
+                letter-spacing:.05em;text-transform:uppercase;">{lbl}</div>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<div style='height:32px'></div>", unsafe_allow_html=True)
+
+    # ── Feature cards ─────────────────────────────────────────────────────────
+    st.markdown(
+        "<h3 style='color:#f8fafc;font-weight:800;margin-bottom:20px;"
+        "font-size:20px;'>What you can do</h3>",
+        unsafe_allow_html=True,
+    )
+
+    cards = [
+        ("#0ea5e9", "Student Mission",
+         "5-step guided learning path — Brain Brief, examples, practice, mock test, overview."),
+        ("#6366f1", "Ask Preluma AI",
+         "Chat with the AI tutor. Adaptive style: child, deep, exam, example, or normal mode."),
+        ("#10b981", "My Homework",
+         "View teacher-assigned homework, submit answers, review AI-graded results."),
+        ("#f59e0b", "Teacher Studio",
+         "Merge Sort, Binary Search, Linear Search — live algorithm proof with timing."),
+        ("#ec4899", "Homework Center",
+         "Create homework, assign to students, review submissions and class performance."),
+        ("#8b5cf6", "Evidence Board",
+         "Algorithm proof, CSV proof, audit log, and test results — all in one place."),
+    ]
+
+    c1, c2, c3 = st.columns(3)
+    cols = [c1, c2, c3]
+    for i, (color, title, desc) in enumerate(cards):
+        cols[i % 3].markdown(
+            f"""<div style="
+              background:rgba(15,23,42,.70);
+              border:1px solid rgba(148,163,184,.09);
+              border-top:3px solid {color};
+              border-radius:16px;padding:22px 18px;margin-bottom:16px;
+            ">
+              <div style="font-size:15px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">
+                {title}
+              </div>
+              <div style="font-size:13px;color:#64748b;line-height:1.55;">{desc}</div>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+
+    # ── Quick start ───────────────────────────────────────────────────────────
+    st.markdown(
+        "<h3 style='color:#f8fafc;font-weight:800;margin-bottom:16px;"
+        "font-size:20px;'>Quick start</h3>",
+        unsafe_allow_html=True,
+    )
+    qs1, qs2, qs3 = st.columns(3)
+    if qs1.button("Go to Student Mission", use_container_width=True, type="primary"):
+        st.session_state.active_page = "Student Mission"
+        st.rerun()
+    if qs2.button("Ask Preluma AI", use_container_width=True):
+        st.session_state.active_page = "Ask Preluma AI"
+        st.rerun()
+    if qs3.button("Teacher Studio", use_container_width=True):
+        st.session_state.active_page = "Teacher Studio"
+        st.rerun()
 
 
 # ── Hero ─────────────────────────────────────────────────────────────────────
@@ -1908,6 +2181,7 @@ def main():
         return
 
     pages = {
+        "Home": home_page,
         "Student Mission": lambda: student_mission(presentation),
         "Ask Preluma AI": ask_preluma_ai_page,
         "Teacher Studio": teacher_studio,
@@ -1918,7 +2192,7 @@ def main():
         "Demo Guide": demo_guide,
         "Future Roadmap": roadmap,
     }
-    pages.get(page, lambda: student_mission(presentation))()
+    pages.get(page, home_page)()
 
 
 
