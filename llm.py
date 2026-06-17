@@ -1,8 +1,5 @@
-"""
-llm.py  –  Preluma V17
-Multi-provider LLM integration.
-Priority is configurable; providers automatically fall back when keys or calls fail.
-"""
+"""LLM integration for Preluma. Supports Gemini, OpenAI, Anthropic, Groq, OpenRouter, and Together AI.
+Providers are tried in order. If one fails the next one takes over automatically."""
 
 import os
 import json
@@ -18,7 +15,7 @@ _TOGETHER_URL   = "https://api.together.xyz/v1/chat/completions"
 _OPENAI_MODEL    = os.environ.get("OPENAI_MODEL", "gpt-4.1-mini")
 _ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
 _GROQ_MODEL      = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
-_GEMINI_MODEL    = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+_GEMINI_MODEL    = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
 _OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "openai/gpt-4.1-mini")
 _TOGETHER_MODEL   = os.environ.get("TOGETHER_MODEL", "meta-llama/Llama-3.3-70B-Instruct-Turbo")
 _TIMEOUT         = 20
@@ -94,24 +91,40 @@ def _call_groq(system: str, user: str) -> str:
     return ""
 
 
+def _log_error(msg: str) -> None:
+    # Store the last LLM error in Streamlit session state so the UI can display it.
+    try:
+        import streamlit as st
+        st.session_state["_llm_last_error"] = msg
+    except Exception:
+        pass
+
+
 def _call_gemini(system: str, user: str) -> str:
     key = _key("GEMINI_API_KEY")
     if not key:
         return ""
-    try:
-        resp = requests.post(
-            f"{_GEMINI_URL.format(model=_GEMINI_MODEL)}?key={key}",
-            headers={"Content-Type": "application/json"},
-            json={
-                "contents": [{"role": "user", "parts": [{"text": f"{system}\n\n{user}"}]}],
-                "generationConfig": {"maxOutputTokens": _MAX_TOKENS, "temperature": 0.5},
-            },
-            timeout=_TIMEOUT,
-        )
-        resp.raise_for_status()
-        return resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-    except Exception:
-        pass
+    # Try the configured model first, then fall back to gemini-1.5-flash.
+    models_to_try = list({_GEMINI_MODEL, "gemini-1.5-flash", "gemini-2.0-flash"})
+    for model in models_to_try:
+        try:
+            resp = requests.post(
+                f"{_GEMINI_URL.format(model=model)}?key={key}",
+                headers={"Content-Type": "application/json"},
+                json={
+                    "contents": [{"role": "user", "parts": [{"text": f"{system}\n\n{user}"}]}],
+                    "generationConfig": {"maxOutputTokens": _MAX_TOKENS, "temperature": 0.5},
+                },
+                timeout=_TIMEOUT,
+            )
+            resp.raise_for_status()
+            text = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+            if text:
+                return text
+        except requests.HTTPError as e:
+            _log_error(f"Gemini {model}: HTTP {e.response.status_code}")
+        except Exception as e:
+            _log_error(f"Gemini {model}: {type(e).__name__}")
     return ""
 
 

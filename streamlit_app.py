@@ -27,7 +27,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "29.0 Peak Defense Ready"
+APP_VERSION = "30.0 Peak Defense Ready"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -64,7 +64,7 @@ CSS = """
 /* System font stack — no external CDN required, works offline */
 *, *::before, *::after { box-sizing: border-box; }
 html, body, [class*="css"] { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-.block-container { max-width: 100% !important; padding-top: 1.5rem !important; padding-left: 3rem !important; padding-right: 3rem !important; }
+.block-container { max-width: 100% !important; padding-top: 1.5rem !important; padding-left: 2.5rem !important; padding-right: 2.5rem !important; }
 [data-testid="stSidebar"] { background: #03080f; border-right: 1px solid rgba(255,255,255,.06); }
 [data-testid="stSidebar"] * { color: #e2e8f0; }
 h1, h2, h3 { letter-spacing: -0.02em; }
@@ -591,7 +591,7 @@ code, pre, [data-testid="stCodeBlock"] {
 st.markdown(CSS, unsafe_allow_html=True)
 
 
-# ── helpers ─────────────────────────────────────────────────────────────────
+# Session state helpers and shared utilities used across all pages
 
 def init_state():
     st.session_state.setdefault("student", "")
@@ -620,13 +620,16 @@ def reset_session():
         st.session_state.pop(key, None)
 
 
-
-def _nav_button(label: str, page_name: str, badge: str = "") -> None:
+def _nav_button(label: str, page_name: str, badge: str = "",
+                _in_expander: bool = False) -> None:
+    # Render a nav button. Inside a sidebar expander use st.button so the item
+    # stays inside the collapsed section. Outside use st.sidebar.button.
     display = f"{label}  {badge}".rstrip() if badge else label
     active = st.session_state.get("active_page") == page_name
     btn_type = "primary" if active else "secondary"
-    if st.sidebar.button(display, key=f"nav_{page_name}",
-                         use_container_width=True, type=btn_type):
+    btn_fn = st.button if _in_expander else st.sidebar.button
+    if btn_fn(display, key=f"nav_{page_name}",
+              use_container_width=True, type=btn_type):
         st.session_state.active_page = page_name
         st.rerun()
 
@@ -634,7 +637,7 @@ def _nav_button(label: str, page_name: str, badge: str = "") -> None:
 def sidebar():
     st.session_state.setdefault("active_page", "Home")
 
-    # ── Tower photo — more visible gradient so photo shows through ──
+    # Tower photo — more visible gradient so photo shows through
     if SIDEBAR_URI:
         st.sidebar.markdown(
             f"<style>"
@@ -650,7 +653,7 @@ def sidebar():
             unsafe_allow_html=True,
         )
 
-    # ── Branding ──────────────────────────────────────────────────
+    # Branding
     st.sidebar.markdown(
         "<div class='sb-brand'>"
         "<div class='sb-brand-name'>Preluma</div>"
@@ -659,7 +662,7 @@ def sidebar():
         unsafe_allow_html=True,
     )
 
-    # ── Student identity ──────────────────────────────────────────
+    # Student identity
     st.sidebar.markdown("<div class='sb-nav-wrap'>", unsafe_allow_html=True)
 
     student_name = st.sidebar.text_input(
@@ -703,7 +706,7 @@ def sidebar():
             unsafe_allow_html=True,
         )
 
-    # ── Collapsible nav sections — auto-expand based on active page ──
+    # Collapsible nav sections — auto-expand based on active page
     current_page = st.session_state.get("active_page", "Home")
     learn_pages   = {"Home", "Student Mission", "My Homework", "Ask Preluma AI"}
     teach_pages   = {"Teacher Studio", "Homework Center"}
@@ -712,23 +715,25 @@ def sidebar():
     hw_badge = f" [{unread_count}]" if unread_count else ""
 
     with st.sidebar.expander("LEARN", expanded=(current_page in learn_pages)):
-        _nav_button("Home", "Home")
-        _nav_button("Student Mission", "Student Mission")
-        _nav_button(f"My Homework{hw_badge}", "My Homework")
-        _nav_button("Ask Preluma AI", "Ask Preluma AI")
+        # Buttons inside expanders must use st.button (not st.sidebar.button)
+        # so they render inside the collapsed section and not in the main sidebar.
+        _nav_button("Home", "Home", _in_expander=True)
+        _nav_button("Student Mission", "Student Mission", _in_expander=True)
+        _nav_button(f"My Homework{hw_badge}", "My Homework", _in_expander=True)
+        _nav_button("Ask Preluma AI", "Ask Preluma AI", _in_expander=True)
 
     with st.sidebar.expander("TEACH", expanded=(current_page in teach_pages)):
-        _nav_button("Teacher Studio", "Teacher Studio")
-        _nav_button("Homework Center", "Homework Center")
+        _nav_button("Teacher Studio", "Teacher Studio", _in_expander=True)
+        _nav_button("Homework Center", "Homework Center", _in_expander=True)
 
     with st.sidebar.expander("PROJECT", expanded=(current_page in project_pages)):
-        _nav_button("Evidence Board", "Evidence Board")
-        _nav_button("Professor Defense", "Professor Defense")
-        _nav_button("Project Team", "Project Team")
-        _nav_button("Demo Guide", "Demo Guide")
-        _nav_button("Future Roadmap", "Future Roadmap")
+        _nav_button("Evidence Board", "Evidence Board", _in_expander=True)
+        _nav_button("Professor Defense", "Professor Defense", _in_expander=True)
+        _nav_button("Project Team", "Project Team", _in_expander=True)
+        _nav_button("Demo Guide", "Demo Guide", _in_expander=True)
+        _nav_button("Future Roadmap", "Future Roadmap", _in_expander=True)
 
-    # ── AI status pill ────────────────────────────────────────────
+    # AI status pill
     _prov = _provider()
     _has_key = llm_available()
     _ai_label  = f"AI: {_prov}" if _has_key else "Add API Key"
@@ -752,7 +757,7 @@ def sidebar():
     return st.session_state.active_page, True  # presentation always True
 
 
-# ── Home Page ─────────────────────────────────────────────────────────────────
+# Home page shown to all users on first load
 
 def home_page():
     """Gorgeous Home page — the first thing teacher and students see."""
@@ -765,7 +770,7 @@ def home_page():
         else "linear-gradient(135deg,#020617 0%,#0f172a 50%,#1e1b4b 100%)"
     )
 
-    # ── Full-width hero ────────────────────────────────────────────────────────
+    # Full-width hero
     st.markdown(f"""
     <style>
     @keyframes glow-pulse {{
@@ -777,13 +782,14 @@ def home_page():
       to   {{ opacity:1; transform:translateY(0); }}
     }}
     .hp-hero {{
-      position:relative; border-radius:24px; overflow:hidden;
-      min-height:480px;
+      position:relative; overflow:hidden;
+      min-height:500px;
       background:{bg_hero};
       background-size:cover; background-position:center 30%;
-      border:1px solid rgba(255,255,255,.08);
+      border-bottom:1px solid rgba(255,255,255,.06);
       box-shadow:0 40px 100px rgba(0,0,0,.60);
-      margin-bottom:28px;
+      margin-left:-2.5rem; margin-right:-2.5rem; margin-top:-1.5rem;
+      margin-bottom:32px; border-radius:0;
     }}
     .hp-overlay {{
       position:absolute; inset:0;
@@ -871,7 +877,7 @@ def home_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Stats row ─────────────────────────────────────────────────────────────
+    # Stats row
     stats = [("18", "AI Topics", "#38bdf8"), ("5", "Mission Steps", "#818cf8"),
              ("3+", "Algorithms", "#34d399"), ("6+", "AI Providers", "#fb923c")]
     sc = st.columns(4)
@@ -891,7 +897,7 @@ def home_page():
 
     st.markdown("<div style='height:36px'></div>", unsafe_allow_html=True)
 
-    # ── Feature cards ─────────────────────────────────────────────────────────
+    # Feature cards
     st.markdown("""
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
       <div style="width:4px;height:28px;border-radius:4px;
@@ -938,7 +944,7 @@ def home_page():
 
     st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
 
-    # ── "How it works" strip ──────────────────────────────────────────────────
+    # "How it works" strip
     st.markdown("""
     <div style="
       background:linear-gradient(135deg,rgba(14,165,233,.08),rgba(99,102,241,.06));
@@ -984,7 +990,7 @@ def home_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Quick-start buttons (real Streamlit buttons) ───────────────────────────
+    # Quick-start buttons (real Streamlit buttons)
     st.markdown(
         "<div style='font-size:13px;font-weight:700;color:#475569;letter-spacing:.10em;"
         "text-transform:uppercase;margin-bottom:12px;'>Jump to</div>",
@@ -1000,7 +1006,7 @@ def home_page():
     if qs4.button("Teacher Studio", use_container_width=True):
         st.session_state.active_page = "Teacher Studio"; st.rerun()
 
-    # ── Footer tag ────────────────────────────────────────────────────────────
+    # Footer tag
     st.markdown(f"""
     <div style="margin-top:36px;padding:18px 24px;border-radius:14px;
       background:rgba(8,14,26,.60);border:1px solid rgba(255,255,255,.05);
@@ -1016,7 +1022,7 @@ def home_page():
     """, unsafe_allow_html=True)
 
 
-# ── Hero ─────────────────────────────────────────────────────────────────────
+# Campus hero banner used on Evidence Board and Professor Defense pages
 
 def hero():
     bg = f"url('{CAMPUS_URI}')" if CAMPUS_URI else "linear-gradient(135deg,#020617,#0f172a,#1e1b4b)"
@@ -1050,7 +1056,7 @@ def hero():
     </div>""", unsafe_allow_html=True)
 
 
-# ── Progress ──────────────────────────────────────────────────────────────────
+# Progress bar and page header components shared across pages
 
 def page_intro(theme: str, kicker: str, title: str, subtitle: str) -> None:
     """Render a consistent brand header with a page-specific visual identity."""
@@ -1090,7 +1096,7 @@ def chip_row():
     st.markdown("<div class='chip-row'>" + "".join(f"<span class='chip'>{l}</span>" for l in labels) + "</div>", unsafe_allow_html=True)
 
 
-# ── Mission Control ───────────────────────────────────────────────────────────
+# Mission setup form where the student picks a topic and starts preparation
 
 def mission_control():
     st.markdown("""<div class='sec-head'>
@@ -1156,8 +1162,7 @@ def mission_control():
         st.rerun()
 
 
-# ── Brain Brief ───────────────────────────────────────────────────────────────
-
+# Brain Brief
 def brain_brief():
     if "brief" not in st.session_state: return
     b    = st.session_state.brief
@@ -1207,8 +1212,7 @@ def brain_brief():
             st.write(pack.get("source_url"))
 
 
-# ── Quiz ──────────────────────────────────────────────────────────────────────
-
+# Quiz
 def quiz():
     if "questions" not in st.session_state: return
     st.markdown("""<div class='sec-head'>
@@ -1250,8 +1254,7 @@ def quiz():
         st.rerun()
 
 
-# ── Result ────────────────────────────────────────────────────────────────────
-
+# Result
 def result_section():
     result = st.session_state.get("quiz_result")
     if not result: return
@@ -1317,8 +1320,7 @@ def result_section():
         st.plotly_chart(fig2, use_container_width=True)
 
 
-# ── Smart QnA + UltraTutor ────────────────────────────────────────────────────
-
+# Smart QnA + UltraTutor
 def smart_qna():
     if "pack" not in st.session_state: return
 
@@ -1382,8 +1384,7 @@ def smart_qna():
         st.markdown("<hr style='border-color:rgba(255,255,255,.05);margin:10px 0;'>", unsafe_allow_html=True)
 
 
-# ── Class Questions ───────────────────────────────────────────────────────────
-
+# Class Questions
 def class_questions_and_download():
     if "pack" not in st.session_state: return
     st.markdown("""<div class='sec-head'>
@@ -1404,8 +1405,7 @@ def class_questions_and_download():
         mime="application/json", use_container_width=True)
 
 
-# ── How it works ──────────────────────────────────────────────────────────────
-
+# How it works
 def how_it_works():
     st.markdown("""<div class='kpi-grid'>
       <div class='kpi-card'><div class='kpi-num'>18</div><div class='kpi-lbl'>Curated Topics</div></div>
@@ -1420,8 +1420,7 @@ def how_it_works():
     </div>""", unsafe_allow_html=True)
 
 
-# ── Student Mission ───────────────────────────────────────────────────────────
-
+# Student Mission
 def _set_mission_step(step: int) -> None:
     st.session_state.mission_step = max(1, min(5, int(step)))
     st.rerun()
@@ -1724,12 +1723,7 @@ def student_mission(presentation):
         mission_overview_screen()
 
 
-
-# ── Teacher Studio
-
-# ── Teacher Studio ────────────────────────────────────────────────────────────
-
-def teacher_studio():
+# Teacher Studio: algorithm demos and class analytics# Teacher Studio: algorithm demos and class analyticsdef teacher_studio():
     page_intro(
         "teacher",
         "Algorithm-powered class analytics",
@@ -1800,7 +1794,6 @@ def teacher_studio():
             st.code(line, language="text")
 
 
-
 def _question_needs_clarification(question: str) -> bool:
     text = " ".join(str(question).strip().split())
     if not text:
@@ -1859,7 +1852,7 @@ def ask_preluma_ai_page():
         "Ask naturally. Preluma detects the topic, understands the learning goal, and adjusts the depth and teaching style.",
     )
 
-    # ── No key notice ─────────────────────────────────────────────────────────
+    # No key notice
     if not llm_available():
         st.markdown(
             "<div style='background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.28);"
@@ -1945,7 +1938,16 @@ def ask_preluma_ai_page():
             routed_question = style_prefix + depth_prefix + question.strip()
             with st.spinner(f"Preluma AI is understanding your question about {detected_topic}..."):
                 response = llm_tutor(detected_topic, routed_question, st.session_state.get("persona", "Normal Mode")) if llm_available() else None
-                source = f"AI provider: {_provider()}" if response else "Curated + Wikipedia fallback"
+                # Label the answer source so the student knows which AI answered
+                if response:
+                    source = f"{_provider()} AI"
+                elif llm_available():
+                    source = "Preluma Smart Answer"
+                    err = st.session_state.pop("_llm_last_error", "")
+                    if err:
+                        st.warning(f"AI connection issue: {err}. Showing smart offline answer.", icon=None)
+                else:
+                    source = "Preluma Smart Answer"
                 if response is None:
                     fallback_pack = build_pack(detected_topic, use_wikipedia=True)
                     response = tutor_sections(fallback_pack, routed_question, st.session_state.get("persona", "Normal Mode"))
@@ -1980,7 +1982,7 @@ def my_homework_page():
         "Complete your assigned work, question by question. Each answer is reviewed instantly.",
     )
 
-    # ── Notifications ─────────────────────────────────────────────────────────
+    # Notifications
     notifications = notifications_for_student(student)
     if notifications:
         unread = [n for n in notifications if n.get("Is Read") == "No"]
@@ -2013,7 +2015,7 @@ def my_homework_page():
         st.info("No homework assigned yet. Check back after your teacher publishes an assignment.")
         return
 
-    # ── Homework selector ─────────────────────────────────────────────────────
+    # Homework selector
     labels = {
         f"#{row['Homework ID']} · {row['Title']} · Due {row['Due Date']}": row
         for row in homework_rows
@@ -2050,7 +2052,7 @@ def my_homework_page():
     total_q = len(questions)
     result = st.session_state.get("homework_result")
 
-    # ── RESULTS view ──────────────────────────────────────────────────────────
+    # RESULTS view
     if result:
         pct   = result.get("percentage", 0)
         score = result.get("score", 0)
@@ -2112,7 +2114,7 @@ def my_homework_page():
             st.rerun()
         return
 
-    # ── Sequential Q&A ────────────────────────────────────────────────────────
+    # Sequential Q&A
     if not questions:
         st.info("No questions found for this assignment.")
         return
@@ -2203,7 +2205,6 @@ def my_homework_page():
                     f"{mistake.get('Question', '')}</div>",
                     unsafe_allow_html=True,
                 )
-
 
 
 def _default_homework_questions(topic: str) -> list[dict]:
@@ -2379,7 +2380,7 @@ def homework_center_page():
             st.dataframe(report["submission_rows"], use_container_width=True)
 
 
-# ── Evidence Board ────────────────────────────────────────────────────────────
+# Evidence Board: shows every Python concept and algorithm used in the project
 
 def evidence_board():
     page_intro(
@@ -2419,7 +2420,7 @@ def evidence_board():
     }), use_container_width=True)
 
 
-# ── Professor Defense ─────────────────────────────────────────────────────────
+# Professor Defense: 8-point rubric for the final presentation
 
 def professor_defense():
     page_intro(
@@ -2447,7 +2448,7 @@ def professor_defense():
     st.success("Third-party libraries are allowed. Preluma uses Streamlit and Plotly for the interface, but all core algorithms — Merge Sort, Binary Search, statistics, CSV I/O — are implemented manually in Python. This proves both presentation skill and algorithmic understanding.")
 
 
-# ── Project Team ──────────────────────────────────────────────────────────────
+# Project Team: member cards, team photo, and contribution breakdown
 
 def project_team():
     page_intro(
@@ -2457,7 +2458,7 @@ def project_team():
         "Three students built Preluma together — combining core Python development, algorithm testing, and topic data engineering.",
     )
 
-    # ── Team photo — full-width, proper fit ───────────────────────────────────
+    # Team photo — full-width, proper fit
     if TEAM_URI:
         st.markdown(
             f"<div style='"
@@ -2481,7 +2482,7 @@ def project_team():
     else:
         st.warning("Team photo missing: assets/team_preluma.jpg")
 
-    # ── Member cards ──────────────────────────────────────────────────────────
+    # Member cards
     m1, m2, m3 = st.columns(3)
     members = [
         (m1, "#0ea5e9", "MAMUNUR RASHID",
@@ -2509,7 +2510,7 @@ def project_team():
 
     st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
 
-    # ── Work division table ───────────────────────────────────────────────────
+    # Work division table
     st.markdown(
         "<div style='font-size:13px;font-weight:700;color:#475569;letter-spacing:.10em;"
         "text-transform:uppercase;margin-bottom:12px;'>Contribution Breakdown</div>",
@@ -2534,7 +2535,7 @@ def project_team():
     ], use_container_width=True, hide_index=True)
 
 
-# ── Demo Guide ────────────────────────────────────────────────────────────────
+# Demo Guide: step-by-step script for the live class presentation
 
 def demo_guide():
     page_intro(
@@ -2565,7 +2566,7 @@ def demo_guide():
     st.success("Final line: Preluma does not replace teachers. It prepares students to understand teachers better.")
 
 
-# ── Roadmap ───────────────────────────────────────────────────────────────────
+# Future Roadmap: planned features and product vision beyond the prototype
 
 def roadmap():
     page_intro(
@@ -2584,13 +2585,13 @@ def roadmap():
     st.code("Now:    Python + Streamlit + Wikipedia + Claude/Groq/Gemini + CSV + Merge Sort\nNext:   Login + SQLite + saved student history per account\nLater:  Upload course PDF + retrieval + cited AI answers\nFuture: Mobile app + teacher dashboard + real-time class codes", language="text")
 
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+# App entry point — called by Streamlit on every page load or user interaction
 
 def main():
     init_state()
     page, presentation = sidebar()
 
-    if page in {"My Homework", "🔔 My Homework"} or page.startswith("🔔 My Homework"):
+    if page in {"My Homework", " My Homework"} or page.startswith(" My Homework"):
         my_homework_page()
         return
 
@@ -2607,7 +2608,6 @@ def main():
         "Future Roadmap": roadmap,
     }
     pages.get(page, home_page)()
-
 
 
 if __name__ == "__main__":
