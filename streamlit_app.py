@@ -27,7 +27,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "30.0 Peak Defense Ready"
+APP_VERSION = "32.0 Peak Defense Ready"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -788,11 +788,10 @@ def home_page():
       position:relative; overflow:hidden;
       min-height:520px;
       background:{bg_hero};
-      background-size:cover; background-position:center 22%;
-      border-bottom:1px solid rgba(255,255,255,.06);
+      background-size:cover; background-position:center top;
       box-shadow:0 40px 100px rgba(0,0,0,.60);
       margin-left:-2.5rem; margin-right:-2.5rem; margin-top:-1.5rem;
-      margin-bottom:32px; border-radius:0;
+      margin-bottom:0; border-radius:0;
     }}
     .hp-overlay {{
       position:absolute; inset:0;
@@ -800,7 +799,7 @@ def home_page():
         linear-gradient(115deg, rgba(2,6,23,.97) 0%, rgba(7,14,38,.85) 40%,
                         rgba(15,23,62,.62) 66%, rgba(55,8,120,.46) 100%),
         radial-gradient(ellipse at 12% 60%, rgba(56,189,248,.22) 0%, transparent 52%),
-        linear-gradient(to top, rgba(2,6,23,.98) 0%, transparent 22%);
+        linear-gradient(to top, rgba(2,6,23,1) 0%, rgba(2,6,23,1) 18%, rgba(2,6,23,.88) 26%, transparent 42%);
     }}
     .hp-glow {{
       position:absolute; right:-120px; top:-80px;
@@ -896,6 +895,7 @@ def home_page():
     "></div>
     """, unsafe_allow_html=True)
 
+    st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
     # Stats row
     stats = [("18", "AI Topics", "#38bdf8"), ("5", "Mission Steps", "#818cf8"),
              ("3+", "Algorithms", "#34d399"), ("6+", "AI Providers", "#fb923c")]
@@ -1184,28 +1184,74 @@ def mission_control():
     ds, dt, dtime, dp, dm = preset_data.get(preset, (
         st.session_state.student, st.session_state.topic, "Tomorrow 9 AM", st.session_state.persona, "Fast Review"))
 
+    st.markdown("""
+    <style>
+    /* Mission form — study environment feel */
+    div[data-testid="stForm"] {
+        background: linear-gradient(145deg, rgba(10,18,38,.96), rgba(6,12,26,.98));
+        border: 1px solid rgba(56,189,248,.14);
+        border-radius: 24px; padding: 28px 28px 20px; margin-top: 4px;
+        box-shadow: 0 8px 40px rgba(0,0,0,.40), inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    div[data-testid="stTextInput"] input,
+    div[data-testid="stSelectbox"] > div {
+        background: rgba(15,23,42,.80) !important;
+        border: 1px solid rgba(56,189,248,.18) !important;
+        border-radius: 12px !important; color: #e2e8f0 !important;
+    }
+    div[data-testid="stFormSubmitButton"] button {
+        background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%) !important;
+        border: none !important; border-radius: 14px !important;
+        font-weight: 800 !important; font-size: 16px !important;
+        padding: 14px !important; letter-spacing: .02em !important;
+        box-shadow: 0 8px 28px rgba(99,102,241,.38) !important;
+        transition: transform .15s !important;
+    }
+    .mc-section-label {
+        font-size: 10px; font-weight: 800; color: #38bdf8;
+        letter-spacing: .10em; text-transform: uppercase;
+        margin-bottom: 10px; margin-top: 4px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     with st.form("mission_form", border=False):
-        st.markdown("<div class='card-glass' style='padding:24px;'>", unsafe_allow_html=True)
         c1, c2, c3 = st.columns([1.4, 1, 0.9])
         with c1:
-            student      = st.text_input("Write your name", value=ds)
+            st.markdown("<div class='mc-section-label'>Your details</div>", unsafe_allow_html=True)
+            student      = st.text_input("Your name", value=ds, placeholder="Enter your name")
             topic_choice = st.selectbox("Lecture topic", TOPIC_OPTIONS,
                 index=TOPIC_OPTIONS.index(dt) if dt in TOPIC_OPTIONS else 0)
             topic = st.text_input("Custom topic", placeholder="e.g. Reinforcement Learning") \
                     if topic_choice == "Custom Topic" else topic_choice
             lecture_time = st.text_input("Lecture time", value=dtime)
         with c2:
+            st.markdown("<div class='mc-section-label'>Learning style</div>", unsafe_allow_html=True)
             persona       = st.radio("Tutor personality", ["Normal Mode","Coach Mode","Roast Mode"],
                 captions=["Clear & direct","Warm & motivating","Funny pressure"],
                 index=["Normal Mode","Coach Mode","Roast Mode"].index(dp) if dp in ["Normal Mode","Coach Mode","Roast Mode"] else 0)
             learning_mode = st.selectbox("Learning mode",["Fast Review","Deep Understanding","Exam/Viva Mode"],
                 index=["Fast Review","Deep Understanding","Exam/Viva Mode"].index(dm) if dm in ["Fast Review","Deep Understanding","Exam/Viva Mode"] else 0)
         with c3:
+            st.markdown("<div class='mc-section-label'>What you will get</div>", unsafe_allow_html=True)
             use_wiki = st.checkbox("Wikipedia real data", value=True)
-            st.markdown("**You will get:**")
-            for item in ["AI Brain Brief","All concepts in tabs","Quiz + skill check","Mistake clinic","UltraTutor answers","Smart class questions"]:
-                st.markdown(f"<div style='font-size:13px;color:#94a3b8;padding:2px 0;'>→ {item}</div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+            for item in [
+                ("AI Brain Brief", "#38bdf8"),
+                ("All concepts in tabs", "#818cf8"),
+                ("Quiz + skill check", "#34d399"),
+                ("Mistake clinic", "#f87171"),
+                ("UltraTutor answers", "#fb923c"),
+                ("Smart class questions", "#a78bfa"),
+            ]:
+                st.markdown(
+                    f"<div style='display:flex;align-items:center;gap:8px;"
+                    f"padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);'>"
+                    f"<div style='width:6px;height:6px;border-radius:50%;"
+                    f"background:{item[1]};flex-shrink:0;'></div>"
+                    f"<span style='font-size:12px;color:#94a3b8;'>{item[0]}</span></div>",
+                    unsafe_allow_html=True,
+                )
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
         start = st.form_submit_button("Start Pre-Class Mission", use_container_width=True)
 
     if start:
@@ -2098,14 +2144,14 @@ def ask_preluma_ai_page():
 
     top1, top2, top3 = st.columns([1.2, 1, 1])
     with top1:
-        use_context = st.toggle("Use current mission context", value=True)
+        use_context = st.toggle("Lock to mission topic", value=False)
     with top2:
         mode = st.selectbox("Teaching style", ["Auto-detect", "Explain like I am 5", "Friendly Tutor", "Step-by-Step", "Exam/Viva Answer", "Give More Examples"])
     with top3:
         depth = st.selectbox("Answer depth", ["Balanced", "Short", "Deep"])
 
     st.markdown(
-        f"<span class='context-chip'>Context: {mission_topic if use_context else 'Question only'}</span>"
+        f"<span class='context-chip'>{'Topic locked: ' + mission_topic if use_context else 'Ask anything — any topic'}</span>"
         f"<span class='context-chip'>Provider: {provider_label}</span>"
         f"<span class='context-chip'>Fallbacks ready: {len(providers)}</span>",
         unsafe_allow_html=True,
@@ -2135,25 +2181,27 @@ def ask_preluma_ai_page():
         detected_topic = detect_topic_from_question(question, mission_topic if use_context else "General learning")
         if _question_needs_clarification(question):
             raw = question.strip().casefold().strip(" ?.,!")
-            if raw in _GREETINGS:
+            provider_name = _provider() or "AI"
+            # Pure greeting — respond warmly like any real AI assistant
+            if raw in _GREETINGS or (raw.split()[0] in _GREETINGS if raw.split() else False):
                 reply = (
-                    f"Hello! I am Preluma AI, powered by {_provider() or 'Smart Answer'}. "
-                    f"I am here to help you prepare for {mission_topic}. "
-                    f"Ask me anything — try: 'explain simply', 'give a real example', "
-                    f"'what is the main idea', or 'help me prepare for the exam'."
+                    f"Hello! I am Preluma AI, powered by {provider_name}. "
+                    f"How can I help you today? "
+                    f"You can ask me anything — any topic, any concept, any question. "
+                    f"Just type what you want to understand."
                 )
             else:
+                # Vague input with no specific topic — ask for one more detail
                 reply = (
-                    "I can help — just need one more detail. "
-                    "Do you want a simple overview, a real-life example, "
-                    "a step-by-step explanation, or an exam-ready answer?"
+                    f"I am ready to help. Just tell me what topic or concept you want to understand "
+                    f"and I will give you a clear, direct answer powered by {provider_name}."
                 )
             st.session_state.tutor_history.append({
                 "question": question.strip(),
-                "topic": detected_topic,
+                "topic": "General",
                 "clarification": True,
                 "answer_text": reply,
-                "source": "Preluma",
+                "source": f"Preluma ({provider_name})",
             })
         else:
             style_prefix = {
@@ -2720,16 +2768,19 @@ def project_team():
     m1, m2, m3 = st.columns(3)
     members = [
         (m1, "#0ea5e9", "MAMUNUR RASHID",
-         "Lead Developer · Architecture · Integration",
-         "Built the full Python Streamlit app architecture, AI integration, algorithm modules, homework system, and deployment pipeline. Lead technical contributor across all 12 Python files."),
+         "Lead Developer · Architecture · Deployment",
+         "Built the complete Preluma architecture — streamlit_app.py (2 600+ lines), engine.py, llm.py, algorithms_core.py, homework_core.py, and analytics_core.py. Designed every page, connected the AI pipeline, and deployed to Streamlit Cloud.",
+         "streamlit_app.py · engine.py · llm.py · algorithms_core.py"),
         (m2, "#10b981", "MD FAHIM",
-         "Algorithm Testing · Quiz Module · Python Logic",
-         "Wrote and tested the quiz grading logic, validated algorithm outputs, and contributed Python code for interaction flow and session state management."),
+         "Quiz Logic · Algorithm Validation · Python Testing",
+         "Wrote and validated the quiz grading function in homework_core.py, tested all manual algorithm outputs in algorithms_core.py, and contributed session state handling for the interaction flow across teacher.py.",
+         "homework_core.py · algorithms_core.py · teacher.py"),
         (m3, "#8b5cf6", "MD JIARUL ISLAM",
-         "Data Engineering · Topics Module · Testing",
-         "Built the topic data structure used across all 18 topics, managed the topics.py module, contributed to CSV data handling and test validation."),
+         "Topic Data · Wiki Pipeline · Storage",
+         "Built and maintained the full topic data structure across all 18 topics in topics.py, contributed to the Wikipedia data pipeline in wiki_fetcher.py, and validated CSV record handling in storage_core.py.",
+         "topics.py · wiki_fetcher.py · storage_core.py"),
     ]
-    for col, color, name, role, desc in members:
+    for col, color, name, role, desc, files in members:
         col.markdown(
             f"<div style='background:linear-gradient(145deg,rgba(15,23,42,.94),rgba(8,14,26,.98));"
             f"border:1px solid rgba(148,163,184,.09);border-top:3px solid {color};"
@@ -2737,8 +2788,13 @@ def project_team():
             f"<div style='font-size:10px;font-weight:800;color:{color};letter-spacing:.10em;"
             f"text-transform:uppercase;margin-bottom:10px;'>{role}</div>"
             f"<div style='font-size:17px;font-weight:900;color:#f8fafc;margin-bottom:10px;'>{name}</div>"
-            f"<div style='font-size:13px;color:#64748b;line-height:1.65;'>{desc}</div>"
-            f"</div>",
+            f"<div style='font-size:13px;color:#64748b;line-height:1.65;margin-bottom:12px;'>{desc}</div>"
+            f"<div style='background:rgba(0,0,0,.30);border-radius:8px;padding:8px 12px;"
+            f"border-left:3px solid {color}40;'>"
+            f"<div style='font-size:9px;font-weight:800;color:{color};letter-spacing:.10em;"
+            f"text-transform:uppercase;margin-bottom:4px;'>Python files</div>"
+            f"<div style='font-size:11px;color:#64748b;font-family:monospace;'>{files}</div>"
+            f"</div></div>",
             unsafe_allow_html=True,
         )
 
@@ -2753,18 +2809,18 @@ def project_team():
     st.dataframe([
         {
             "Member": "MAMUNUR RASHID",
-            "Python Files": "streamlit_app.py, engine.py, llm.py, algorithms_core.py, analytics_core.py, homework_core.py, storage_core.py, models.py, result_generator.py",
-            "Responsibility": "Core architecture, AI integration, UI/UX, full deployment",
+            "Python Ownership": "streamlit_app.py, engine.py, llm.py, algorithms_core.py, analytics_core.py, homework_core.py",
+            "Role": "Lead developer — full architecture, AI, UI, deployment",
         },
         {
             "Member": "MD FAHIM",
-            "Python Files": "Quiz grading logic, teacher.py testing, session state validation",
-            "Responsibility": "Algorithm testing, quiz module, Python interaction logic",
+            "Python Ownership": "homework_core.py (quiz grading), algorithms_core.py (testing), teacher.py",
+            "Role": "Quiz & algorithm validation, session state, Python testing",
         },
         {
             "Member": "MD JIARUL ISLAM",
-            "Python Files": "topics.py, wiki_fetcher.py support, data validation",
-            "Responsibility": "Topic data engineering, documentation, test support",
+            "Python Ownership": "topics.py (all 18 topics), wiki_fetcher.py, storage_core.py",
+            "Role": "Topic data engineering, Wikipedia pipeline, CSV storage",
         },
     ], use_container_width=True, hide_index=True)
 
