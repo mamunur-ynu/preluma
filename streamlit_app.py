@@ -9,6 +9,7 @@ import streamlit as st
 
 from engine import build_brain_brief, build_pack, grade, make_questions, tutor_sections
 from teacher import build_teacher_dataframe, class_average_readiness, readiness_label, teacher_analytics, search_student
+from result_generator import generate_result_file
 from topics import TOPIC_OPTIONS, validate_topics
 from wiki_fetcher import smart_answer_from_pack
 from storage_core import append_student_row, next_record_id, read_recent_logs, timestamp
@@ -25,7 +26,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "25.0 Unique Interfaces + Adaptive AI"
+APP_VERSION = "26.0 Peak Defense Ready"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -57,9 +58,9 @@ TEAM_URI = image_data_uri(str(TEAM_IMAGE))
 
 CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* System font stack — no external CDN required, works offline */
 *, *::before, *::after { box-sizing: border-box; }
-html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+html, body, [class*="css"] { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 .block-container { max-width: 1200px; padding-top: 0 !important; padding-left: 2rem; padding-right: 2rem; }
 [data-testid="stSidebar"] { background: #03080f; border-right: 1px solid rgba(255,255,255,.06); }
 [data-testid="stSidebar"] * { color: #e2e8f0; }
@@ -226,7 +227,7 @@ h1, h2, h3 { letter-spacing: -0.02em; }
     background: linear-gradient(135deg, rgba(15,23,42,.94), rgba(30,41,59,.82));
     border: 1px solid rgba(125,211,252,.18);
 }
-.member-card.main { border-color: rgba(96,165,250,.45); background: linear-gradient(135deg, rgba(14,165,233,.17), rgba(124,58,237,.14)); }
+/* Equal styling for all team members — no visual hierarchy */
 .member-role { color: #93c5fd; font-weight: 900; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
 .member-card h3 { color: #fff; margin: 0 0 8px; font-size: 19px; }
 .member-card p  { color: #cbd5e1; line-height: 1.55; margin: 0; font-size: 14px; }
@@ -645,7 +646,7 @@ def progress_bar():
     html = "<div class='progress-wrap'>"
     for label, done, active in steps:
         c = "done" if done else ("active" if active else "")
-        prefix = "✓ " if done else ""
+        prefix = "[v] " if done else ""
         html += f"<div class='progress-step {c}'>{prefix}{label}</div>"
     html += "</div>"
     st.markdown(html, unsafe_allow_html=True)
@@ -659,7 +660,7 @@ def chip_row():
 
 def mission_control():
     st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(56,189,248,.12);'>🎯</div>
+      <div class='sec-icon' style='background:rgba(56,189,248,.12);'>GO</div>
       <div><div class='sec-title'>Mission Control</div><div class='sec-sub'>Choose your topic and start your pre-class mission</div></div>
     </div>""", unsafe_allow_html=True)
 
@@ -750,7 +751,7 @@ def brain_brief():
     all_concepts = b.get("all_concepts", {})
     if all_concepts:
         st.markdown("""<div class='sec-head' style='margin-top:1.5rem;'>
-          <div class='sec-icon' style='background:rgba(251,191,36,.10);'>📖</div>
+          <div class='sec-icon' style='background:rgba(251,191,36,.10);'>BB</div>
           <div><div class='sec-title'>All Key Concepts</div><div class='sec-sub'>Click each tab to explore in depth</div></div>
         </div>""", unsafe_allow_html=True)
         tabs = st.tabs([f"  {n.title()}  " for n in all_concepts])
@@ -777,7 +778,7 @@ def brain_brief():
 def quiz():
     if "questions" not in st.session_state: return
     st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(34,211,238,.10);'>⚡</div>
+      <div class='sec-icon' style='background:rgba(34,211,238,.10);'>EX</div>
       <div><div class='sec-title'>Readiness Quiz</div><div class='sec-sub'>4 questions across 4 skill types — find your weak spots</div></div>
     </div>""", unsafe_allow_html=True)
 
@@ -826,7 +827,7 @@ def result_section():
     label     = _rl(pct)
 
     st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(52,211,153,.10);'>📊</div>
+      <div class='sec-icon' style='background:rgba(52,211,153,.10);'>QZ</div>
       <div><div class='sec-title'>Your Result</div><div class='sec-sub'>Score breakdown and skill analysis</div></div>
     </div>""", unsafe_allow_html=True)
 
@@ -856,13 +857,13 @@ def result_section():
         </div>""", unsafe_allow_html=True)
 
     st.markdown("""<div class='sec-head' style='margin-top:1.5rem;'>
-      <div class='sec-icon' style='background:rgba(248,113,113,.10);'>🔬</div>
+      <div class='sec-icon' style='background:rgba(248,113,113,.10);'>AN</div>
       <div><div class='sec-title'>Mistake Clinic</div><div class='sec-sub'>Every wrong answer explained clearly</div></div>
     </div>""", unsafe_allow_html=True)
 
     for i, d in enumerate(result["details"], 1):
         ok = d["correct"]
-        with st.expander(f"{'✓' if ok else '✗'} Q{i}: {d['skill']} — {'Correct' if ok else 'Review needed'}"):
+        with st.expander(f"{'[OK]' if ok else '[NO]'} Q{i}: {d['skill']} — {'Correct' if ok else 'Review needed'}"):
             col1, col2 = st.columns(2)
             with col1:
                 st.markdown(f"<div style='font-size:13px;color:#64748b;'>Your answer</div><div style='font-size:14px;color:{'#34d399' if ok else '#f87171'};font-weight:600;'>{d['chosen'] or 'No answer'}</div>", unsafe_allow_html=True)
@@ -888,7 +889,7 @@ def smart_qna():
     if "pack" not in st.session_state: return
 
     st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(99,102,241,.12);'>🤖</div>
+      <div class='sec-icon' style='background:rgba(99,102,241,.12);'>AI</div>
       <div><div class='sec-title'>UltraTutor</div><div class='sec-sub'>Ask anything — get an answer matched exactly to how you asked</div></div>
     </div>""", unsafe_allow_html=True)
 
@@ -952,7 +953,7 @@ def smart_qna():
 def class_questions_and_download():
     if "pack" not in st.session_state: return
     st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(34,211,238,.10);'>💬</div>
+      <div class='sec-icon' style='background:rgba(34,211,238,.10);'>QA</div>
       <div><div class='sec-title'>Smart Class Questions</div><div class='sec-sub'>Walk into class with questions that show you prepared</div></div>
     </div>""", unsafe_allow_html=True)
 
@@ -1292,13 +1293,19 @@ def student_mission(presentation):
 def teacher_studio():
     hero()
     st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(56,189,248,.12);'>👩‍🏫</div>
+      <div class='sec-icon' style='background:rgba(56,189,248,.12);'>TS</div>
       <div><div class='sec-title'>Teacher Studio</div><div class='sec-sub'>Manual Python algorithms: Merge Sort, Binary Search, CSV persistence, audit log</div></div>
     </div>""", unsafe_allow_html=True)
 
     rows      = build_teacher_dataframe(st.session_state.get("latest_session"))
     analytics = teacher_analytics(rows)
     summary   = analytics["summary"]
+
+    # Auto-generate result.txt with live algorithm timing whenever Teacher Studio loads
+    try:
+        generate_result_file()
+    except Exception:
+        pass  # Never crash the UI — result.txt is a proof artifact, not critical path
 
     c1,c2,c3,c4 = st.columns(4)
     c1.metric("Class Average",  f"{summary['class_average']}%")
@@ -1729,7 +1736,7 @@ def homework_center_page():
 def evidence_board():
     hero()
     st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(167,139,250,.12);'>📋</div>
+      <div class='sec-icon' style='background:rgba(167,139,250,.12);'>EB</div>
       <div><div class='sec-title'>Evidence Board</div><div class='sec-sub'>What this project demonstrates and why it matters</div></div>
     </div>""", unsafe_allow_html=True)
 
@@ -1768,7 +1775,7 @@ def evidence_board():
 def professor_defense():
     hero()
     st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(52,211,153,.10);'>🎓</div>
+      <div class='sec-icon' style='background:rgba(52,211,153,.10);'>PD</div>
       <div><div class='sec-title'>Professor Defense</div><div class='sec-sub'>Built for final presentation — clear problem, Python proof, innovation, and contribution</div></div>
     </div>""", unsafe_allow_html=True)
 
@@ -1820,7 +1827,7 @@ def project_team():
         <h3>MD FAHIM</h3>
         <p>Supported quiz checking, feature testing, and interaction feedback.</p>
       </div>
-      <div class='member-card main'>
+      <div class='member-card'>
         <div class='member-role'>Core App · UI/UX · Integration</div>
         <h3>MAMUNUR RASHID</h3>
         <p>Worked on the main Python Streamlit app, interface design, module integration, and deployment flow.</p>
@@ -1877,7 +1884,7 @@ def demo_guide():
 def roadmap():
     hero()
     st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(52,211,153,.10);'>🚀</div>
+      <div class='sec-icon' style='background:rgba(52,211,153,.10);'>RM</div>
       <div><div class='sec-title'>Future Roadmap</div><div class='sec-sub'>Where Preluma goes next</div></div>
     </div>""", unsafe_allow_html=True)
 
@@ -1902,7 +1909,6 @@ def main():
 
     pages = {
         "Student Mission": lambda: student_mission(presentation),
-        "Ask Preluma AI": ask_preluma_ai_page,
         "Ask Preluma AI": ask_preluma_ai_page,
         "Teacher Studio": teacher_studio,
         "Homework Center": homework_center_page,

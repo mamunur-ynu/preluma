@@ -188,8 +188,18 @@ def _call_llm(system: str, user: str) -> str:
 
 def detect_topic_from_question(question: str, fallback_topic: str = "General learning") -> str:
     """Extract an explicit topic so old mission context cannot override the user's question."""
+    import re as _re
     raw = " ".join(str(question).strip().split())
     lowered = raw.casefold()
+
+    # Vague words that should never become a topic
+    _VAGUE = {
+        "help", "explain", "tell", "more", "details", "why", "how",
+        "this", "it", "please", "okay", "ok", "yes", "no", "what",
+        "thanks", "thank", "understand", "know", "learn", "study",
+    }
+
+    # FIX: "ai" must be whole-word only (prevents "explain" → AI via expl-ai-n)
     common = {
         "machine learning": "Machine Learning",
         "deep learning": "Deep Learning",
@@ -200,12 +210,14 @@ def detect_topic_from_question(question: str, fallback_topic: str = "General lea
         "python": "Python Programming",
         "photosynthesis": "Photosynthesis",
         "artificial intelligence": "Artificial Intelligence",
-        "ai": "Artificial Intelligence",
         "urban water management": "Urban Water Management",
     }
     for phrase, title in common.items():
         if phrase in lowered:
             return title
+    # Whole-word match for short tokens that are substrings of common words
+    if _re.search(r'\bai\b', lowered):
+        return "Artificial Intelligence"
 
     prefixes = [
         "about ", "explain ", "what is ", "what are ", "tell me about ",
@@ -223,6 +235,9 @@ def detect_topic_from_question(question: str, fallback_topic: str = "General lea
     for suffix in cleanup:
         candidate = candidate.replace(suffix, "")
     candidate = candidate.strip(" :,-")
+    # FIX: reject vague single words that pass the length check (e.g. "help", "explain")
+    if candidate in _VAGUE:
+        return fallback_topic or "General learning"
     if 1 <= len(candidate.split()) <= 7 and len(candidate) >= 3:
         return candidate.title()
     return fallback_topic or "General learning"
@@ -251,16 +266,23 @@ def _parse_json(raw: str) -> dict | None:
 
 def _detect_question_style(question: str) -> str:
     """Detect how the student wants the answer delivered."""
+    import re as _re
     q = question.lower()
-    if any(w in q for w in ["5 year", "5-year", "kid", "child", "simple", "easy", "beginner", "basic"]):
+    # FIX: added "simply", "easily" so "explain X simply" → child style
+    if any(w in q for w in ["5 year", "5-year", "kid", "child", "simple", "simply",
+                             "easy", "easily", "beginner", "basic", "like i am 5"]):
         return "child"
-    if any(w in q for w in ["exam", "viva", "marks", "answer for", "write for", "definition"]):
-        return "exam"
+    # FIX: "example" check BEFORE "exam" so "give me an example" doesn't trigger exam
     if any(w in q for w in ["example", "real life", "real-life", "use case", "application"]):
         return "example"
+    # FIX: use word-boundary so "exam" doesn't match inside "example"
+    if _re.search(r'\b(exam|viva|marks|answer for|write for|definition)\b', q):
+        return "exam"
     if any(w in q for w in ["difference", "vs", "compare", "versus", "between"]):
         return "compare"
-    if any(w in q for w in ["why", "reason", "because", "how does", "how do"]):
+    # FIX: added "deep", "deeply", "in depth" — user writing "explain X deeply" → deep style
+    if any(w in q for w in ["why", "reason", "because", "how does", "how do",
+                             "deep", "deeply", "in depth", "in detail", "detailed"]):
         return "deep"
     return "normal"
 
