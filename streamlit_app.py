@@ -13,7 +13,7 @@ from result_generator import generate_result_file
 from topics import TOPIC_OPTIONS, validate_topics
 from wiki_fetcher import smart_answer_from_pack
 from storage_core import append_student_row, next_record_id, read_recent_logs, timestamp
-from llm import active_provider as _provider, available_providers, llm_available, llm_tutor, detect_topic_from_question
+from llm import active_provider as _provider, available_providers, llm_available, llm_tutor, detect_topic_from_question, llm_free_chat
 from homework_core import (
     create_homework,
     homework_for_student,
@@ -27,7 +27,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "32.0 Peak Defense Ready"
+APP_VERSION = "33.0 Peak Defense Ready"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -712,7 +712,7 @@ def sidebar():
     # Collapsible nav sections — auto-expand based on active page
     current_page = st.session_state.get("active_page", "Home")
     learn_pages   = {"Home", "Student Mission", "My Homework", "Ask Preluma AI"}
-    teach_pages   = {"Teacher Studio", "Homework Center"}
+    teach_pages   = {"Teacher Profile", "Teacher Studio", "Homework Center"}
     project_pages = {"Evidence Board", "Professor Defense", "Project Team", "Demo Guide", "Future Roadmap"}
 
     hw_badge = f" [{unread_count}]" if unread_count else ""
@@ -726,6 +726,7 @@ def sidebar():
         _nav_button("Ask Preluma AI", "Ask Preluma AI", _in_expander=True)
 
     with st.sidebar.expander("TEACH", expanded=(current_page in teach_pages)):
+        _nav_button("Teacher Profile", "Teacher Profile", _in_expander=True)
         _nav_button("Teacher Studio", "Teacher Studio", _in_expander=True)
         _nav_button("Homework Center", "Homework Center", _in_expander=True)
 
@@ -786,9 +787,9 @@ def home_page():
     }}
     .hp-hero {{
       position:relative; overflow:hidden;
-      min-height:520px;
+      min-height:560px;
       background:{bg_hero};
-      background-size:cover; background-position:center top;
+      background-size:cover; background-position:center 15%;
       box-shadow:0 40px 100px rgba(0,0,0,.60);
       margin-left:-2.5rem; margin-right:-2.5rem; margin-top:-1.5rem;
       margin-bottom:0; border-radius:0;
@@ -796,10 +797,10 @@ def home_page():
     .hp-overlay {{
       position:absolute; inset:0;
       background:
-        linear-gradient(115deg, rgba(2,6,23,.97) 0%, rgba(7,14,38,.85) 40%,
-                        rgba(15,23,62,.62) 66%, rgba(55,8,120,.46) 100%),
-        radial-gradient(ellipse at 12% 60%, rgba(56,189,248,.22) 0%, transparent 52%),
-        linear-gradient(to top, rgba(2,6,23,1) 0%, rgba(2,6,23,1) 18%, rgba(2,6,23,.88) 26%, transparent 42%);
+        linear-gradient(110deg, rgba(2,6,23,.94) 0%, rgba(4,10,28,.88) 28%,
+                        rgba(8,16,40,.48) 50%, rgba(8,14,32,.12) 70%, transparent 88%),
+        radial-gradient(ellipse at 12% 60%, rgba(56,189,248,.14) 0%, transparent 46%),
+        linear-gradient(to top, rgba(2,6,23,1) 0%, rgba(2,6,23,.72) 10%, transparent 24%);
     }}
     .hp-glow {{
       position:absolute; right:-120px; top:-80px;
@@ -897,7 +898,7 @@ def home_page():
 
     st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
     # Stats row
-    stats = [("18", "AI Topics", "#38bdf8"), ("5", "Mission Steps", "#818cf8"),
+    stats = [("28", "AI Topics", "#38bdf8"), ("5", "Mission Steps", "#818cf8"),
              ("3+", "Algorithms", "#34d399"), ("6+", "AI Providers", "#fb923c")]
     sc = st.columns(4)
     for col, (num, lbl, color) in zip(sc, stats):
@@ -1900,9 +1901,25 @@ def mission_overview_screen() -> None:
     """, unsafe_allow_html=True)
 
     if class_questions:
-        st.markdown("#### Questions you are ready to ask in class")
-        for number, question in enumerate(class_questions[:5], 1):
-            st.write(f"{number}. {question}")
+        st.markdown(
+            "<div style='font-size:10px;font-weight:800;color:#38bdf8;letter-spacing:.10em;"
+            "text-transform:uppercase;margin:20px 0 12px;'>"
+            "3 questions ready to ask your teacher in class</div>",
+            unsafe_allow_html=True,
+        )
+        for number, question in enumerate(class_questions[:3], 1):
+            st.markdown(
+                f"<div style='background:linear-gradient(135deg,rgba(56,189,248,.07),rgba(99,102,241,.05));"
+                f"border:1px solid rgba(56,189,248,.18);border-radius:16px;"
+                f"padding:16px 20px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start;'>"
+                f"<div style='min-width:28px;height:28px;border-radius:50%;"
+                f"background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.30);"
+                f"display:flex;align-items:center;justify-content:center;"
+                f"font-size:12px;font-weight:900;color:#38bdf8;flex-shrink:0;'>{number}</div>"
+                f"<div style='font-size:14px;color:#cbd5e1;line-height:1.60;'>{question}</div>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
 
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -1951,6 +1968,126 @@ def student_mission(presentation):
         mission_mock_test_screen()
     else:
         mission_overview_screen()
+
+
+
+def teacher_profile_page():
+    """Teacher profile page — shows course teacher details for Zhou Yujue."""
+    page_intro(
+        "teacher",
+        "Course Teacher · Yunnan University",
+        "Teacher Profile",
+        "Meet the teacher behind this course — department, course info, and what Preluma was built to support.",
+    )
+
+    st.markdown("""
+    <style>
+    .tp-avatar {
+        width:88px; height:88px; border-radius:50%;
+        background:linear-gradient(135deg,#0ea5e9,#6366f1);
+        display:flex; align-items:center; justify-content:center;
+        font-size:32px; font-weight:900; color:#fff; flex-shrink:0;
+        border:3px solid rgba(56,189,248,.35);
+        box-shadow:0 8px 28px rgba(99,102,241,.40);
+    }
+    .tp-banner {
+        background:linear-gradient(135deg,rgba(14,165,233,.09),rgba(99,102,241,.07));
+        border:1px solid rgba(56,189,248,.15); border-radius:24px;
+        padding:28px 32px; margin-bottom:28px;
+        display:flex; align-items:center; gap:28px;
+    }
+    .tp-name { font-size:26px; font-weight:900; color:#f1f5f9; margin-bottom:4px; }
+    .tp-cn   { font-size:18px; font-weight:700; color:#38bdf8; margin-bottom:6px; }
+    .tp-role { font-size:13px; color:#64748b; }
+    .tp-card {
+        background:linear-gradient(145deg,rgba(10,18,36,.96),rgba(6,12,26,.98));
+        border:1px solid rgba(255,255,255,.07); border-radius:20px;
+        padding:22px 24px; margin-bottom:14px;
+    }
+    .tp-card-lbl {
+        font-size:10px; font-weight:800; color:#38bdf8;
+        letter-spacing:.10em; text-transform:uppercase; margin-bottom:10px;
+    }
+    .tp-row {
+        display:flex; gap:12px; align-items:flex-start; padding:8px 0;
+        border-bottom:1px solid rgba(255,255,255,.04);
+    }
+    .tp-row:last-child { border-bottom:none; }
+    .tp-key { min-width:130px; font-size:12px; color:#475569; font-weight:600; }
+    .tp-val { font-size:13px; color:#cbd5e1; }
+    </style>
+    <div class="tp-banner">
+        <div class="tp-avatar">ZY</div>
+        <div>
+            <div class="tp-name">Zhou Yujue</div>
+            <div class="tp-cn">周玉珏</div>
+            <div class="tp-role">
+                Lecturer &nbsp;&bull;&nbsp; School of Software &nbsp;&bull;&nbsp; Yunnan University
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("""
+        <div class="tp-card">
+            <div class="tp-card-lbl">Course and Teaching</div>
+            <div class="tp-row"><div class="tp-key">Course</div>
+            <div class="tp-val">Python Application Development and AI Tools</div></div>
+            <div class="tp-row"><div class="tp-key">Department</div>
+            <div class="tp-val">School of Software, Yunnan University</div></div>
+            <div class="tp-row"><div class="tp-key">Level</div>
+            <div class="tp-val">2nd-year undergraduate</div></div>
+            <div class="tp-row"><div class="tp-key">Teaching style</div>
+            <div class="tp-val">Project-based, practical Python focus</div></div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_b:
+        st.markdown("""
+        <div class="tp-card">
+            <div class="tp-card-lbl">School and Location</div>
+            <div class="tp-row"><div class="tp-key">University</div>
+            <div class="tp-val">Yunnan University (云南大学)</div></div>
+            <div class="tp-row"><div class="tp-key">School</div>
+            <div class="tp-val">School of Software (软件学院)</div></div>
+            <div class="tp-row"><div class="tp-key">Campus</div>
+            <div class="tp-val">Chenggong Campus, Kunming, Yunnan</div></div>
+            <div class="tp-row"><div class="tp-key">Profile photo</div>
+            <div class="tp-val">To be added with teacher consent</div></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="tp-card">
+        <div class="tp-card-lbl">Why Preluma was built for this class</div>
+        <div style="font-size:14px;color:#94a3b8;line-height:1.80;margin-top:6px;">
+            Preluma was designed specifically for students in Teacher Zhou Yujue's class.
+            The platform guides students through a 5-step pre-class mission so every student
+            walks into the lecture already familiar with the key ideas — meaning better questions,
+            stronger engagement, and higher retention after class.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="font-size:10px;font-weight:800;color:#f59e0b;letter-spacing:.10em;
+        text-transform:uppercase;margin:20px 0 12px;">
+        Sample questions students can ask in this class
+    </div>
+    """, unsafe_allow_html=True)
+    for i, q in enumerate([
+        "Is it better to understand one algorithm deeply or know many at a surface level?",
+        "How do we know when an AI model has actually learned and not just memorised the training data?",
+        "What is the most common mistake students make when writing their first real Python project?",
+    ], 1):
+        st.markdown(
+            f"<div style='background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.18);"
+            f"border-radius:14px;padding:14px 18px;margin-bottom:10px;display:flex;gap:12px;'>"
+            f"<span style='font-size:11px;font-weight:900;color:#f59e0b;min-width:24px;'>Q{i}</span>"
+            f"<span style='font-size:13px;color:#cbd5e1;line-height:1.65;'>{q}</span></div>",
+            unsafe_allow_html=True,
+        )
 
 
 # Teacher Studio: algorithm demos and class analytics
@@ -2182,13 +2319,14 @@ def ask_preluma_ai_page():
         if _question_needs_clarification(question):
             raw = question.strip().casefold().strip(" ?.,!")
             provider_name = _provider() or "AI"
-            # Pure greeting — respond warmly like any real AI assistant
+            # Pure greeting — respond warmly like a real AI assistant
             if raw in _GREETINGS or (raw.split()[0] in _GREETINGS if raw.split() else False):
-                reply = (
+                # Try live LLM for a natural greeting; fall back to a hardcoded reply
+                live = llm_free_chat(question.strip(), provider_name) if llm_available() else ""
+                reply = live if live else (
                     f"Hello! I am Preluma AI, powered by {provider_name}. "
                     f"How can I help you today? "
-                    f"You can ask me anything — any topic, any concept, any question. "
-                    f"Just type what you want to understand."
+                    f"You can ask me anything — any topic, any concept, or any question."
                 )
             else:
                 # Vague input with no specific topic — ask for one more detail
@@ -2889,6 +3027,7 @@ def main():
         "Home": home_page,
         "Student Mission": lambda: student_mission(presentation),
         "Ask Preluma AI": ask_preluma_ai_page,
+        "Teacher Profile": teacher_profile_page,
         "Teacher Studio": teacher_studio,
         "Homework Center": homework_center_page,
         "Evidence Board": evidence_board,

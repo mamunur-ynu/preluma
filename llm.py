@@ -19,7 +19,7 @@ _GEMINI_MODEL    = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
 _OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "openai/gpt-4.1-mini")
 _TOGETHER_MODEL   = os.environ.get("TOGETHER_MODEL", "meta-llama/Llama-3.3-70B-Instruct-Turbo")
 _TIMEOUT         = 20
-_MAX_TOKENS      = 1400
+_MAX_TOKENS      = 2200
 
 
 def _key(name: str) -> str:
@@ -355,7 +355,7 @@ def llm_tutor(topic: str, question: str, style: str = "Normal Mode") -> dict | N
         ),
     }.get(style, "Be clear, direct, and confident.")
 
-    system = f"""You are Preluma UltraTutor — an expert AI teaching assistant for university students.
+    system = f"""You are Preluma UltraTutor — a highly capable AI academic assistant for second-year university students at Yunnan University, School of Software. You answer in clear, natural, connected English. You are as capable as ChatGPT, Claude, or Gemini — give equally strong, complete, and intelligent answers.
 
 Your MOST IMPORTANT job: detect HOW the student is asking and match your answer style EXACTLY to that.
 
@@ -365,14 +365,15 @@ REQUIRED STYLE FOR THIS RESPONSE:
 PERSONA:
 {persona_instruction}
 
-STRICT RULES — violating these means your answer is wrong:
-1. The "explain_simply" field must FULLY match the required style above — not just partially
-2. If the student asked for child-style: ZERO technical terms allowed in explain_simply
-3. If the student asked for exam-style: EVERY sentence must be exam-appropriate
-4. Never use bullet symbols (* or -)
-5. Match the requested depth: short may be brief, balanced should be 2-4 connected paragraphs, deep may be 5-8 coherent paragraphs
-6. Write natural prose, not disconnected fragments
-7. ONLY output a valid JSON object — absolutely no text before or after it, no markdown fences"""
+STRICT RULES:
+1. The "explain_simply" field must FULLY match the required style — not just partially
+2. If child-style was requested: ZERO technical jargon in explain_simply
+3. If exam-style was requested: every sentence must be exam-appropriate and precise
+4. Never use bullet symbols (* or -) anywhere in your answer
+5. Short depth: 1-2 tight paragraphs. Balanced: 3-4 connected paragraphs. Deep: 5-8 thorough paragraphs
+6. Write flowing natural prose — never disconnected fragments or list sentences
+7. Give COMPLETE answers — do not truncate or trail off mid-sentence
+8. ONLY output a valid JSON object — no text before or after, no markdown fences"""
 
     user = (
         f"Topic: {topic}\n"
@@ -452,3 +453,16 @@ def llm_class_questions(topic: str, definition: str, concepts: list) -> list | N
     except Exception:
         pass
     return None
+
+
+def llm_free_chat(question: str, provider_name: str = "AI") -> str:
+    """Call the LLM for natural free conversation — returns plain text, no JSON required."""
+    system = (
+        f"You are Preluma AI, a friendly and knowledgeable academic assistant powered by {provider_name}. "
+        "You help university students with any question — academic topics, study advice, general questions, or just conversation. "
+        "Respond naturally and helpfully in 2-4 sentences. Be warm, direct, and clear. "
+        "Never refuse to answer. If you do not know something, say so honestly and offer what you do know."
+    )
+    result = _call_llm(system, question)
+    return result.strip() if result else ""
+
