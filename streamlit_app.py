@@ -1723,7 +1723,9 @@ def student_mission(presentation):
         mission_overview_screen()
 
 
-# Teacher Studio: algorithm demos and class analytics# Teacher Studio: algorithm demos and class analyticsdef teacher_studio():
+# Teacher Studio: algorithm demos and class analytics
+
+def teacher_studio():
     page_intro(
         "teacher",
         "Algorithm-powered class analytics",
@@ -1794,16 +1796,28 @@ def student_mission(presentation):
             st.code(line, language="text")
 
 
+# Words that are not real questions and need a follow-up prompt instead of a topic answer
+_GREETINGS = {"hi", "hello", "hey", "yo", "hiya", "sup", "ok", "okay", "sure",
+               "test", "testing", "good", "nice", "great", "thanks", "thank you",
+               "bye", "goodbye", "lol", "haha", "hmm", "yes", "no", "yeah"}
+
+_VAGUE_WORDS = {"help", "explain", "tell me", "more", "details",
+                "why", "how", "this", "it", "i do not understand"}
+
+
 def _question_needs_clarification(question: str) -> bool:
+    # Return True when the input is too vague to answer meaningfully.
     text = " ".join(str(question).strip().split())
     if not text:
         return True
     cleaned = text.casefold().strip(" ?.,!")
-    ambiguous_only = {
-        "help", "explain", "tell me", "more", "details",
-        "why", "how", "this", "it", "i do not understand",
-    }
-    return cleaned in ambiguous_only
+    # Single-word greetings or acknowledgements are not real questions
+    if cleaned in _GREETINGS:
+        return True
+    # Vague one-phrase inputs that need more context
+    if cleaned in _VAGUE_WORDS:
+        return True
+    return False
 
 
 def _natural_answer_text(response: dict, depth: str) -> str:
@@ -1914,12 +1928,26 @@ def ask_preluma_ai_page():
     if ask and question.strip():
         detected_topic = detect_topic_from_question(question, mission_topic if use_context else "General learning")
         if _question_needs_clarification(question):
+            raw = question.strip().casefold().strip(" ?.,!")
+            if raw in _GREETINGS:
+                reply = (
+                    f"Hello! I am Preluma AI, powered by {_provider() or 'Smart Answer'}. "
+                    f"I am here to help you prepare for {mission_topic}. "
+                    f"Ask me anything — try: 'explain simply', 'give a real example', "
+                    f"'what is the main idea', or 'help me prepare for the exam'."
+                )
+            else:
+                reply = (
+                    "I can help — just need one more detail. "
+                    "Do you want a simple overview, a real-life example, "
+                    "a step-by-step explanation, or an exam-ready answer?"
+                )
             st.session_state.tutor_history.append({
                 "question": question.strip(),
                 "topic": detected_topic,
                 "clarification": True,
-                "answer_text": "I can help, but I need one detail first: do you want a simple overview, a deep explanation of how it works, a real-life example, or an exam-ready answer?",
-                "source": "Preluma intent check",
+                "answer_text": reply,
+                "source": "Preluma",
             })
         else:
             style_prefix = {
