@@ -130,9 +130,12 @@ h1, h2, h3 { letter-spacing: -0.02em; }
     display: flex; gap: 0; margin: 0 0 2rem;
     background: rgba(15,23,42,.60); border-radius: 16px;
     padding: 6px; border: 1px solid rgba(255,255,255,.07);
+    overflow-x: auto;
 }
-.progress-step { flex: 1; text-align: center; padding: 10px 8px; border-radius: 12px;
-    font-size: 12px; font-weight: 600; color: #64748b; }
+.progress-step {
+    flex: 1; min-width: 90px; text-align: center; padding: 10px 6px; border-radius: 12px;
+    font-size: 11px; font-weight: 600; color: #64748b; white-space: nowrap;
+}
 .progress-step.done   { color: #34d399; background: rgba(52,211,153,.10); }
 .progress-step.active { color: #38bdf8; background: rgba(56,189,248,.12); font-weight: 800; }
 
@@ -783,9 +786,9 @@ def home_page():
     }}
     .hp-hero {{
       position:relative; overflow:hidden;
-      min-height:500px;
+      min-height:520px;
       background:{bg_hero};
-      background-size:cover; background-position:center 30%;
+      background-size:cover; background-position:center 22%;
       border-bottom:1px solid rgba(255,255,255,.06);
       box-shadow:0 40px 100px rgba(0,0,0,.60);
       margin-left:-2.5rem; margin-right:-2.5rem; margin-top:-1.5rem;
@@ -794,9 +797,10 @@ def home_page():
     .hp-overlay {{
       position:absolute; inset:0;
       background:
-        linear-gradient(115deg, rgba(2,6,23,.96) 0%, rgba(7,14,38,.82) 42%,
-                        rgba(15,23,62,.60) 68%, rgba(55,8,120,.44) 100%),
-        radial-gradient(ellipse at 12% 60%, rgba(56,189,248,.22) 0%, transparent 52%);
+        linear-gradient(115deg, rgba(2,6,23,.97) 0%, rgba(7,14,38,.85) 40%,
+                        rgba(15,23,62,.62) 66%, rgba(55,8,120,.46) 100%),
+        radial-gradient(ellipse at 12% 60%, rgba(56,189,248,.22) 0%, transparent 52%),
+        linear-gradient(to top, rgba(2,6,23,.98) 0%, transparent 22%);
     }}
     .hp-glow {{
       position:absolute; right:-120px; top:-80px;
@@ -877,6 +881,21 @@ def home_page():
     </div>
     """, unsafe_allow_html=True)
 
+    # Full page background wrapper — keeps the entire page cohesive
+    st.markdown("""
+    <style>
+    .stApp { background: #020817 !important; }
+    .stMainBlockContainer { background: transparent !important; }
+    </style>
+    <div style="
+        position:fixed; inset:0; z-index:-1;
+        background:
+            radial-gradient(ellipse at 20% 50%, rgba(56,189,248,.055) 0%, transparent 55%),
+            radial-gradient(ellipse at 80% 80%, rgba(99,102,241,.055) 0%, transparent 50%),
+            #020817;
+    "></div>
+    """, unsafe_allow_html=True)
+
     # Stats row
     stats = [("18", "AI Topics", "#38bdf8"), ("5", "Mission Steps", "#818cf8"),
              ("3+", "Algorithms", "#34d399"), ("6+", "AI Providers", "#fb923c")]
@@ -884,15 +903,16 @@ def home_page():
     for col, (num, lbl, color) in zip(sc, stats):
         col.markdown(f"""
         <div style="
-          background:linear-gradient(145deg,rgba(15,23,42,.88),rgba(8,15,30,.95));
+          background:linear-gradient(145deg,rgba(15,23,42,.88),rgba(8,14,28,.96));
           border:1px solid rgba(255,255,255,.07); border-radius:20px;
-          padding:22px 16px; text-align:center;
-          box-shadow:0 8px 32px rgba(0,0,0,.30);
+          padding:24px 16px; text-align:center;
+          box-shadow:0 8px 32px rgba(0,0,0,.40);
+          transition: border-color .2s;
         ">
-          <div style="font-size:36px;font-weight:900;color:{color};
-            text-shadow:0 0 18px {color}66;">{num}</div>
-          <div style="font-size:11px;color:#475569;margin-top:6px;font-weight:700;
-            letter-spacing:.08em;text-transform:uppercase;">{lbl}</div>
+          <div style="font-size:38px;font-weight:900;color:{color};
+            text-shadow:0 0 22px {color}55;letter-spacing:-.02em;">{num}</div>
+          <div style="font-size:10px;color:#334155;margin-top:7px;font-weight:800;
+            letter-spacing:.10em;text-transform:uppercase;">{lbl}</div>
         </div>""", unsafe_allow_html=True)
 
     st.markdown("<div style='height:36px'></div>", unsafe_allow_html=True)
@@ -927,19 +947,27 @@ def home_page():
     for i, (grad, num, title, desc) in enumerate(feature_data):
         cols[i % 3].markdown(f"""
         <div style="
-          background:rgba(10,17,32,.82); border:1px solid rgba(148,163,184,.09);
-          border-radius:20px; padding:22px 20px; margin-bottom:14px;
-          transition:border-color .2s;
+          background: linear-gradient(145deg, rgba(10,17,36,.95), rgba(8,13,26,.98));
+          border: 1px solid rgba(255,255,255,.07);
+          border-top: 1px solid rgba(255,255,255,.14);
+          border-radius: 20px; padding: 24px 22px; margin-bottom: 14px;
+          box-shadow: 0 4px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+          position: relative; overflow: hidden;
         ">
           <div style="
-            display:inline-flex;align-items:center;justify-content:center;
-            width:36px;height:36px;border-radius:10px;
+            position:absolute; top:-20px; right:-20px; width:80px; height:80px;
+            border-radius:50%; background:{grad}; opacity:.07; filter:blur(20px);
+          "></div>
+          <div style="
+            display:inline-flex; align-items:center; justify-content:center;
+            width:40px; height:40px; border-radius:12px;
             background:{grad};
-            font-size:12px;font-weight:900;color:#fff;margin-bottom:14px;
+            font-size:12px; font-weight:900; color:#fff; margin-bottom:16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,.28);
           ">{num}</div>
-          <div style="font-size:15px;font-weight:800;color:#f1f5f9;
-            margin-bottom:8px;letter-spacing:-.01em;">{title}</div>
-          <div style="font-size:13px;color:#64748b;line-height:1.60;">{desc}</div>
+          <div style="font-size:15px;font-weight:800;color:#e2e8f0;
+            margin-bottom:8px;letter-spacing:-.015em;">{title}</div>
+          <div style="font-size:13px;color:#475569;line-height:1.65;">{desc}</div>
         </div>""", unsafe_allow_html=True)
 
     st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
@@ -1099,10 +1127,53 @@ def chip_row():
 # Mission setup form where the student picks a topic and starts preparation
 
 def mission_control():
-    st.markdown("""<div class='sec-head'>
-      <div class='sec-icon' style='background:rgba(56,189,248,.12);'>GO</div>
-      <div><div class='sec-title'>Mission Control</div><div class='sec-sub'>Choose your topic and start your pre-class mission</div></div>
-    </div>""", unsafe_allow_html=True)
+    st.markdown("""
+    <style>
+    .mc-banner {
+        background: linear-gradient(135deg, rgba(14,165,233,.10) 0%, rgba(99,102,241,.08) 100%);
+        border: 1px solid rgba(56,189,248,.16);
+        border-radius: 24px; padding: 28px 32px; margin-bottom: 28px;
+        position: relative; overflow: hidden;
+    }
+    .mc-banner-glow {
+        position: absolute; right: -60px; top: -60px;
+        width: 200px; height: 200px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(99,102,241,.22) 0%, transparent 70%);
+    }
+    .mc-banner-title {
+        font-size: 26px; font-weight: 900; color: #f1f5f9;
+        margin-bottom: 8px; letter-spacing: -.03em;
+    }
+    .mc-banner-title span { color: #38bdf8; }
+    .mc-banner-sub {
+        font-size: 14px; color: #64748b; line-height: 1.60;
+    }
+    .mc-checklist {
+        display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;
+    }
+    .mc-check {
+        background: rgba(52,211,153,.08); border: 1px solid rgba(52,211,153,.20);
+        border-radius: 20px; padding: 4px 12px;
+        font-size: 12px; color: #34d399; font-weight: 600;
+    }
+    </style>
+    <div class="mc-banner">
+        <div class="mc-banner-glow"></div>
+        <div class="mc-banner-title">Mission Control &nbsp;<span>GO</span></div>
+        <div class="mc-banner-sub">
+            Set your topic, choose how deep you want to go, and let Preluma AI build
+            your complete pre-class learning mission in seconds.
+        </div>
+        <div class="mc-checklist">
+            <span class="mc-check">AI Brain Brief</span>
+            <span class="mc-check">All Concepts in Tabs</span>
+            <span class="mc-check">Quiz + Skill Check</span>
+            <span class="mc-check">Mistake Clinic</span>
+            <span class="mc-check">UltraTutor Answers</span>
+            <span class="mc-check">Smart Class Questions</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     preset = st.selectbox("Demo preset", ["Manual Input","AI Class Demo","Python Exam Demo","Statistics Viva Demo"], index=0)
     preset_data = {
@@ -1597,45 +1668,158 @@ def _save_mission_quiz_result(result: dict) -> None:
 
 
 def mission_mock_test_screen() -> None:
+    st.markdown("""
+    <style>
+    @keyframes slide-in {
+        from { opacity: 0; transform: translateX(28px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+    .mock-card {
+        animation: slide-in .35s cubic-bezier(.22,.61,.36,1) both;
+        background: linear-gradient(145deg, rgba(15,23,42,.90), rgba(8,14,28,.95));
+        border: 1px solid rgba(255,255,255,.09); border-radius: 24px;
+        padding: 32px 28px; margin-bottom: 20px;
+    }
+    .mock-skill-tag {
+        display: inline-block; padding: 5px 14px; border-radius: 30px;
+        font-size: 11px; font-weight: 800; letter-spacing: .09em;
+        text-transform: uppercase; margin-bottom: 18px;
+        background: rgba(239,68,68,.14); color: #f87171;
+        border: 1px solid rgba(239,68,68,.28);
+    }
+    .mock-question-text {
+        font-size: 19px; font-weight: 700; color: #f1f5f9;
+        line-height: 1.50; margin-bottom: 28px;
+    }
+    .mock-progress-dots {
+        display: flex; gap: 8px; margin-bottom: 24px;
+    }
+    .mock-dot {
+        width: 34px; height: 6px; border-radius: 4px;
+        background: rgba(255,255,255,.10);
+    }
+    .mock-dot.done   { background: #34d399; }
+    .mock-dot.active { background: #38bdf8; }
+    .mock-counter {
+        font-size: 12px; font-weight: 700; color: #475569;
+        letter-spacing: .06em; text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.markdown("""<div class='sec-head'>
       <div class='sec-icon' style='background:rgba(239,68,68,.15);'>04</div>
       <div><div class='sec-title'>Step 4 · Mini Mock Test</div>
-      <div class='sec-sub'>Check understanding before entering the lecture</div></div>
+      <div class='sec-sub'>One question at a time — think before you pick</div></div>
     </div>""", unsafe_allow_html=True)
 
     questions = st.session_state.questions
+    total = len(questions)
+
+    # Results screen
     if st.session_state.get("quiz_result"):
         result = st.session_state.quiz_result
-        st.success(f"Submitted: {result['score']}/{result['total']} correct · {result['pct']}% readiness")
+        pct = result["pct"]
+        color = "#34d399" if pct >= 75 else ("#f59e0b" if pct >= 50 else "#f87171")
+        st.markdown(f"""
+        <div style="
+            background: linear-gradient(145deg,rgba(15,23,42,.90),rgba(8,14,28,.95));
+            border: 1px solid {color}44; border-radius: 24px; padding: 32px 28px;
+            text-align: center; margin-bottom: 24px;
+        ">
+            <div style="font-size:48px;font-weight:900;color:{color};margin-bottom:8px;">
+                {pct}%
+            </div>
+            <div style="font-size:16px;color:#94a3b8;margin-bottom:4px;">
+                {result["score"]} out of {result["total"]} correct
+            </div>
+            <div style="font-size:13px;color:#475569;margin-top:12px;">
+                Weakest skill: <span style="color:#f87171;font-weight:700;">
+                {result["weakest"]}</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         for index, detail in enumerate(result["details"], 1):
-            status = "Correct" if detail["correct"] else "Review"
-            with st.expander(f"Question {index} · {status} · {detail['skill']}"):
-                st.write(f"Your answer: {detail['chosen'] or 'No answer'}")
-                st.write(f"Correct answer: {detail['answer']}")
+            ok = detail["correct"]
+            with st.expander(
+                f"{'✓' if ok else '✗'} Q{index} · {detail['skill']} · "
+                f"{'Correct' if ok else 'Review needed'}"
+            ):
+                c1, c2 = st.columns(2)
+                c1.markdown(f"**Your answer:** {detail['chosen'] or 'No answer'}")
+                c2.markdown(f"**Correct:** {detail['answer']}")
                 st.info(detail["why"])
         _mission_navigation(3, 5, "View Final Overview")
         return
 
-    with st.form("guided_mock_test", border=False):
-        answers = {}
-        for index, question in enumerate(questions):
-            st.markdown(
-                f"<div class='card-glass'><div class='albl lbl-red'>"
-                f"{question['skill']}</div><div class='atxt'>{question['q']}</div></div>",
-                unsafe_allow_html=True,
-            )
-            answers[index] = st.radio(
-                "Choose one",
-                question["options"],
-                key=f"guided_quiz_{index}",
-                label_visibility="collapsed",
-            )
-        submitted = st.form_submit_button("Submit Mock Test", use_container_width=True)
+    # One-question-at-a-time flow
+    idx = st.session_state.get("_mock_q_index", 0)
+    if idx >= total:
+        idx = total - 1
+    st.session_state._mock_q_index = idx
 
-    if submitted:
-        result = grade(questions, answers)
-        _save_mission_quiz_result(result)
-        st.rerun()
+    q = questions[idx]
+    skill_colors = {
+        "Definition":    ("rgba(56,189,248,.14)",  "#38bdf8",  "rgba(56,189,248,.28)"),
+        "Core Concept":  ("rgba(167,139,250,.14)", "#a78bfa",  "rgba(167,139,250,.28)"),
+        "Application":   ("rgba(52,211,153,.14)",  "#34d399",  "rgba(52,211,153,.28)"),
+        "Misconception": ("rgba(251,191,36,.14)",  "#fbbf24",  "rgba(251,191,36,.28)"),
+    }
+    bg, fg, border = skill_colors.get(q["skill"], ("rgba(239,68,68,.14)", "#f87171", "rgba(239,68,68,.28)"))
+
+    # Progress dots
+    dots_html = "<div class='mock-progress-dots'>"
+    for i in range(total):
+        cls = "done" if i < idx else ("active" if i == idx else "")
+        dots_html += f"<div class='mock-dot {cls}'></div>"
+    dots_html += "</div>"
+
+    st.markdown(f"""
+    <div class="mock-card">
+        <div class="mock-counter">Question {idx + 1} of {total}</div>
+        {dots_html}
+        <div style="
+            display:inline-block; padding:5px 14px; border-radius:30px;
+            font-size:11px; font-weight:800; letter-spacing:.09em;
+            text-transform:uppercase; margin-bottom:18px;
+            background:{bg}; color:{fg}; border:1px solid {border};
+        ">{q["skill"]}</div>
+        <div class="mock-question-text">{q["q"]}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    answer_key = f"mock_ans_{idx}"
+    chosen = st.radio(
+        "Choose your answer",
+        q["options"],
+        key=answer_key,
+        label_visibility="collapsed",
+    )
+
+    is_last = idx == total - 1
+    col_prev, col_next = st.columns([1, 3])
+
+    with col_prev:
+        if idx > 0 and st.button("← Back", use_container_width=True):
+            st.session_state._mock_q_index = idx - 1
+            st.rerun()
+
+    with col_next:
+        label = "Submit Mock Test" if is_last else f"Next Question →"
+        if st.button(label, use_container_width=True, type="primary"):
+            if not is_last:
+                st.session_state._mock_q_index = idx + 1
+                st.rerun()
+            else:
+                # Collect all answers and grade
+                answers = {}
+                for i in range(total):
+                    answers[i] = st.session_state.get(f"mock_ans_{i}", "")
+                result = grade(questions, answers)
+                _save_mission_quiz_result(result)
+                st.session_state._mock_q_index = 0
+                st.rerun()
 
     _mission_navigation(3, None)
 
@@ -1804,6 +1988,15 @@ _GREETINGS = {"hi", "hello", "hey", "yo", "hiya", "sup", "ok", "okay", "sure",
 _VAGUE_WORDS = {"help", "explain", "tell me", "more", "details",
                 "why", "how", "this", "it", "i do not understand"}
 
+# Short phrases that are essentially greetings + requests for help with no topic
+_HELP_PHRASES = {
+    "i need help", "need help", "please help", "help me", "help please",
+    "can you help", "can u help", "i need help please", "please help me",
+    "hi i need help", "hello i need help", "hey i need help",
+    "hi help me", "hello help me", "hey help me",
+    "hi can you help", "hello can you help",
+}
+
 
 def _question_needs_clarification(question: str) -> bool:
     # Return True when the input is too vague to answer meaningfully.
@@ -1811,11 +2004,24 @@ def _question_needs_clarification(question: str) -> bool:
     if not text:
         return True
     cleaned = text.casefold().strip(" ?.,!")
-    # Single-word greetings or acknowledgements are not real questions
+    # Exact greeting word
     if cleaned in _GREETINGS:
         return True
-    # Vague one-phrase inputs that need more context
+    # Exact vague phrase
     if cleaned in _VAGUE_WORDS:
+        return True
+    # Known help-only phrases with no real topic
+    if cleaned in _HELP_PHRASES:
+        return True
+    # Starts with a greeting then has only vague words (e.g. "hi i need help please")
+    words = cleaned.split()
+    if words and words[0] in _GREETINGS:
+        rest_words = set(words[1:])
+        all_vague = rest_words <= (_GREETINGS | _VAGUE_WORDS | {"i", "a", "me", "please", "u", "need", "some"})
+        if all_vague:
+            return True
+    # Very short input with no academic content (3 words or fewer, none academic)
+    if len(words) <= 3 and not any(len(w) > 6 for w in words):
         return True
     return False
 
