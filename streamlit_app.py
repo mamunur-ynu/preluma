@@ -198,7 +198,7 @@ def _get_photo_src(photo_key: str) -> str | None:
 
 # ─────────────────────────────────────────────────────────────────────────────
 
-APP_VERSION = "40.4"
+APP_VERSION = "40.5"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -1047,7 +1047,7 @@ def home_page():
       <div class='hp-glow'></div>
       <div class='hp-content'>
         <h1 class='hp-h1'>
-          Prepare before class.<br>
+          Prepare before class<br>
           <em>Understand more during class.</em>
         </h1>
         <p class='hp-sub'>
@@ -1056,7 +1056,7 @@ def home_page():
         </p>
         <div class='hp-badge'>
           <span class='hp-badge-dot'></span>
-          <span class='hp-badge-txt'>{ai_label} Powered &nbsp;&bull;&nbsp; Yunnan University</span>
+          <span class='hp-badge-txt'>Preluma AI &nbsp;&bull;&nbsp; Yunnan University</span>
         </div>
       </div>
     </div>
