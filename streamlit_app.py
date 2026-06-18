@@ -97,6 +97,14 @@ def _clear_session_cookie() -> None:
 # ─── Supabase Photo Storage ───────────────────────────────────────────────────
 _PHOTO_TABLE = "preluma_photos"
 
+def _get_secret(name: str) -> str:
+    """Safe Streamlit secrets reader — returns '' if key is missing."""
+    try:
+        val = st.secrets.get(name, "")
+        return str(val).strip() if val else ""
+    except Exception:
+        return ""
+
 def _sb_photo_url() -> str:
     base = _get_secret("SUPABASE_URL").rstrip("/")
     return f"{base}/rest/v1/{_PHOTO_TABLE}"
@@ -190,7 +198,7 @@ def _get_photo_src(photo_key: str) -> str | None:
 
 # ─────────────────────────────────────────────────────────────────────────────
 
-APP_VERSION = "36.0 Login System"
+APP_VERSION = "40.0"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -646,6 +654,7 @@ code, pre, [data-testid="stCodeBlock"] {
 .theme-ai       { --page-accent:#c4b5fd; --page-border:rgba(139,92,246,.28); --page-bg-a:rgba(76,29,149,.32); --page-bg-b:rgba(15,23,42,.88); --page-glow:rgba(139,92,246,.18); }
 .theme-homework { --page-accent:#fbbf24; --page-border:rgba(245,158,11,.25); --page-bg-a:rgba(120,53,15,.26); --page-bg-b:rgba(15,23,42,.9); --page-glow:rgba(245,158,11,.13); }
 .theme-teacher  { --page-accent:#67e8f9; --page-border:rgba(6,182,212,.24); --page-bg-a:rgba(8,47,73,.52); --page-bg-b:rgba(15,23,42,.9); --page-glow:rgba(6,182,212,.14); }
+.theme-student  { --page-accent:#a78bfa; --page-border:rgba(167,139,250,.25); --page-bg-a:rgba(49,15,122,.28); --page-bg-b:rgba(15,23,42,.92); --page-glow:rgba(167,139,250,.14); }
 .theme-evidence { --page-accent:#86efac; --page-border:rgba(34,197,94,.25); --page-bg-a:rgba(5,46,22,.48); --page-bg-b:rgba(8,15,27,.95); --page-glow:rgba(34,197,94,.13); }
 .theme-defense  { --page-accent:#bfdbfe; --page-border:rgba(96,165,250,.25); --page-bg-a:rgba(30,58,138,.30); --page-bg-b:rgba(15,23,42,.93); --page-glow:rgba(59,130,246,.15); }
 .theme-demo     { --page-accent:#fdba74; --page-border:rgba(249,115,22,.24); --page-bg-a:rgba(124,45,18,.28); --page-bg-b:rgba(15,23,42,.92); --page-glow:rgba(249,115,22,.12); }
@@ -1065,13 +1074,27 @@ def home_page():
           Brain Brief, adaptive quiz, multi-provider AI tutor, and teacher analytics —
           all in one Python app.
         </p>
-        <div class='hp-cta-row'>
-          <div class='hp-cta-primary'>Start Learning Mission</div>
-          <div class='hp-cta-ghost'>Ask Preluma AI</div>
-        </div>
       </div>
     </div>
     """, unsafe_allow_html=True)
+
+    # CTA buttons — real Streamlit buttons overlaid below the hero
+    cta1, cta2, _ = st.columns([1.4, 1.2, 2])
+    _role = st.session_state.get("user_role", "student")
+    if _role == "student":
+        if cta1.button("🚀 Start Learning Mission", use_container_width=True, type="primary"):
+            st.session_state.active_page = "Student Mission"
+            st.rerun()
+        if cta2.button("💬 Ask Preluma AI", use_container_width=True):
+            st.session_state.active_page = "Ask Preluma AI"
+            st.rerun()
+    else:
+        if cta1.button("📊 Teacher Studio", use_container_width=True, type="primary"):
+            st.session_state.active_page = "Teacher Studio"
+            st.rerun()
+        if cta2.button("📋 Class Dashboard", use_container_width=True):
+            st.session_state.active_page = "Class Dashboard"
+            st.rerun()
 
     # Full page background wrapper — keeps the entire page cohesive
     st.markdown("""
@@ -3108,6 +3131,53 @@ def student_profile_page():
             tags_html += "</div>"
             st.markdown(tags_html, unsafe_allow_html=True)
 
+    # ── Profile Photo Upload ──────────────────────────────────────────────────
+    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+    with st.expander("📷 Update Profile Photo", expanded=False):
+        st.markdown(
+            "<div style='font-size:12px;color:#64748b;margin-bottom:10px;'>"
+            "Upload a photo (JPG or PNG, max 5 MB). It will appear on your profile card.</div>",
+            unsafe_allow_html=True,
+        )
+        photo_up = st.file_uploader(
+            "Choose photo", type=["jpg", "jpeg", "png"],
+            key="profile_photo_up",
+        )
+        c1, c2 = st.columns(2)
+        if photo_up is not None:
+            size_mb = photo_up.size / (1024 * 1024)
+            if size_mb > 5:
+                st.warning(f"Photo too large ({size_mb:.1f} MB). Max is 5 MB.")
+            elif c1.button("💾 Save Photo", key="save_photo_btn", type="primary",
+                           use_container_width=True):
+                ext = photo_up.name.rsplit(".", 1)[-1].lower()
+                if ext == "jpg":
+                    ext = "jpeg"
+                with st.spinner("Saving photo..."):
+                    # Save locally for this session
+                    photos_dir = Path("photos")
+                    photos_dir.mkdir(exist_ok=True)
+                    (photos_dir / f"{username}.{ext}").write_bytes(photo_up.getvalue())
+                    # Clear cache so new photo is shown on next load
+                    st.session_state.pop(f"_sbp_{username}", None)
+                    # Push to Supabase if available
+                    _save_photo_sb(username, photo_up.getvalue(), ext)
+                st.success("✓ Photo saved!")
+                st.rerun()
+
+        if photo_src:
+            if c2.button("🗑 Remove Photo", key="del_photo_btn", use_container_width=True):
+                with st.spinner("Removing..."):
+                    photos_dir = Path("photos")
+                    for ext in ("jpg", "jpeg", "png", "webp"):
+                        fp = photos_dir / f"{username}.{ext}"
+                        if fp.exists():
+                            fp.unlink()
+                    st.session_state.pop(f"_sbp_{username}", None)
+                    _delete_photo_sb(username)
+                st.success("✓ Photo removed.")
+                st.rerun()
+
 
 def teacher_profile_page():
     """Compact name-card grid — click to open full detail page."""
@@ -4289,36 +4359,77 @@ def evidence_board():
         "evidence",
         "Project proof and technical validation",
         "Evidence Board",
-        "Every Python concept, algorithm, and AI integration used in Preluma — proven and documented.",
+        "Every Python concept, algorithm, AI integration, and data quality check used in Preluma — proven and documented.",
     )
 
     st.markdown("""<div class='ev-grid'>
-      <div class='ev-card'><h4>Clear Problem</h4><p>Students enter lectures unprepared, leading to passive learning and poor retention.</p></div>
-      <div class='ev-card'><h4>Python Architecture</h4><p>Streamlit, Pandas, Plotly, dicts, session state, forms, CSV, and modular functions.</p></div>
-      <div class='ev-card'><h4>Manual Algorithms</h4><p>Merge Sort O(n log n) and Binary Search O(log n) implemented from scratch — no library sorting.</p></div>
-      <div class='ev-card'><h4>Multi-LLM AI</h4><p>Claude, Groq, and Gemini with automatic fallback — whichever key is available is used.</p></div>
-      <div class='ev-card'><h4>CSV Persistence</h4><p>Student quiz results stored in data/students.csv using Python csv module. Survives page refresh.</p></div>
-      <div class='ev-card'><h4>Wikipedia Fallback</h4><p>Unknown topics fetch real content from Wikipedia API — no empty answers ever.</p></div>
-      <div class='ev-card'><h4>Audit Log</h4><p>Every algorithm call is timed and written to result.txt with nanosecond precision.</p></div>
-      <div class='ev-card'><h4>Smart Tutor Style</h4><p>UltraTutor detects if you want child-simple, exam-ready, example-first, or deep explanation.</p></div>
-      <div class='ev-card'><h4>Live Deployment</h4><p>Running live at preluma-edtech.streamlit.app — accessible from any device, anywhere.</p></div>
+      <div class='ev-card'><h4>Clear Problem</h4><p>Students enter lectures unprepared, leading to passive learning and poor retention. Preluma solves this with a structured 5-step AI mission before each class.</p></div>
+      <div class='ev-card'><h4>Python Architecture</h4><p>Streamlit, Pandas, Plotly, dicts, session state, forms, CSV, Supabase REST API — all in modular Python files totalling 5 100+ lines.</p></div>
+      <div class='ev-card'><h4>Manual Algorithms</h4><p>Merge Sort O(n log n) and Binary Search O(log n) implemented from scratch — no library sorting. Nanosecond timing stored in result.txt.</p></div>
+      <div class='ev-card'><h4>Multi-LLM AI</h4><p>Claude, Groq, and Gemini with automatic fallback — whichever key is available is used. 3-Mood system: Normal, Coach, Roast.</p></div>
+      <div class='ev-card'><h4>Persistent Storage</h4><p>Supabase REST API stores student records, homework, projects, and profile photos permanently. CSV fallback when Supabase is unavailable.</p></div>
+      <div class='ev-card'><h4>Wikipedia Fallback</h4><p>Unknown topics fetch real content from Wikipedia API — no empty answers, ever. 29 built-in topic packs plus unlimited free-text topics.</p></div>
+      <div class='ev-card'><h4>Login & Security</h4><p>HMAC-signed session tokens survive browser refresh with zero network calls. Role-based access: students and teachers see different pages.</p></div>
+      <div class='ev-card'><h4>Homework & Projects</h4><p>Teachers publish homework and class projects. Students submit files (up to 100 MB) stored in Supabase — categorised by type after upload.</p></div>
+      <div class='ev-card'><h4>Data Quality Module</h4><p>data_quality.py runs automated checks: topic field validation, CSV schema checks, duplicate detection, and integrity tests — with nanosecond timing.</p></div>
     </div>""", unsafe_allow_html=True)
 
-    errors = validate_topics()
-    if errors:
-        st.warning("Topic issues: " + ", ".join(errors[:3]))
+    # Live data quality report
+    st.markdown(
+        "<div style='font-size:11px;font-weight:800;color:#86efac;letter-spacing:.10em;"
+        "text-transform:uppercase;margin:24px 0 10px;'>Live Data Quality Report</div>",
+        unsafe_allow_html=True,
+    )
+    if st.button("▶ Run All Checks Now", key="run_dq_btn", type="primary"):
+        import data_quality as _dq
+        with st.spinner("Running checks..."):
+            report = _dq.run_all_checks()
+        overall_color = "#34d399" if report["all_passed"] else "#f87171"
+        overall_label = "✅ ALL CHECKS PASSED" if report["all_passed"] else "❌ CHECKS FAILED"
+        total_ms = report["total_time_ns"] / 1_000_000
+        st.markdown(
+            f"<div style='background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.20);"
+            f"border-radius:14px;padding:14px 18px;margin-bottom:12px;'>"
+            f"<span style='font-size:15px;font-weight:800;color:{overall_color};'>{overall_label}</span>"
+            f"<span style='font-size:12px;color:#475569;margin-left:14px;'>"
+            f"{report['total_errors']} error(s) · {report['total_warnings']} warning(s) · {total_ms:.1f} ms</span>"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+        for suite in report["suites"]:
+            icon = "✅" if suite["passed"] else "❌"
+            suite_ms = suite["time_ns"] / 1_000_000
+            with st.expander(f"{icon}  {suite['suite']}  ({suite_ms:.1f} ms)", expanded=not suite["passed"]):
+                for e in suite.get("errors", []):
+                    st.error(e)
+                for w in suite.get("warnings", []):
+                    st.warning(w)
+                if suite["passed"] and not suite.get("warnings"):
+                    st.success("No issues found.")
+                for key, label in [("topics_checked","Topics checked"),("files_checked","Files checked"),
+                                    ("rows_checked","Rows checked"),("duplicates","Duplicates found")]:
+                    if key in suite:
+                        st.caption(f"{label}: {suite[key]}")
     else:
-        st.success(f"All topic packs validated — no data errors found.")
+        errors = validate_topics()
+        if errors:
+            st.warning("Topic issues: " + ", ".join(errors[:3]))
+        else:
+            st.success("All 29 topic packs validated — no data errors found.")
 
     st.markdown("### Python Concepts Demonstrated")
     st.dataframe(pd.DataFrame({
         "Concept": ["Functions","Nested Dicts","Session State","Forms","DataFrame","Plotly Charts",
-                    "CSV File I/O","Wikipedia API","Multi-LLM","Merge Sort","Binary Search","Audit Log","Tabs"],
-        "Used For": ["Modular app logic","Topic pack storage","Quiz and tutor state",
-                     "Safe form submission","Teacher analytics","Readiness visualisation",
-                     "Persistent student records","Unknown topic fallback","Claude/Groq/Gemini auto-select",
-                     "Manual O(n log n) ranking","Manual O(log n) student search",
-                     "Algorithm timing in result.txt","All-concept display"],
+                    "CSV File I/O","Supabase REST API","Wikipedia API","Multi-LLM","Merge Sort",
+                    "Binary Search","Audit Log","HMAC Auth","Data Quality Tests"],
+        "Used For": ["Modular app logic across 8 Python files","Topic pack storage (29 built-in topics)",
+                     "Quiz, tutor, and login state","Safe form submission for homework and projects",
+                     "Teacher analytics and class dashboard","Readiness visualisation and score charts",
+                     "Local fallback for all data types","Permanent cloud storage for files, photos, projects",
+                     "Unknown topic fallback — no empty answers","Claude/Groq/Gemini auto-select with fallback",
+                     "Manual O(n log n) student ranking","Manual O(log n) student search",
+                     "Algorithm timing in result.txt (nanoseconds)","Session token signing — survives browser refresh",
+                     "Automated validation for topics, CSVs, duplicates"],
     }), use_container_width=True)
 
 
@@ -4389,16 +4500,16 @@ def project_team():
     members = [
         (m1, "#0ea5e9", "MAMUNUR RASHID",
          "Lead Developer · Architecture · Deployment",
-         "Built the complete Preluma architecture — streamlit_app.py (2 600+ lines), engine.py, llm.py, algorithms_core.py, homework_core.py, and analytics_core.py. Designed every page, connected the AI pipeline, and deployed to Streamlit Cloud.",
-         "streamlit_app.py · engine.py · llm.py · algorithms_core.py"),
+         "Built the complete Preluma architecture — streamlit_app.py (5 100+ lines), engine.py, llm.py, project_core.py, homework_core.py, auth.py. Designed every page, built the login system, 3-Mood AI, student/teacher project system, and deployed to Streamlit Cloud.",
+         "streamlit_app.py · engine.py · llm.py · project_core.py · auth.py"),
         (m2, "#10b981", "MD FAHIM",
          "Quiz Logic · Algorithm Validation · Python Testing",
-         "Wrote and validated the quiz grading function in homework_core.py, tested all manual algorithm outputs in algorithms_core.py, and contributed session state handling for the interaction flow across teacher.py.",
+         "Wrote and validated the quiz grading function in homework_core.py, tested all manual algorithm outputs in algorithms_core.py, contributed session state handling for the interaction flow, and validated the MCQ fix (no pre-selected options).",
          "homework_core.py · algorithms_core.py · teacher.py"),
         (m3, "#8b5cf6", "MD JIARUL ISLAM",
-         "Topic Data · Wiki Pipeline · Storage",
-         "Built and maintained the full topic data structure across all 18 topics in topics.py, contributed to the Wikipedia data pipeline in wiki_fetcher.py, and validated CSV record handling in storage_core.py.",
-         "topics.py · wiki_fetcher.py · storage_core.py"),
+         "Topic Data · Data Quality & Testing · Storage",
+         "Built and maintained all 29 topic packs in topics.py, contributed to the Wikipedia data pipeline in wiki_fetcher.py, and built data_quality.py — automated unit tests for topic field validation, CSV schema integrity, duplicate detection, and homework/project data checks with nanosecond timing.",
+         "topics.py · wiki_fetcher.py · storage_core.py · data_quality.py"),
     ]
     for col, color, name, role, desc, files in members:
         col.markdown(
@@ -4429,8 +4540,8 @@ def project_team():
     st.dataframe([
         {
             "Member": "MAMUNUR RASHID",
-            "Python Ownership": "streamlit_app.py, engine.py, llm.py, algorithms_core.py, analytics_core.py, homework_core.py",
-            "Role": "Lead developer — full architecture, AI, UI, deployment",
+            "Python Ownership": "streamlit_app.py (5 100+ lines), engine.py, llm.py, project_core.py, auth.py, homework_core.py",
+            "Role": "Lead developer — full architecture, AI, login system, projects, UI, deployment",
         },
         {
             "Member": "MD FAHIM",
@@ -4439,8 +4550,8 @@ def project_team():
         },
         {
             "Member": "MD JIARUL ISLAM",
-            "Python Ownership": "topics.py (all 18 topics), wiki_fetcher.py, storage_core.py",
-            "Role": "Topic data engineering, Wikipedia pipeline, CSV storage",
+            "Python Ownership": "topics.py (all 29 topics), wiki_fetcher.py, storage_core.py, data_quality.py",
+            "Role": "Topic data engineering, Wikipedia pipeline, CSV storage, data quality & testing",
         },
     ], use_container_width=True, hide_index=True)
 
@@ -4456,16 +4567,19 @@ def demo_guide():
     )
 
     steps = [
-        ("Open Preluma", "Show preluma-edtech.streamlit.app. Say: Python-based pre-class learning assistant with Wikipedia fallback, manual algorithms, and multi-LLM AI."),
-        ("Show the problem", "Students sit in lectures without preparation — passive learning, low retention, bad questions."),
-        ("Start a mission", "Select Machine Learning, enter name, click Start Pre-Class Mission."),
-        ("Brain Brief", "Show 2-column layout and concept tabs — all concepts explained, not just one."),
-        ("Quiz", "Take the quiz — each question tests a different skill type."),
-        ("Mistake Clinic", "Every wrong answer gets a clear correction with reasoning."),
-        ("UltraTutor", "Ask 'explain it like I am 5 years old' — show how style changes completely with AI."),
-        ("Teacher Studio", "Show Merge Sort ranking, Binary Search, CSV persistence, and audit log."),
-        ("Evidence Board", "Show Python concepts table — 13 concepts demonstrated."),
-        ("Professor Defense", "Show the 8-point rubric and defense line."),
+        ("Open Preluma & Log In", "Show the login page. Log in as a student (STUDENT role) and then as a teacher (TEACHER role) to demonstrate role-based access control. Say: HMAC-signed session token — survives browser refresh with zero network calls."),
+        ("Show the Problem", "Students sit in lectures without preparation — passive learning, low retention, bad questions. Preluma's 5-step mission solves this before class."),
+        ("Student Mission — Brain Brief", "Select Machine Learning, click Start Mission. Show Brain Brief: all key concepts explained, not just one — 2-column layout, concept tabs."),
+        ("Quiz + Mistake Clinic", "Take the quiz — each question tests a different skill. Show MCQ with no pre-selected option (fixed bug). Every wrong answer gets a clear correction with reasoning."),
+        ("Mock Test", "Show the mock test — timed, full topic coverage, final readiness score with grade."),
+        ("Ask Preluma AI — 3 Moods", "Go to Ask Preluma AI. Switch between Normal Mode, Coach Mode, and Roast Mode — show how the same answer changes tone completely. Ask the same question in all three."),
+        ("Student Profile + Projects", "Open My Profile — show rank badge, progress bars, homework stats. Open Class Projects — create a personal project, toggle In Progress → Complete, upload a file. Show category folders (Documents, Presentations, Images)."),
+        ("My Homework", "Open My Homework — submit answers, show instant AI grading and mistake capture per question."),
+        ("Teacher Side — Homework Center", "Log in as teacher. Open Homework Center — create a homework assignment, set questions and due date. Open Class Dashboard — show class readiness chart and weak concept analysis."),
+        ("Teacher Side — Project Center", "Open Project Center — create a class project, upload a brief. Open Student Projects tab — show all completed student personal projects grouped by student with download."),
+        ("Teacher Studio — Algorithms", "Open Teacher Studio — show Merge Sort O(n log n) ranking with nanosecond timing, Binary Search O(log n), CSV persistence proof, and audit log written to result.txt."),
+        ("Evidence Board — Live Tests", "Open Evidence Board. Click 'Run All Checks Now' — show live data quality report: 29 topics validated, CSV schema checks, duplicate detection. All green."),
+        ("Professor Defense", "Show the 8-point rubric — real problem, Python solution, algorithm proof, data persistence, AI integration, teacher value, testing, future product."),
     ]
     for i, (title, desc) in enumerate(steps, 1):
         st.markdown(f"""<div class='card-glass' style='margin:6px 0;display:flex;gap:16px;align-items:flex-start;'>
@@ -4487,12 +4601,29 @@ def roadmap():
     )
 
     st.dataframe(pd.DataFrame({
-        "Phase":      ["Current","Prototype","AI Upgrade","Real Product"],
-        "Goal":       ["Final project submission","Student accounts + history","RAG tutor with citations","Mobile app + class codes"],
-        "Technology": ["Python + Streamlit + Gemini","Python + SQLite","Embeddings + retrieval + LLM","API backend + React Native"],
-        "Status":     ["Live now","Next semester","Future","Long-term"],
+        "Phase":      ["V40 — Delivered","Next: V41","AI Upgrade","Real Product"],
+        "Goal":       [
+            "Login system, HMAC sessions, Student Profile, 3-Mood AI, Homework, Class Projects, Data Quality tests",
+            "RAG: upload course PDF → retrieval → cited AI answers",
+            "Weakness AI — auto-detects weak concepts and generates targeted exercises",
+            "Mobile app + real-time class codes + multi-teacher support",
+        ],
+        "Technology": [
+            "Python + Streamlit + Supabase + Claude/Groq/Gemini + HMAC",
+            "Embeddings + vector store + LLM",
+            "LLM + student mistake history + adaptive quiz generation",
+            "API backend + React Native + WebSockets",
+        ],
+        "Status":     ["✅ Live now","Next semester","Future","Long-term"],
     }), use_container_width=True)
-    st.code("Now:    Python + Streamlit + Wikipedia + Claude/Groq/Gemini + CSV + Merge Sort\nNext:   Login + SQLite + saved student history per account\nLater:  Upload course PDF + retrieval + cited AI answers\nFuture: Mobile app + teacher dashboard + real-time class codes", language="text")
+    st.code(
+        "V40 Now:  Python + Streamlit + Supabase + Wikipedia + Claude/Groq/Gemini\n"
+        "          + HMAC Login + Homework + Projects + Data Quality Tests\n"
+        "Next:     Upload course PDF → RAG retrieval → cited answers\n"
+        "Later:    Adaptive weakness detection → auto-generated exercises\n"
+        "Future:   Mobile app + teacher dashboard + real-time class codes",
+        language="text",
+    )
 
 
 # App entry point — called by Streamlit on every page load or user interaction
