@@ -32,33 +32,25 @@ from homework_core import (
 )
 
 # ─── Persistent Session (Remember Me) — locally-signed HMAC token ────────────
-# No network call needed on browser refresh — token lives in URL query param "t"
-# Token format: base64url(payload).hmac_sig
+# Survives browser refresh via URL query param "t". Zero network calls needed.
 import json as _json_mod, time as _time_mod, hmac as _hmac_mod, base64 as _b64_mod
 
-def _session_secret() -> bytes:
-    """Use Supabase key as HMAC secret (or fallback). Never leaves the server."""
-    try:
-        raw = st.secrets.get("SUPABASE_KEY", "") or "preluma-fallback-secret-2024"
-    except Exception:
-        raw = "preluma-fallback-secret-2024"
-    return str(raw)[:32].encode()
+# Fixed app-level secret — constant so signing and verification always match
+_HMAC_KEY = b"preluma-ynu-2024-session-key!!!!"  # exactly 32 bytes
 
 def _make_session_token(username: str, role: str, full_name: str) -> str:
-    """Create a 30-day self-contained signed session token."""
     payload = _json_mod.dumps({
         "u": username, "r": role, "n": full_name,
         "exp": int(_time_mod.time()) + 30 * 24 * 3600,
     })
     b64 = _b64_mod.urlsafe_b64encode(payload.encode()).decode().rstrip("=")
-    sig = _hmac_mod.new(_session_secret(), b64.encode(), "sha256").hexdigest()[:24]
+    sig = _hmac_mod.new(_HMAC_KEY, b64.encode(), "sha256").hexdigest()[:24]
     return f"{b64}.{sig}"
 
 def _verify_session_token(token: str) -> dict | None:
-    """Verify token signature and expiry locally — zero network calls."""
     try:
         b64, sig = token.rsplit(".", 1)
-        expected = _hmac_mod.new(_session_secret(), b64.encode(), "sha256").hexdigest()[:24]
+        expected = _hmac_mod.new(_HMAC_KEY, b64.encode(), "sha256").hexdigest()[:24]
         if not _hmac_mod.compare_digest(sig, expected):
             return None
         padded = b64 + "=" * (-len(b64) % 4)
@@ -70,7 +62,6 @@ def _verify_session_token(token: str) -> dict | None:
         return None
 
 def _save_session_cookie(username: str, role: str, full_name: str) -> None:
-    """Sign + save token into URL query param (survives browser refresh)."""
     token = _make_session_token(username, role, full_name)
     st.session_state["_session_token"] = token
     try:
@@ -79,7 +70,7 @@ def _save_session_cookie(username: str, role: str, full_name: str) -> None:
         pass
 
 def _load_session_cookie() -> dict | None:
-    """Restore session from URL query param — no Supabase round-trip needed."""
+    """Read token from URL query param → verify locally → no network needed."""
     token = ""
     try:
         token = st.query_params.get("t", "")
@@ -92,15 +83,10 @@ def _load_session_cookie() -> dict | None:
     payload = _verify_session_token(token)
     if payload:
         st.session_state["_session_token"] = token
-        try:
-            st.query_params["t"] = token   # keep it in URL
-        except Exception:
-            pass
         return {"u": payload["u"], "r": payload["r"], "n": payload["n"]}
     return None
 
 def _clear_session_cookie() -> None:
-    """Wipe token from session_state and URL on logout."""
     st.session_state.pop("_session_token", None)
     try:
         st.query_params.clear()
@@ -3863,37 +3849,37 @@ def class_dashboard_page():
             _ann_email  = ""
             _ann_photo  = None
 
-        _ann_avatar = (
-            f'<img src="{_ann_photo}" style="width:56px;height:56px;border-radius:12px;'
-            f'object-fit:cover;border:2px solid rgba(56,189,248,.4);">'
-            if _ann_photo else
-            f'<div style="width:56px;height:56px;border-radius:12px;'
-            f'background:linear-gradient(135deg,#0ea5e9,#6366f1);'
-            f'display:flex;align-items:center;justify-content:center;'
-            f'font-size:20px;font-weight:900;color:#fff;">'
-            f'{"".join(w[0] for w in _ann_name.split()[:2]).upper()}</div>'
-        )
+        # Build HTML pieces in Python vars first (avoids multiline f-string issues)
+        _initials = "".join(w[0] for w in _ann_name.split()[:2]).upper()
+        if _ann_photo:
+            _ann_avatar = (
+                f'<img src="{_ann_photo}" style="width:56px;height:56px;border-radius:12px;'
+                f'object-fit:cover;border:2px solid rgba(56,189,248,.4);">'
+            )
+        else:
+            _ann_avatar = (
+                f'<div style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#0ea5e9,#6366f1);'
+                f'display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;">'
+                f'{_initials}</div>'
+            )
+        _cn_html     = f'<span style="font-size:14px;color:#38bdf8;margin-left:8px;">{_ann_cn}</span>' if _ann_cn else ''
+        _course_html = f'<div style="font-size:11px;color:#94a3b8;background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.15);border-radius:8px;padding:4px 10px;">📚 {_ann_course}</div>' if _ann_course else ''
+        _email_html  = f'<div style="font-size:11px;color:#94a3b8;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.15);border-radius:8px;padding:4px 10px;">✉️ {_ann_email}</div>' if _ann_email else ''
 
-        st.markdown(f"""
-        <div style="background:linear-gradient(135deg,rgba(14,165,233,.08) 0%,rgba(99,102,241,.06) 100%);
-            border:1px solid rgba(56,189,248,.18);border-radius:20px;padding:20px 24px;
-            margin-bottom:20px;display:flex;gap:18px;align-items:center;">
-          {_ann_avatar}
-          <div style="flex:1;">
-            <div style="font-size:11px;font-weight:800;color:#38bdf8;letter-spacing:.10em;
-                text-transform:uppercase;margin-bottom:4px;">Sender · This Announcement</div>
-            <div style="font-size:18px;font-weight:800;color:#f1f5f9;line-height:1.2;">
-                {_ann_name}
-                {"<span style='font-size:14px;color:#38bdf8;margin-left:8px;'>"+_ann_cn+"</span>" if _ann_cn else ""}
-            </div>
-            <div style="font-size:12px;color:#64748b;margin-top:2px;">{_ann_role}</div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-            {"<div style='font-size:11px;color:#94a3b8;background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.15);border-radius:8px;padding:4px 10px;'>📚 "+_ann_course+"</div>" if _ann_course else ""}
-            {"<div style='font-size:11px;color:#94a3b8;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.15);border-radius:8px;padding:4px 10px;'>✉️ "+_ann_email+"</div>" if _ann_email else ""}
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="background:linear-gradient(135deg,rgba(14,165,233,.08),rgba(99,102,241,.06));'
+            f'border:1px solid rgba(56,189,248,.18);border-radius:20px;padding:20px 24px;'
+            f'margin-bottom:20px;display:flex;gap:18px;align-items:center;">'
+            f'{_ann_avatar}'
+            f'<div style="flex:1;">'
+            f'<div style="font-size:11px;font-weight:800;color:#38bdf8;letter-spacing:.10em;text-transform:uppercase;margin-bottom:4px;">Sender · This Announcement</div>'
+            f'<div style="font-size:18px;font-weight:800;color:#f1f5f9;">{_ann_name}{_cn_html}</div>'
+            f'<div style="font-size:12px;color:#64748b;margin-top:3px;">{_ann_role}</div>'
+            f'</div>'
+            f'<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">{_course_html}{_email_html}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
         # ── Announcement form ────────────────────────────────────────
         with st.form("announcement_form", border=False):
