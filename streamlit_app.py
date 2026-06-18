@@ -2072,35 +2072,83 @@ def teacher_profile_page():
             </div>""", unsafe_allow_html=True)
             if st.button("View Full Profile →", key=f"tpg_open_{idx}", use_container_width=True):
                 st.session_state.tp_detail_idx = idx
-                st.session_state.page = "teacher_detail"
+                st.session_state.active_page = "teacher_detail"
                 st.rerun()
 
-    # ── Quick Assign Homework ──
+    # ── Quick Assign Homework (full form, same as Homework Center) ──
     st.markdown("""<div style="font-size:10px;font-weight:800;color:#f59e0b;letter-spacing:.10em;
-        text-transform:uppercase;margin:28px 0 14px;">Quick Assign Homework</div>""",
+        text-transform:uppercase;margin:32px 0 16px;">Quick Assign Homework</div>""",
         unsafe_allow_html=True)
+
+    _TEACHER_OPTIONS = [
+        "Zhou Yujue (周玉珏) · AI Dept",
+        "Gao Song (高嵩) · Software Engineering",
+        "Tang Li (唐丽) · Cyberspace Security",
+        "Wei Ping (韦平) · Cyberspace Security",
+    ]
+    _TEACHER_NAMES = {
+        "Zhou Yujue (周玉珏) · AI Dept":          "Zhou Yujue",
+        "Gao Song (高嵩) · Software Engineering": "Gao Song",
+        "Tang Li (唐丽) · Cyberspace Security":    "Tang Li",
+        "Wei Ping (韦平) · Cyberspace Security":   "Wei Ping",
+    }
+    _logged_name = st.session_state.get("student", "") or ""
+    _default_idx = 0
+    for _i, _k in enumerate(_TEACHER_OPTIONS):
+        if _logged_name.split()[0] in _k if _logged_name.split() else False:
+            _default_idx = _i
+
+    # File uploader must live outside the form
+    import pathlib as _pl2
+    tp_uploaded = st.file_uploader(
+        "Attach homework file (optional)",
+        type=["pdf", "doc", "docx", "txt"],
+        help="Upload a PDF or Word document as homework reference material.",
+        key="tp_hw_file",
+    )
+    tp_attachment = ""
+    if tp_uploaded is not None:
+        att_dir = _pl2.Path("data/homework_attachments")
+        att_dir.mkdir(parents=True, exist_ok=True)
+        safe = tp_uploaded.name.replace(" ", "_")
+        (att_dir / safe).write_bytes(tp_uploaded.getbuffer())
+        tp_attachment = safe
+        st.success(f"📎 File ready: {safe}")
+
     with st.form("tp_quick_assign", border=False):
+        tp_teacher = st.selectbox(
+            "Assigned by (Teacher)", _TEACHER_OPTIONS, index=_default_idx,
+            help="Select which teacher is publishing this homework.",
+        )
         qa1, qa2 = st.columns(2)
-        hw_title  = qa1.text_input("Homework title", placeholder="e.g. Neural Networks Practice")
-        hw_topic  = qa2.text_input("Topic", placeholder="e.g. Machine Learning")
+        hw_title = qa1.text_input("Homework title", value="Introduction Practice")
+        hw_topic = qa2.text_input("Topic", value="Machine Learning")
+        hw_instr = st.text_area("Instructions",
+            value="Read the topic summary and answer all questions.")
         qa3, qa4, qa5 = st.columns(3)
-        hw_due    = qa3.text_input("Due date", placeholder="e.g. Friday 8 PM")
+        hw_due    = qa3.text_input("Due date", value="Friday 8:00 PM")
         hw_diff   = qa4.selectbox("Difficulty", ["Beginner", "Intermediate", "Advanced"])
-        hw_assign = qa5.text_input("Assign to", value="All Students")
+        hw_assign = qa5.text_input("Assign to", value="All Students",
+            help="All Students or comma-separated names.")
         submit_hw = st.form_submit_button("Publish Homework", use_container_width=True)
+
     if submit_hw:
         if hw_title.strip() and hw_topic.strip():
             hw_id = create_homework(
-                title=hw_title.strip(), topic=hw_topic.strip(),
-                instructions=f"Read the topic summary and answer all questions about {hw_topic.strip()}.",
-                due_date=hw_due.strip() or "TBD", difficulty=hw_diff,
+                title=hw_title.strip(),
+                topic=hw_topic.strip(),
+                instructions=hw_instr.strip(),
+                due_date=hw_due.strip() or "TBD",
+                difficulty=hw_diff,
                 assigned_to=hw_assign.strip() or "All Students",
-                created_by=st.session_state.get("student", "Teacher"),
+                created_by=tp_teacher,
                 questions=_default_homework_questions(hw_topic.strip()),
+                attachment=tp_attachment,
             )
-            st.success(f"Homework #{hw_id} published to students.")
+            tname = _TEACHER_NAMES.get(tp_teacher, tp_teacher)
+            st.success(f"✅ Homework #{hw_id} published by **{tname}**. Students have been notified.")
         else:
-            st.warning("Please enter both a title and a topic.")
+            st.warning("Please fill in the title and topic.")
 
 
 def _teacher_list():
@@ -2150,7 +2198,7 @@ def teacher_detail_page():
 
     # ── Back button ──
     if st.button("← Back to Teacher List", key="td_back"):
-        st.session_state.page = "teacher_profile"
+        st.session_state.active_page = "Teacher Profile"
         st.rerun()
 
     st.markdown("""
@@ -2298,7 +2346,7 @@ def teacher_detail_page():
                 st.rerun()
     with nav2:
         if st.button("View All Teachers", key="td_all", use_container_width=True):
-            st.session_state.page = "teacher_profile"
+            st.session_state.active_page = "Teacher Profile"
             st.rerun()
     with nav3:
         if idx < len(TEACHERS) - 1:
