@@ -14,6 +14,7 @@ from topics import TOPIC_OPTIONS, validate_topics
 from wiki_fetcher import smart_answer_from_pack
 from storage_core import append_student_row, next_record_id, read_recent_logs, timestamp
 from llm import active_provider as _provider, available_providers, llm_available, llm_tutor, detect_topic_from_question, llm_free_chat
+from auth import authenticate, register, get_all_students, username_exists
 from homework_core import (
     create_homework,
     homework_for_student,
@@ -27,7 +28,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "34.0 Peak Defense Ready"
+APP_VERSION = "35.0 Login System"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -597,6 +598,9 @@ st.markdown(CSS, unsafe_allow_html=True)
 # Session state helpers and shared utilities used across all pages
 
 def init_state():
+    st.session_state.setdefault("logged_in", False)
+    st.session_state.setdefault("user_role", "")
+    st.session_state.setdefault("username", "")
     st.session_state.setdefault("student", "")
     st.session_state.setdefault("topic", "Quantum Mechanics")
     st.session_state.setdefault("persona", "Normal Mode")
@@ -621,6 +625,13 @@ def reset_session():
     ]
     for key in keys:
         st.session_state.pop(key, None)
+
+
+def logout():
+    """Clear all session state including login."""
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.rerun()
 
 
 def _nav_button(label: str, page_name: str, badge: str = "",
@@ -665,72 +676,54 @@ def sidebar():
         unsafe_allow_html=True,
     )
 
-    # Student identity
+    # Logged-in user chip
     st.sidebar.markdown("<div class='sb-nav-wrap'>", unsafe_allow_html=True)
-
-    student_name = st.sidebar.text_input(
-        "name",
-        value=st.session_state.get("student", ""),
-        key="sidebar_student_identity",
-        label_visibility="collapsed",
-        placeholder="Write your name...",
-    )
-    if student_name.strip():
-        st.session_state.student = student_name.strip()
-    else:
-        st.session_state.student = ""
 
     current_student = st.session_state.get("student", "")
     display_name    = current_student if current_student else "Guest"
+    user_role       = st.session_state.get("user_role", "student")
     unread_count    = len(notifications_for_student(display_name, unread_only=True))
 
-    # Status line below name input
-    if not current_student:
-        st.sidebar.markdown(
-            "<div style='font-size:11px;color:#374151;padding:3px 2px 8px;font-style:italic;'>"
-            "Enter your name to track progress</div>",
-            unsafe_allow_html=True,
-        )
-    elif unread_count:
-        st.sidebar.markdown(
-            f"<div style='display:flex;align-items:center;gap:7px;padding:4px 2px 8px;'>"
-            f"<span class='sb-dot'></span>"
-            f"<span style='font-size:12px;color:#94a3b8;font-weight:600;'>{current_student}</span>"
-            f"<span class='sb-badge'>{unread_count}</span>"
-            f"</div>",
-            unsafe_allow_html=True,
-        )
-    else:
-        st.sidebar.markdown(
-            f"<div style='display:flex;align-items:center;gap:7px;padding:4px 2px 8px;'>"
-            f"<span class='sb-dot'></span>"
-            f"<span style='font-size:12px;color:#64748b;font-weight:600;'>{current_student}</span>"
-            f"</div>",
-            unsafe_allow_html=True,
-        )
+    role_color  = "#67e8f9" if user_role == "teacher" else "#86efac"
+    role_label  = "TEACHER" if user_role == "teacher" else "STUDENT"
+    badge_html  = f"<span class='sb-badge'>{unread_count}</span>" if unread_count else ""
 
-    # Collapsible nav sections — auto-expand based on active page
+    st.sidebar.markdown(
+        f"<div style='padding:10px 4px 8px;'>"
+        f"  <div style='display:flex;align-items:center;gap:8px;'>"
+        f"    <span class='sb-dot'></span>"
+        f"    <span style='font-size:13px;color:#e2e8f0;font-weight:700;flex:1;'>{current_student}</span>"
+        f"    {badge_html}"
+        f"  </div>"
+        f"  <div style='font-size:10px;color:{role_color};font-weight:800;letter-spacing:.1em;"
+        f"              margin-top:3px;padding-left:15px;'>{role_label}</div>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+    # Collapsible nav sections — role-based
     current_page = st.session_state.get("active_page", "Home")
     learn_pages   = {"Student Mission", "My Homework", "Ask Preluma AI"}
     teach_pages   = {"Teacher Profile", "Teacher Studio", "Homework Center"}
     project_pages = {"Evidence Board", "Professor Defense", "Project Team", "Demo Guide", "Future Roadmap"}
 
     hw_badge = f" [{unread_count}]" if unread_count else ""
+    _role    = st.session_state.get("user_role", "student")
 
-    # Home is a top-level standalone button — not inside any expander
+    # Home always visible
     _nav_button("Home", "Home")
 
-    with st.sidebar.expander("LEARN", expanded=(current_page in learn_pages)):
-        # Buttons inside expanders must use st.button (not st.sidebar.button)
-        # so they render inside the collapsed section and not in the main sidebar.
-        _nav_button("Student Mission", "Student Mission", _in_expander=True)
-        _nav_button(f"My Homework{hw_badge}", "My Homework", _in_expander=True)
-        _nav_button("Ask Preluma AI", "Ask Preluma AI", _in_expander=True)
+    if _role == "student":
+        with st.sidebar.expander("LEARN", expanded=(current_page in learn_pages)):
+            _nav_button("Student Mission", "Student Mission", _in_expander=True)
+            _nav_button(f"My Homework{hw_badge}", "My Homework", _in_expander=True)
+            _nav_button("Ask Preluma AI", "Ask Preluma AI", _in_expander=True)
 
-    with st.sidebar.expander("TEACH", expanded=(current_page in teach_pages)):
-        _nav_button("Teacher Profile", "Teacher Profile", _in_expander=True)
-        _nav_button("Teacher Studio", "Teacher Studio", _in_expander=True)
-        _nav_button("Homework Center", "Homework Center", _in_expander=True)
+    if _role == "teacher":
+        with st.sidebar.expander("TEACH", expanded=(current_page in teach_pages)):
+            _nav_button("Teacher Profile", "Teacher Profile", _in_expander=True)
+            _nav_button("Teacher Studio", "Teacher Studio", _in_expander=True)
+            _nav_button("Homework Center", "Homework Center", _in_expander=True)
 
     with st.sidebar.expander("PROJECT", expanded=(current_page in project_pages)):
         _nav_button("Evidence Board", "Evidence Board", _in_expander=True)
@@ -738,6 +731,12 @@ def sidebar():
         _nav_button("Project Team", "Project Team", _in_expander=True)
         _nav_button("Demo Guide", "Demo Guide", _in_expander=True)
         _nav_button("Future Roadmap", "Future Roadmap", _in_expander=True)
+
+    # Logout button at bottom
+    st.sidebar.markdown("<div style='margin-top:8px;'>", unsafe_allow_html=True)
+    if st.sidebar.button("Log Out", key="logout_btn", use_container_width=True, type="secondary"):
+        logout()
+    st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
     # AI status pill
     _prov = _provider()
@@ -1980,98 +1979,91 @@ def student_mission(presentation):
 
 
 def teacher_profile_page():
-    """Teacher profile page — all course teachers with minimal info."""
+    """Teacher profile page — course teacher info for Zhou Yujue."""
     page_intro(
         "teacher",
-        "Course Teachers · Yunnan University",
+        "Course Teacher · Yunnan University",
         "Teacher Profile",
-        "The teaching team behind this course — department, research, and contact details.",
+        "Course teacher information — department, school, and contact details.",
     )
-
     st.markdown("""
     <style>
-    .tp-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
-    .tp-card2 {
-        background:linear-gradient(145deg,rgba(10,18,36,.96),rgba(6,12,26,.98));
-        border:1px solid rgba(255,255,255,.07); border-radius:20px; padding:22px 24px;
-    }
-    .tp-avatar2 {
-        width:52px; height:52px; border-radius:50%;
+    .tp-avatar {
+        width:88px; height:88px; border-radius:50%;
         background:linear-gradient(135deg,#0ea5e9,#6366f1);
         display:flex; align-items:center; justify-content:center;
-        font-size:18px; font-weight:900; color:#fff; flex-shrink:0;
-        border:2px solid rgba(56,189,248,.30);
+        font-size:32px; font-weight:900; color:#fff; flex-shrink:0;
+        border:3px solid rgba(56,189,248,.35);
+        box-shadow:0 8px 28px rgba(99,102,241,.40);
     }
-    .tp-head { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
-    .tp-name2 { font-size:17px; font-weight:900; color:#f1f5f9; }
-    .tp-cn2   { font-size:13px; font-weight:700; color:#38bdf8; }
-    .tp-title2 { font-size:11px; color:#64748b; margin-top:2px; }
-    .tp-row2 {
-        display:flex; gap:10px; padding:6px 0;
-        border-bottom:1px solid rgba(255,255,255,.04); font-size:12px;
+    .tp-banner {
+        background:linear-gradient(135deg,rgba(14,165,233,.09),rgba(99,102,241,.07));
+        border:1px solid rgba(56,189,248,.15); border-radius:24px;
+        padding:28px 32px; margin-bottom:28px;
+        display:flex; align-items:center; gap:28px;
     }
-    .tp-row2:last-child { border-bottom:none; }
-    .tp-k { min-width:90px; color:#475569; font-weight:600; }
-    .tp-v { color:#cbd5e1; }
+    .tp-name { font-size:26px; font-weight:900; color:#f1f5f9; margin-bottom:4px; }
+    .tp-cn   { font-size:18px; font-weight:700; color:#38bdf8; margin-bottom:6px; }
+    .tp-role { font-size:13px; color:#64748b; }
+    .tp-card {
+        background:linear-gradient(145deg,rgba(10,18,36,.96),rgba(6,12,26,.98));
+        border:1px solid rgba(255,255,255,.07); border-radius:20px;
+        padding:22px 24px; margin-bottom:14px;
+    }
+    .tp-card-lbl {
+        font-size:10px; font-weight:800; color:#38bdf8;
+        letter-spacing:.10em; text-transform:uppercase; margin-bottom:10px;
+    }
+    .tp-row {
+        display:flex; gap:12px; align-items:flex-start; padding:8px 0;
+        border-bottom:1px solid rgba(255,255,255,.04);
+    }
+    .tp-row:last-child { border-bottom:none; }
+    .tp-key { min-width:130px; font-size:12px; color:#475569; font-weight:600; }
+    .tp-val { font-size:13px; color:#cbd5e1; }
     </style>
-    """, unsafe_allow_html=True)
-
-    teachers = [
-        {
-            "initials": "ZY", "en": "Zhou Yujue", "cn": "周玉珏",
-            "title": "Lecturer · AI Department",
-            "course": "Python Programming & AI Tools",
-            "email": "zhouyujue@ynu.edu.cn",
-            "research": "AI, Time Series Analysis, Smart Healthcare",
-            "photo": "To be added with teacher consent",
-        },
-        {
-            "initials": "GS", "en": "Gao Song", "cn": "高嵩",
-            "title": "Lecturer · Software Engineering",
-            "course": "C++ Programming",
-            "email": "gaos@ynu.edu.cn",
-            "research": "Computer Vision, AI Security, Model Compression",
-            "photo": "To be added with teacher consent",
-        },
-        {
-            "initials": "TL", "en": "Tang Li", "cn": "唐丽",
-            "title": "Lecturer · Cyberspace Security",
-            "course": "Database",
-            "email": "tangli@ynu.edu.cn",
-            "research": "Data Security, Image Security",
-            "photo": "To be added with teacher consent",
-        },
-        {
-            "initials": "WP", "en": "Wei Ping", "cn": "韦平",
-            "title": "Lecturer · Cyberspace Security",
-            "course": "Statistics & Probability",
-            "email": "weip@ynu.edu.cn",
-            "research": "LLM & Multi-agent, Cybersecurity, Multimedia Security",
-            "photo": "To be added with teacher consent",
-        },
-    ]
-
-    cols = st.columns(2)
-    for i, t in enumerate(teachers):
-        with cols[i % 2]:
-            st.markdown(f"""
-            <div class="tp-card2">
-                <div class="tp-head">
-                    <div class="tp-avatar2">{t["initials"]}</div>
-                    <div>
-                        <div class="tp-name2">{t["en"]}</div>
-                        <div class="tp-cn2">{t["cn"]}</div>
-                        <div class="tp-title2">{t["title"]}</div>
-                    </div>
-                </div>
-                <div class="tp-row2"><div class="tp-k">Course</div><div class="tp-v">{t["course"]}</div></div>
-                <div class="tp-row2"><div class="tp-k">Research</div><div class="tp-v">{t["research"]}</div></div>
-                <div class="tp-row2"><div class="tp-k">Email</div><div class="tp-v">{t["email"]}</div></div>
-                <div class="tp-row2"><div class="tp-k">Photo</div><div class="tp-v">{t["photo"]}</div></div>
+    <div class="tp-banner">
+        <div class="tp-avatar">ZY</div>
+        <div>
+            <div class="tp-name">Zhou Yujue</div>
+            <div class="tp-cn">周玉珏</div>
+            <div class="tp-role">
+                Lecturer &nbsp;&bull;&nbsp; School of Software &nbsp;&bull;&nbsp; Yunnan University
             </div>
-            """, unsafe_allow_html=True)
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("""
+        <div class="tp-card">
+            <div class="tp-card-lbl">Course and Teaching</div>
+            <div class="tp-row"><div class="tp-key">Course</div>
+            <div class="tp-val">AI and Software Development</div></div>
+            <div class="tp-row"><div class="tp-key">Department</div>
+            <div class="tp-val">School of Software, Yunnan University</div></div>
+            <div class="tp-row"><div class="tp-key">Level</div>
+            <div class="tp-val">2nd-year undergraduate</div></div>
+            <div class="tp-row"><div class="tp-key">Teaching style</div>
+            <div class="tp-val">Project-based, practical Python focus</div></div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_b:
+        st.markdown("""
+        <div class="tp-card">
+            <div class="tp-card-lbl">School and Location</div>
+            <div class="tp-row"><div class="tp-key">University</div>
+            <div class="tp-val">Yunnan University (云南大学)</div></div>
+            <div class="tp-row"><div class="tp-key">School</div>
+            <div class="tp-val">School of Software (软件学院)</div></div>
+            <div class="tp-row"><div class="tp-key">Campus</div>
+            <div class="tp-val">Chenggong Campus, Kunming, Yunnan</div></div>
+            <div class="tp-row"><div class="tp-key">Profile photo</div>
+            <div class="tp-val">To be added with teacher consent</div></div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    # Quick homework assign
+    # Quick homework assign — teacher can assign directly from profile page
     st.markdown("""
     <div style="font-size:10px;font-weight:800;color:#f59e0b;letter-spacing:.10em;
         text-transform:uppercase;margin:28px 0 14px;">
@@ -2096,12 +2088,13 @@ def teacher_profile_page():
                 due_date=hw_due.strip() or "TBD",
                 difficulty=hw_diff,
                 assigned_to=hw_assign.strip() or "All Students",
-                created_by="Teacher",
+                created_by="Teacher Zhou Yujue",
                 questions=_default_homework_questions(hw_topic.strip()),
             )
             st.success(f"Homework #{hw_id} published to students.")
         else:
             st.warning("Please enter both a title and a topic.")
+
 
 # Teacher Studio: algorithm demos and class analytics
 
@@ -3083,13 +3076,163 @@ def roadmap():
 
 # App entry point — called by Streamlit on every page load or user interaction
 
+def login_page():
+    """Beautiful full-screen login & register page."""
+
+    # Gradient background
+    st.markdown("""
+<style>
+.login-wrap {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 40px 0 20px;
+}
+.login-logo {
+    text-align: center;
+    margin-bottom: 32px;
+}
+.login-logo-name {
+    font-size: 42px;
+    font-weight: 900;
+    color: #06b6d4;
+    letter-spacing: -1px;
+    line-height: 1;
+}
+.login-logo-tag {
+    font-size: 13px;
+    color: #475569;
+    font-weight: 500;
+    letter-spacing: .04em;
+    margin-top: 4px;
+}
+.login-card {
+    background: rgba(15,23,42,.82);
+    border: 1px solid rgba(6,182,212,.18);
+    border-radius: 20px;
+    padding: 36px 32px 28px;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 24px 64px rgba(0,0,0,.5);
+}
+.login-tab-hint {
+    font-size: 11.5px;
+    color: #64748b;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.demo-box {
+    background: rgba(6,182,212,.06);
+    border: 1px solid rgba(6,182,212,.14);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-top: 20px;
+}
+.demo-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #06b6d4;
+    letter-spacing: .08em;
+    margin-bottom: 8px;
+}
+.demo-row {
+    font-size: 11.5px;
+    color: #94a3b8;
+    line-height: 1.8;
+    font-family: monospace;
+}
+</style>
+""", unsafe_allow_html=True)
+
+    st.markdown("<div class='login-wrap'>", unsafe_allow_html=True)
+
+    # Logo
+    st.markdown("""
+<div class='login-logo'>
+    <div class='login-logo-name'>Preluma</div>
+    <div class='login-logo-tag'>Light Up Before Class</div>
+</div>""", unsafe_allow_html=True)
+
+    # Tabs: Login / Register
+    tab_login, tab_reg = st.tabs(["Log In", "Create Account"])
+
+    with tab_login:
+        with st.form("login_form", clear_on_submit=False):
+            username = st.text_input("Username", placeholder="Enter your username")
+            password = st.text_input("Password", type="password", placeholder="Enter your password")
+            submitted = st.form_submit_button("Log In", use_container_width=True, type="primary")
+
+        if submitted:
+            if not username or not password:
+                st.error("Please enter both username and password.")
+            else:
+                user = authenticate(username, password)
+                if user:
+                    st.session_state.logged_in  = True
+                    st.session_state.user_role  = user["Role"]
+                    st.session_state.username   = user["Username"]
+                    st.session_state.student    = user["Full Name"]
+                    st.session_state.active_page = "Home"
+                    st.rerun()
+                else:
+                    st.error("Incorrect username or password.")
+
+        # Demo credentials
+        st.markdown("""
+<div class='demo-box'>
+    <div class='demo-title'>DEMO ACCOUNTS</div>
+    <div class='demo-row'>
+        Teacher &nbsp;→&nbsp; <b>teacher</b> / teach123<br>
+        Student &nbsp;→&nbsp; <b>mamun</b> / preluma1<br>
+        Student &nbsp;→&nbsp; <b>fahim</b> / preluma1<br>
+        Student &nbsp;→&nbsp; <b>jiarul</b> / preluma1
+    </div>
+</div>""", unsafe_allow_html=True)
+
+    with tab_reg:
+        with st.form("register_form", clear_on_submit=True):
+            reg_name     = st.text_input("Full Name", placeholder="e.g. Alice Wang")
+            reg_user     = st.text_input("Username", placeholder="Choose a username (min 3 chars)")
+            reg_pass     = st.text_input("Password", type="password", placeholder="Min 6 characters")
+            reg_pass2    = st.text_input("Confirm Password", type="password", placeholder="Repeat password")
+            reg_submit   = st.form_submit_button("Create Account", use_container_width=True, type="primary")
+
+        if reg_submit:
+            if reg_pass != reg_pass2:
+                st.error("Passwords do not match.")
+            else:
+                ok, msg = register(reg_user, reg_pass, reg_name, role="student")
+                if ok:
+                    st.success(f"{msg} You can now log in.")
+                else:
+                    st.error(msg)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
 def main():
     init_state()
+
+    # Login gate — show login page if not authenticated
+    if not st.session_state.get("logged_in", False):
+        login_page()
+        return
+
     page, presentation = sidebar()
 
     if page in {"My Homework", " My Homework"} or page.startswith(" My Homework"):
         my_homework_page()
         return
+
+    # Role guard — redirect teacher to Home if they land on student-only pages
+    _role = st.session_state.get("user_role", "student")
+    student_only = {"Student Mission", "My Homework", "Ask Preluma AI"}
+    teacher_only = {"Teacher Profile", "Teacher Studio", "Homework Center"}
+
+    if _role == "teacher" and page in student_only:
+        st.session_state.active_page = "Home"
+        page = "Home"
+    if _role == "student" and page in teacher_only:
+        st.session_state.active_page = "Home"
+        page = "Home"
 
     pages = {
         "Home": home_page,
