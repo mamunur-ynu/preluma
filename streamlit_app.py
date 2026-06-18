@@ -3621,9 +3621,10 @@ def login_page():
 
         with tab_tlogin:
             with st.form("teacher_login_form"):
-                t_user = st.text_input("Username", placeholder="Teacher username")
-                t_pass = st.text_input("Password", type="password", placeholder="Password")
-                t_sub  = st.form_submit_button("Log In as Teacher", use_container_width=True, type="primary")
+                t_user     = st.text_input("Username", placeholder="Teacher username")
+                t_pass     = st.text_input("Password", type="password", placeholder="Password")
+                t_remember = st.checkbox("Keep me logged in", value=True)
+                t_sub      = st.form_submit_button("Log In as Teacher", use_container_width=True, type="primary")
 
             if t_sub:
                 if not t_user or not t_pass:
@@ -3636,6 +3637,8 @@ def login_page():
                         st.session_state.username    = user["Username"]
                         st.session_state.student     = user["Full Name"]
                         st.session_state.active_page = "Home"
+                        if t_remember:
+                            _save_session_cookie(user["Username"], "teacher", user["Full Name"])
                         st.rerun()
                     elif user and user["Role"] == "student":
                         st.error("This is a student account. Please switch to Student mode.")
@@ -3681,9 +3684,10 @@ def login_page():
 
         with tab_login:
             with st.form("student_login_form"):
-                username  = st.text_input("Username", placeholder="Enter your username")
-                password  = st.text_input("Password", type="password", placeholder="Enter your password")
-                submitted = st.form_submit_button("Log In", use_container_width=True, type="primary")
+                username   = st.text_input("Username", placeholder="Enter your username")
+                password   = st.text_input("Password", type="password", placeholder="Enter your password")
+                s_remember = st.checkbox("Keep me logged in", value=True)
+                submitted  = st.form_submit_button("Log In", use_container_width=True, type="primary")
 
             if submitted:
                 if not username or not password:
@@ -3698,6 +3702,8 @@ def login_page():
                         st.session_state.username    = user["Username"]
                         st.session_state.student     = user["Full Name"]
                         st.session_state.active_page = "Home"
+                        if s_remember:
+                            _save_session_cookie(user["Username"], user["Role"], user["Full Name"])
                         st.rerun()
                     else:
                         st.error("Incorrect username or password.")

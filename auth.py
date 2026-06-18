@@ -231,8 +231,22 @@ def ensure_setup() -> None:
 
 
 def authenticate(username: str, password: str) -> Optional[dict]:
-    ensure_setup()
     uname, pw_hash = username.strip().lower(), _hash(password)
+
+    # ── Always check DEMO_USERS directly first (guaranteed to work) ──────────
+    for demo_uname, demo_pw, demo_role, demo_name in DEMO_USERS:
+        if demo_uname.strip().lower() == uname and _hash(demo_pw) == pw_hash:
+            return {
+                "User ID":       "demo",
+                "Username":      uname,
+                "Password Hash": pw_hash,
+                "Role":          demo_role,
+                "Full Name":     demo_name,
+                "Created At":    "",
+            }
+
+    # ── Then check database (registered users) ───────────────────────────────
+    ensure_setup()
     for u in _read_all():
         if u["Username"] == uname and u["Password Hash"] == pw_hash:
             return u
