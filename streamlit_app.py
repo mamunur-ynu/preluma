@@ -14,7 +14,7 @@ from topics import TOPIC_OPTIONS, validate_topics
 from wiki_fetcher import smart_answer_from_pack
 from storage_core import append_student_row, next_record_id, read_recent_logs, timestamp
 from llm import active_provider as _provider, available_providers, llm_available, llm_tutor, detect_topic_from_question, llm_free_chat
-from auth import authenticate, register, get_all_students, username_exists, storage_backend
+from auth import authenticate, register, get_all_students, username_exists, storage_backend, _supabase_available
 from homework_core import (
     create_homework,
     create_notification,
