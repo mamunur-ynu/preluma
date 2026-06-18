@@ -3822,66 +3822,72 @@ def class_dashboard_page():
     # TAB 1 — Send Announcement
     # ══════════════════════════════════════════════════════════════════
     with tab1:
-        # ── Sender info card ─────────────────────────────────────────
         _ann_username = st.session_state.get("username", "").lower()
-        _ann_fullname = st.session_state.get("student", "Teacher")
+        _TLIST        = _teacher_list()
+        _ADMIN_USERS  = {"mim.ynu", "teacher", "mamunur rashid (admin)"}
+        _is_admin_ann = _ann_username in _ADMIN_USERS
 
-        # Match logged-in teacher to _teacher_list()
-        _TLIST = _teacher_list()
-        _ann_teacher = next(
-            (t for t in _TLIST if t["photo_key"] == _ann_username
-             or t["name"].lower() == _ann_fullname.lower()),
-            None
-        )
-        # Build sender display info
-        if _ann_teacher:
-            _ann_name   = _ann_teacher["name"]
-            _ann_cn     = _ann_teacher["cn"]
-            _ann_role   = _ann_teacher["role"]
-            _ann_course = _ann_teacher["course"]
-            _ann_email  = _ann_teacher["email"]
-            _ann_photo  = _get_photo_src(_ann_teacher["photo_key"])
+        # ── If admin: pick which teacher sends this announcement ──────
+        if _is_admin_ann:
+            st.markdown(
+                '<div style="font-size:11px;font-weight:800;color:#f59e0b;letter-spacing:.09em;'
+                'text-transform:uppercase;margin-bottom:8px;">Admin: Select Announcing Teacher</div>',
+                unsafe_allow_html=True,
+            )
+            _t_names = [t["name"] for t in _TLIST]
+            _sel_idx = st.selectbox(
+                "Send announcement as",
+                range(len(_TLIST)),
+                format_func=lambda i: f"{_TLIST[i]['name']}  ({_TLIST[i]['cn']})  — {_TLIST[i]['course']}",
+                key="ann_teacher_select",
+                label_visibility="collapsed",
+            )
+            _ann_t = _TLIST[_sel_idx]
         else:
-            _ann_name   = _ann_fullname
-            _ann_cn     = ""
-            _ann_role   = "Teacher"
-            _ann_course = ""
-            _ann_email  = ""
-            _ann_photo  = None
+            # Logged-in teacher — match by photo_key (username)
+            _ann_t = next((t for t in _TLIST if t["photo_key"] == _ann_username), _TLIST[0])
 
-        # Build HTML pieces in Python vars first (avoids multiline f-string issues)
-        _initials = "".join(w[0] for w in _ann_name.split()[:2]).upper()
-        if _ann_photo:
-            _ann_avatar = (
-                f'<img src="{_ann_photo}" style="width:56px;height:56px;border-radius:12px;'
-                f'object-fit:cover;border:2px solid rgba(56,189,248,.4);">'
+        # ── Resolve teacher details ───────────────────────────────────
+        _t_photo = _get_photo_src(_ann_t["photo_key"])
+        _t_init  = "".join(w[0] for w in _ann_t["name"].split()[:2]).upper()
+
+        # Build HTML pieces individually (avoids multiline f-string rendering bugs)
+        if _t_photo:
+            _av_html = (
+                f'<img src="{_t_photo}" style="width:72px;height:72px;border-radius:16px;'
+                f'object-fit:cover;border:2.5px solid rgba(56,189,248,.5);'
+                f'box-shadow:0 4px 20px rgba(14,165,233,.3);">'
             )
         else:
-            _ann_avatar = (
-                f'<div style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#0ea5e9,#6366f1);'
-                f'display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;">'
-                f'{_initials}</div>'
+            _av_html = (
+                f'<div style="width:72px;height:72px;border-radius:16px;'
+                f'background:linear-gradient(135deg,#0ea5e9 0%,#6366f1 100%);'
+                f'display:flex;align-items:center;justify-content:center;'
+                f'font-size:26px;font-weight:900;color:#fff;'
+                f'box-shadow:0 4px 20px rgba(99,102,241,.3);">{_t_init}</div>'
             )
-        _cn_html     = f'<span style="font-size:14px;color:#38bdf8;margin-left:8px;">{_ann_cn}</span>' if _ann_cn else ''
-        _course_html = f'<div style="font-size:11px;color:#94a3b8;background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.15);border-radius:8px;padding:4px 10px;">📚 {_ann_course}</div>' if _ann_course else ''
-        _email_html  = f'<div style="font-size:11px;color:#94a3b8;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.15);border-radius:8px;padding:4px 10px;">✉️ {_ann_email}</div>' if _ann_email else ''
+        _cn_html     = f'<span style="font-size:15px;color:#38bdf8;font-weight:600;margin-left:10px;">{_ann_t["cn"]}</span>'
+        _badge_role  = f'<span style="font-size:11px;color:#94a3b8;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:3px 9px;margin-right:6px;">{_ann_t["role"]}</span>'
+        _badge_crs   = f'<span style="font-size:11px;color:#7dd3fc;background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.18);border-radius:6px;padding:3px 9px;margin-right:6px;">📚 {_ann_t["course"]}</span>'
+        _badge_mail  = f'<span style="font-size:11px;color:#a5b4fc;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.18);border-radius:6px;padding:3px 9px;">✉️ {_ann_t["email"]}</span>'
 
         st.markdown(
-            f'<div style="background:linear-gradient(135deg,rgba(14,165,233,.08),rgba(99,102,241,.06));'
-            f'border:1px solid rgba(56,189,248,.18);border-radius:20px;padding:20px 24px;'
-            f'margin-bottom:20px;display:flex;gap:18px;align-items:center;">'
-            f'{_ann_avatar}'
-            f'<div style="flex:1;">'
-            f'<div style="font-size:11px;font-weight:800;color:#38bdf8;letter-spacing:.10em;text-transform:uppercase;margin-bottom:4px;">Sender · This Announcement</div>'
-            f'<div style="font-size:18px;font-weight:800;color:#f1f5f9;">{_ann_name}{_cn_html}</div>'
-            f'<div style="font-size:12px;color:#64748b;margin-top:3px;">{_ann_role}</div>'
-            f'</div>'
-            f'<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">{_course_html}{_email_html}</div>'
-            f'</div>',
+            '<div style="background:linear-gradient(135deg,rgba(14,165,233,.10) 0%,rgba(99,102,241,.07) 100%);'
+            'border:1px solid rgba(56,189,248,.20);border-radius:22px;padding:22px 26px;'
+            'margin-bottom:22px;display:flex;gap:20px;align-items:center;">'
+            + _av_html +
+            '<div style="flex:1;">'
+            '<div style="font-size:10px;font-weight:800;color:#38bdf8;letter-spacing:.12em;'
+            'text-transform:uppercase;margin-bottom:6px;">Sender · This Announcement</div>'
+            f'<div style="font-size:22px;font-weight:900;color:#f1f5f9;line-height:1.1;">'
+            f'{_ann_t["name"]}{_cn_html}</div>'
+            f'<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">'
+            f'{_badge_role}{_badge_crs}{_badge_mail}</div>'
+            '</div></div>',
             unsafe_allow_html=True,
         )
 
-        # ── Announcement form ────────────────────────────────────────
+        # ── Announcement form ─────────────────────────────────────────
         with st.form("announcement_form", border=False):
             ann_title = st.text_input(
                 "Announcement title",
@@ -3890,7 +3896,7 @@ def class_dashboard_page():
             ann_msg = st.text_area(
                 "Message",
                 placeholder="Write your announcement here...",
-                height=120,
+                height=130,
             )
             _fc1, _fc2 = st.columns(2)
             ann_target = _fc1.radio(
@@ -3899,9 +3905,9 @@ def class_dashboard_page():
                 horizontal=True,
             )
             ann_include_details = _fc2.checkbox(
-                "Include my contact details in notification",
+                "Include contact details in notification",
                 value=True,
-                help="Students will see your name, course and email in the notification.",
+                help="Students will see the teacher's course and email in their inbox.",
             )
             ann_specific = []
             if ann_target == "Specific Students":
@@ -3920,13 +3926,9 @@ def class_dashboard_page():
                 if not targets:
                     st.warning("Select at least one student.")
                 else:
-                    # Build message body
                     _body = ann_msg.strip()
-                    if ann_include_details and (_ann_course or _ann_email):
-                        _details_parts = []
-                        if _ann_course: _details_parts.append(f"Course: {_ann_course}")
-                        if _ann_email:  _details_parts.append(f"Email: {_ann_email}")
-                        _body += f"\n\n— {_ann_name}" + (f" | {' | '.join(_details_parts)}" if _details_parts else "")
+                    if ann_include_details:
+                        _body += f"\n\n— {_ann_t['name']} | Course: {_ann_t['course']} | {_ann_t['email']}"
                     for name in targets:
                         create_notification(
                             student=name,
@@ -3936,7 +3938,7 @@ def class_dashboard_page():
                             reference_id=0,
                         )
                     st.success(
-                        f"✅ Announcement sent to **{len(targets)} student(s)** from **{_ann_name}**."
+                        f"✅ Announcement sent to **{len(targets)} student(s)** from **{_ann_t['name']}**."
                     )
 
     # ══════════════════════════════════════════════════════════════════
