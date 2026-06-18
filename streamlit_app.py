@@ -632,7 +632,8 @@ def reset_session():
 
 
 def logout():
-    """Clear all session state including login."""
+    """Clear session state and remember-me cookie."""
+    _clear_session_cookie()
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     st.rerun()
@@ -4002,6 +4003,18 @@ def main():
     init_state()
 
     # Login gate — show login page if not authenticated
+    # ── Auto-login from saved cookie (Remember Me) ──────────────────────────
+    if not st.session_state.get("logged_in", False):
+        _cookie_mgr()  # initialise cookie component early
+        _saved = _load_session_cookie()
+        if _saved and _saved.get("u") and _saved.get("r"):
+            st.session_state.logged_in   = True
+            st.session_state.username    = _saved["u"]
+            st.session_state.user_role   = _saved["r"]
+            st.session_state.student     = _saved.get("n", _saved["u"])
+            st.session_state.active_page = "Home"
+            st.rerun()
+
     if not st.session_state.get("logged_in", False):
         login_page()
         return
