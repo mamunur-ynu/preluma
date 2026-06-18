@@ -198,7 +198,7 @@ def _get_photo_src(photo_key: str) -> str | None:
 
 # ─────────────────────────────────────────────────────────────────────────────
 
-APP_VERSION = "40.6"
+APP_VERSION = "40.7"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 

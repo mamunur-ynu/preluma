@@ -12,6 +12,7 @@ _GEMINI_URL     = "https://generativelanguage.googleapis.com/v1beta/models/{mode
 _OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 _TOGETHER_URL   = "https://api.together.xyz/v1/chat/completions"
 _CEREBRAS_URL   = "https://api.cerebras.ai/v1/chat/completions"
+_MISTRAL_URL    = "https://api.mistral.ai/v1/chat/completions"
 
 _OPENAI_MODEL     = os.environ.get("OPENAI_MODEL",     "gpt-4.1-mini")
 _ANTHROPIC_MODEL  = os.environ.get("ANTHROPIC_MODEL",  "claude-sonnet-4-20250514")
@@ -20,6 +21,7 @@ _GEMINI_MODEL     = os.environ.get("GEMINI_MODEL",     "gemini-1.5-flash")
 _OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
 _TOGETHER_MODEL   = os.environ.get("TOGETHER_MODEL",   "meta-llama/Llama-3.3-70B-Instruct-Turbo")
 _CEREBRAS_MODEL   = os.environ.get("CEREBRAS_MODEL",   "llama-3.3-70b")
+_MISTRAL_MODEL    = os.environ.get("MISTRAL_MODEL",    "mistral-small-latest")
 _TIMEOUT         = 20
 _MAX_TOKENS      = 2200
 
@@ -186,6 +188,24 @@ def _call_cerebras(system: str, user: str) -> str:
         return ""
 
 
+def _call_mistral(system: str, user: str) -> str:
+    key = _key("MISTRAL_API_KEY")
+    if not key:
+        return ""
+    try:
+        resp = requests.post(
+            _MISTRAL_URL,
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={"model": _MISTRAL_MODEL, "max_tokens": _MAX_TOKENS,
+                  "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]},
+            timeout=_TIMEOUT,
+        )
+        resp.raise_for_status()
+        return resp.json()["choices"][0]["message"]["content"].strip()
+    except Exception:
+        return ""
+
+
 def available_providers() -> list[str]:
     providers: list[str] = []
     mapping = [
@@ -194,6 +214,7 @@ def available_providers() -> list[str]:
         ("GEMINI_API_KEY",    "Gemini"),
         ("GROQ_API_KEY",      "Groq"),
         ("CEREBRAS_API_KEY",  "Cerebras"),
+        ("MISTRAL_API_KEY",   "Mistral"),
         ("OPENROUTER_API_KEY","OpenRouter"),
         ("TOGETHER_API_KEY",  "Together AI"),
     ]
@@ -214,7 +235,7 @@ def llm_available() -> bool:
 
 def _call_llm(system: str, user: str) -> str:
     # One provider answers; the next providers are automatic fallbacks.
-    for fn in (_call_groq, _call_cerebras, _call_gemini, _call_openrouter, _call_together, _call_openai, _call_anthropic):
+    for fn in (_call_groq, _call_cerebras, _call_mistral, _call_openrouter, _call_together, _call_openai, _call_anthropic):
         result = fn(system, user)
         if result:
             return result
