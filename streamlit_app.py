@@ -30,6 +30,7 @@ from homework_core import (
     seed_homework_demo,
     submit_homework,
 )
+import project_core as _pc
 
 # ─── Persistent Session (Remember Me) — locally-signed HMAC token ────────────
 # Survives browser refresh via URL query param "t". Zero network calls needed.
@@ -870,8 +871,8 @@ def sidebar():
 
     # Collapsible nav sections — role-based
     current_page = st.session_state.get("active_page", "Home")
-    learn_pages   = {"Student Mission", "My Homework", "Ask Preluma AI"}
-    teach_pages   = {"Teacher Profile", "Teacher Studio", "Homework Center", "Class Dashboard"}
+    learn_pages   = {"Student Mission", "My Homework", "Ask Preluma AI", "My Profile", "Class Projects"}
+    teach_pages   = {"Teacher Profile", "Teacher Studio", "Homework Center", "Class Dashboard", "Project Center"}
     project_pages = {"Evidence Board", "Professor Defense", "Project Team", "Demo Guide", "Future Roadmap"}
 
     hw_badge = f" [{unread_count}]" if unread_count else ""
@@ -881,10 +882,12 @@ def sidebar():
     _nav_button("Home", "Home")
 
     if _role == "student":
+        _nav_button("My Profile", "My Profile")
         with st.sidebar.expander("LEARN", expanded=(current_page in learn_pages)):
             _nav_button("Student Mission", "Student Mission", _in_expander=True)
             _nav_button(f"My Homework{hw_badge}", "My Homework", _in_expander=True)
             _nav_button("Ask Preluma AI", "Ask Preluma AI", _in_expander=True)
+            _nav_button("Class Projects", "Class Projects", _in_expander=True)
 
     if _role == "teacher":
         with st.sidebar.expander("TEACH", expanded=(current_page in teach_pages)):
@@ -892,6 +895,7 @@ def sidebar():
             _nav_button("Teacher Studio", "Teacher Studio", _in_expander=True)
             _nav_button("Homework Center", "Homework Center", _in_expander=True)
             _nav_button("Class Dashboard", "Class Dashboard", _in_expander=True)
+            _nav_button("Project Center", "Project Center", _in_expander=True)
 
     # PROJECT section — teachers see technical pages only, students see full section
     if _role == "student":
@@ -1544,12 +1548,12 @@ def quiz():
               <div class='albl {sc}'>{q["skill"]}</div>
               <div style='font-size:15px;color:#f1f5f9;font-weight:600;margin-bottom:12px;'>{q["q"]}</div>
             </div>""", unsafe_allow_html=True)
-            st.radio("", q["options"], key=f"quiz_{i}", label_visibility="collapsed")
+            st.radio("", q["options"], key=f"quiz_{i}", index=None, label_visibility="collapsed")
             st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
         submit = st.form_submit_button("Check My Readiness", use_container_width=True)
 
     if submit:
-        answers = {i: st.session_state.get(f"quiz_{i}","") for i in range(len(st.session_state.questions))}
+        answers = {i: st.session_state.get(f"quiz_{i}") or "" for i in range(len(st.session_state.questions))}
         result  = grade(st.session_state.questions, answers)
         st.session_state.quiz_result = result
         st.session_state.latest_session = {
@@ -1636,6 +1640,68 @@ def result_section():
         st.plotly_chart(fig2, use_container_width=True)
 
 
+# ─── Mood Selector ───────────────────────────────────────────────────────────
+def _mood_selector():
+    """3-button mood picker — updates st.session_state.persona in place."""
+    current = st.session_state.get("persona", "Normal Mode")
+
+    MOODS = [
+        ("😊", "Normal Mode",  "Clear & direct",    "#38bdf8", "rgba(56,189,248,.10)", "rgba(56,189,248,.28)"),
+        ("🏋️", "Coach Mode",   "Warm & motivating", "#34d399", "rgba(52,211,153,.10)", "rgba(52,211,153,.28)"),
+        ("🔥", "Roast Mode",   "Funny pressure",    "#f87171", "rgba(248,113,113,.10)", "rgba(248,113,113,.28)"),
+    ]
+
+    st.markdown("""
+    <style>
+    .mood-wrap { display:flex; gap:10px; margin:4px 0 14px; }
+    .mood-card {
+        flex:1; border-radius:14px; padding:12px 10px 10px;
+        cursor:pointer; text-align:center;
+        border:1.5px solid rgba(255,255,255,.07);
+        transition:all .15s;
+    }
+    .mood-card.active { border-width:2px; }
+    .mood-emoji { font-size:20px; line-height:1; margin-bottom:4px; }
+    .mood-name  { font-size:12px; font-weight:800; letter-spacing:.04em; }
+    .mood-desc  { font-size:10px; color:#64748b; margin-top:2px; }
+    </style>""", unsafe_allow_html=True)
+
+    cards_html = "<div class='mood-wrap'>"
+    for emoji, name, desc, color, bg, border in MOODS:
+        is_active = (current == name)
+        active_cls = " active" if is_active else ""
+        style = (
+            f"background:{bg};border-color:{border};" if is_active
+            else "background:rgba(15,23,42,.50);border-color:rgba(255,255,255,.07);"
+        )
+        _nc = color if is_active else "#94a3b8"
+        cards_html += (
+            f"<div class='mood-card{active_cls}' style='{style}'>"
+            f"<div class='mood-emoji'>{emoji}</div>"
+            f"<div class='mood-name' style='color:{_nc};'>{name}</div>"
+            f"<div class='mood-desc'>{desc}</div>"
+            f"</div>"
+        )
+    cards_html += "</div>"
+    st.markdown(cards_html, unsafe_allow_html=True)
+
+    cols = st.columns(3)
+    changed = False
+    for col, (emoji, name, desc, color, bg, border) in zip(cols, MOODS):
+        is_active = (current == name)
+        btn_type = "primary" if is_active else "secondary"
+        if col.button(
+            f"{'✓ ' if is_active else ''}{name}",
+            key=f"_mood_btn_{name}",
+            use_container_width=True,
+            type=btn_type,
+        ):
+            st.session_state.persona = name
+            changed = True
+    if changed:
+        st.rerun()
+
+
 # Smart QnA + UltraTutor
 def smart_qna():
     if "pack" not in st.session_state: return
@@ -1651,6 +1717,7 @@ def smart_qna():
     else:
         st.markdown("<div class='notice'>Running on local data. Set GEMINI_API_KEY in Streamlit secrets for AI answers.</div>", unsafe_allow_html=True)
 
+    _mood_selector()
     persona = st.session_state.get("persona","Normal Mode")
     hints = {"Normal Mode":"e.g. What is overfitting?","Coach Mode":"e.g. I'm confused, help me understand","Roast Mode":"e.g. Why does everyone talk about neural networks?"}
     question = st.text_input("", placeholder=hints.get(persona,"Ask any question about this topic..."), key="tutor_q", label_visibility="collapsed")
@@ -2039,6 +2106,7 @@ def mission_mock_test_screen() -> None:
         "Choose your answer",
         q["options"],
         key=answer_key,
+        index=None,
         label_visibility="collapsed",
     )
 
@@ -2146,6 +2214,351 @@ def mission_overview_screen() -> None:
             st.rerun()
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# CLASS PROJECTS — student & teacher pages
+# ─────────────────────────────────────────────────────────────────────────────
+
+_ALLOWED_EXTS = {".pdf", ".ppt", ".pptx", ".doc", ".docx", ".txt", ".png", ".jpg", ".jpeg", ".zip"}
+_MAX_FILE_MB   = 100
+
+
+def _file_icon(fname: str) -> str:
+    ext = Path(fname).suffix.lower()
+    return {"pdf": "📄", "ppt": "📊", "pptx": "📊", "doc": "📝", "docx": "📝",
+            "txt": "📋", "zip": "🗜️", "png": "🖼️", "jpg": "🖼️", "jpeg": "🖼️"}.get(ext.lstrip("."), "📎")
+
+
+def _project_card(p: dict, badge: str = "", badge_color: str = "#38bdf8") -> None:
+    """Render a compact project info card."""
+    badge_html = (
+        f"<span style='background:{badge_color}18;border:1px solid {badge_color}40;"
+        f"color:{badge_color};font-size:10px;font-weight:800;letter-spacing:.06em;"
+        f"padding:2px 9px;border-radius:20px;margin-left:8px;'>{badge}</span>"
+    ) if badge else ""
+    st.markdown(
+        f"<div style='background:linear-gradient(145deg,rgba(10,18,38,.97),rgba(6,12,26,.99));"
+        f"border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:18px 20px 14px;'>"
+        f"<div style='font-size:17px;font-weight:900;color:#f1f5f9;margin-bottom:4px;'>"
+        f"{p.get('Title','')}{badge_html}</div>"
+        f"<div style='font-size:13px;color:#94a3b8;line-height:1.65;margin-bottom:8px;'>"
+        f"{p.get('Description','')}</div>"
+        f"<div style='display:flex;gap:12px;flex-wrap:wrap;'>"
+        f"<span style='font-size:11px;color:#64748b;'>📅 Due: <b style='color:#e2e8f0;'>"
+        f"{p.get('Due Date','')}</b></span>"
+        f"<span style='font-size:11px;color:#64748b;'>👤 By: <b style='color:#e2e8f0;'>"
+        f"{p.get('Created By','')}</b></span>"
+        f"<span style='font-size:11px;color:#64748b;'>🆔 <b style='color:#475569;'>"
+        f"{p.get('Project ID','')}</b></span>"
+        f"</div></div>",
+        unsafe_allow_html=True,
+    )
+
+
+def student_project_page():
+    """Student view: browse class projects, upload submissions, download teacher files."""
+    student   = st.session_state.get("student", "")
+    username  = st.session_state.get("username", "")
+
+    page_intro(
+        "student",
+        "Class projects & submissions",
+        "Class Projects",
+        "Browse teacher-assigned projects, upload your files, and track your submissions.",
+    )
+
+    projects = _pc.load_projects()
+
+    if not projects:
+        st.markdown(
+            "<div style='background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.14);"
+            "border-radius:16px;padding:22px;text-align:center;color:#94a3b8;'>"
+            "No projects yet. Your teacher will publish projects here.</div>",
+            unsafe_allow_html=True,
+        )
+        return
+
+    for p in projects:
+        pid = p.get("Project ID", "")
+        already_uploaded = _pc.student_has_uploaded(pid, student or username)
+        badge      = "✓ Submitted" if already_uploaded else "Pending"
+        badge_col  = "#34d399" if already_uploaded else "#fbbf24"
+
+        _project_card(p, badge, badge_col)
+
+        # Teacher attachments (brief, reference files)
+        teacher_files = _pc.get_project_files(project_id=pid, uploader_role="teacher")
+        if teacher_files:
+            st.markdown(
+                "<div style='font-size:11px;font-weight:800;color:#38bdf8;letter-spacing:.08em;"
+                "text-transform:uppercase;margin:10px 0 5px;'>Teacher Materials</div>",
+                unsafe_allow_html=True,
+            )
+            for tf in teacher_files:
+                col_a, col_b = st.columns([4, 1])
+                col_a.markdown(
+                    f"<div style='padding:8px 12px;background:rgba(56,189,248,.06);"
+                    f"border:1px solid rgba(56,189,248,.14);border-radius:10px;"
+                    f"font-size:13px;color:#e2e8f0;'>"
+                    f"{_file_icon(tf.get('file_name',''))} {tf.get('file_name','')}"
+                    f"<span style='font-size:11px;color:#475569;margin-left:10px;'>"
+                    f"{tf.get('created_at','')[:10]}</span></div>",
+                    unsafe_allow_html=True,
+                )
+                if col_b.button("⬇ Download", key=f"dl_t_{tf['file_id']}", use_container_width=True):
+                    with st.spinner("Fetching file..."):
+                        raw, fname, ftype = _pc.download_file(tf["file_id"])
+                    if raw:
+                        st.download_button(
+                            label=f"Save {fname}",
+                            data=raw,
+                            file_name=fname,
+                            mime=ftype or "application/octet-stream",
+                            key=f"save_t_{tf['file_id']}",
+                        )
+                    else:
+                        st.error("Could not fetch file. Please try again.")
+
+        # Upload section
+        st.markdown(
+            "<div style='font-size:11px;font-weight:800;color:#a78bfa;letter-spacing:.08em;"
+            "text-transform:uppercase;margin:12px 0 5px;'>Submit Your File</div>",
+            unsafe_allow_html=True,
+        )
+        up = st.file_uploader(
+            "Choose file (PDF, PPT, DOCX, ZIP — max 8 MB)",
+            type=[e.lstrip(".") for e in _ALLOWED_EXTS],
+            key=f"proj_up_{pid}",
+        )
+        notes_val = st.text_input("Notes (optional)", key=f"proj_notes_{pid}", placeholder="e.g. Final version")
+
+        if up is not None:
+            size_mb = up.size / (1024 * 1024)
+            if size_mb > _MAX_FILE_MB:
+                st.warning(f"File is {size_mb:.1f} MB — max allowed is {_MAX_FILE_MB} MB.")
+            else:
+                if st.button(f"Upload '{up.name}'", key=f"proj_submit_{pid}", type="primary"):
+                    with st.spinner("Uploading to Supabase..."):
+                        ok, fid = _pc.upload_file(
+                            project_id   = pid,
+                            uploader     = student or username,
+                            uploader_role= "student",
+                            file_name    = up.name,
+                            file_bytes   = up.getvalue(),
+                            file_type    = up.type or "",
+                            notes        = notes_val,
+                        )
+                    if ok:
+                        st.success(f"✓ Uploaded successfully! (ID: {fid})")
+                        st.rerun()
+                    else:
+                        st.error("Upload failed. Check Supabase connection or try again.")
+
+        # Show own submissions
+        my_files = _pc.get_project_files(project_id=pid, uploader=student or username, uploader_role="student")
+        if my_files:
+            with st.expander(f"My submissions for this project ({len(my_files)})", expanded=False):
+                for mf in sorted(my_files, key=lambda x: x.get("created_at",""), reverse=True):
+                    col_a, col_b = st.columns([4, 1])
+                    notes_disp = mf.get("notes","") or ""
+                    _nd1 = f"<br><span style='font-size:11px;color:#818cf8;'>{notes_disp}</span>" if notes_disp else ""
+                    col_a.markdown(
+                        f"<div style='padding:8px 12px;background:rgba(167,139,250,.06);"
+                        f"border:1px solid rgba(167,139,250,.14);border-radius:10px;'>"
+                        f"<span style='font-size:13px;color:#e2e8f0;'>"
+                        f"{_file_icon(mf.get('file_name',''))} {mf.get('file_name','')}</span>"
+                        f"<span style='font-size:11px;color:#64748b;margin-left:10px;'>"
+                        f"{mf.get('created_at','')[:16]}</span>"
+                        f"{_nd1}</div>",
+                        unsafe_allow_html=True,
+                    )
+                    if col_b.button("⬇", key=f"dl_my_{mf['file_id']}", use_container_width=True):
+                        with st.spinner("Fetching..."):
+                            raw, fname, ftype = _pc.download_file(mf["file_id"])
+                        if raw:
+                            st.download_button(
+                                label=f"Save {fname}",
+                                data=raw,
+                                file_name=fname,
+                                mime=ftype or "application/octet-stream",
+                                key=f"save_my_{mf['file_id']}",
+                            )
+
+        st.markdown("<hr style='border-color:rgba(255,255,255,.04);margin:14px 0;'>", unsafe_allow_html=True)
+
+
+def teacher_project_page():
+    """Teacher view: create projects, upload materials, see and download all student files."""
+    username = st.session_state.get("username", "")
+    full_name = st.session_state.get("student", username)
+
+    page_intro(
+        "teacher",
+        "Manage projects & student submissions",
+        "Project Center",
+        "Create projects, upload reference materials, and download student deliverables.",
+    )
+
+    tab_create, tab_submissions = st.tabs(["➕ Create / Manage Projects", "📥 Student Submissions"])
+
+    # ── TAB 1: Create project ────────────────────────────────────────────────
+    with tab_create:
+        st.markdown(
+            "<div style='font-size:11px;font-weight:800;color:#38bdf8;letter-spacing:.09em;"
+            "text-transform:uppercase;margin-bottom:12px;'>New Project</div>",
+            unsafe_allow_html=True,
+        )
+
+        with st.form("new_project_form", border=False):
+            c1, c2 = st.columns([2, 1])
+            with c1:
+                p_title = st.text_input("Project title *", placeholder="e.g. Preluma AI Learning Platform")
+                p_desc  = st.text_area("Description *", height=100,
+                    placeholder="What should students submit? What is this project about?")
+            with c2:
+                p_due   = st.text_input("Due date", placeholder="e.g. June 30, 2025")
+                p_attach = st.file_uploader(
+                    "Attach brief / reference (optional)",
+                    type=[e.lstrip(".") for e in _ALLOWED_EXTS],
+                    key="proj_teacher_attach",
+                )
+            create_btn = st.form_submit_button("Create Project", use_container_width=True, type="primary")
+
+        if create_btn:
+            if not p_title.strip() or not p_desc.strip():
+                st.warning("Title and description are required.")
+            else:
+                pid = _pc.create_project(p_title, p_desc, p_due, full_name or username)
+                if p_attach is not None:
+                    with st.spinner("Uploading attachment to Supabase..."):
+                        _pc.upload_file(
+                            project_id    = pid,
+                            uploader      = username,
+                            uploader_role = "teacher",
+                            file_name     = p_attach.name,
+                            file_bytes    = p_attach.getvalue(),
+                            file_type     = p_attach.type or "",
+                            notes         = "Teacher brief",
+                        )
+                st.success(f"✓ Project created! ID: {pid}")
+                st.rerun()
+
+        # Existing projects list with option to upload more materials
+        projects = _pc.load_projects()
+        if projects:
+            st.markdown(
+                "<div style='font-size:11px;font-weight:800;color:#818cf8;letter-spacing:.09em;"
+                "text-transform:uppercase;margin:20px 0 10px;'>Existing Projects</div>",
+                unsafe_allow_html=True,
+            )
+            for p in projects:
+                pid = p.get("Project ID", "")
+                _project_card(p)
+
+                teacher_files = _pc.get_project_files(project_id=pid, uploader_role="teacher")
+                if teacher_files:
+                    st.markdown(
+                        "<div style='font-size:11px;color:#64748b;margin:6px 0 3px;'>Uploaded materials:</div>",
+                        unsafe_allow_html=True,
+                    )
+                    for tf in teacher_files:
+                        st.markdown(
+                            f"<div style='font-size:12px;color:#94a3b8;padding:4px 0;'>"
+                            f"{_file_icon(tf.get('file_name',''))} {tf.get('file_name','')}"
+                            f" · <span style='color:#475569;'>{tf.get('created_at','')[:10]}</span></div>",
+                            unsafe_allow_html=True,
+                        )
+
+                with st.expander(f"Upload more material for: {p.get('Title','')}"):
+                    more_up = st.file_uploader(
+                        "Additional file",
+                        type=[e.lstrip(".") for e in _ALLOWED_EXTS],
+                        key=f"more_up_{pid}",
+                    )
+                    more_notes = st.text_input("Label", key=f"more_notes_{pid}", placeholder="e.g. Slides v2")
+                    if more_up and st.button("Upload", key=f"more_btn_{pid}", type="primary"):
+                        with st.spinner("Uploading..."):
+                            ok, fid = _pc.upload_file(
+                                project_id    = pid,
+                                uploader      = username,
+                                uploader_role = "teacher",
+                                file_name     = more_up.name,
+                                file_bytes    = more_up.getvalue(),
+                                file_type     = more_up.type or "",
+                                notes         = more_notes,
+                            )
+                        if ok:
+                            st.success("✓ Uploaded!")
+                            st.rerun()
+                        else:
+                            st.error("Upload failed.")
+
+                st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
+
+    # ── TAB 2: Student submissions ───────────────────────────────────────────
+    with tab_submissions:
+        projects = _pc.load_projects()
+        if not projects:
+            st.info("No projects yet. Create one in the first tab.")
+        else:
+            sel_titles = {p.get("Title",""): p.get("Project ID","") for p in projects}
+            sel = st.selectbox("Select project", list(sel_titles.keys()), key="teacher_proj_sel")
+            sel_pid = sel_titles.get(sel, "")
+
+            if sel_pid:
+                student_files = _pc.get_project_files(project_id=sel_pid, uploader_role="student")
+
+                if not student_files:
+                    st.markdown(
+                        "<div style='padding:18px;text-align:center;color:#64748b;'>"
+                        "No student submissions yet for this project.</div>",
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    # Group by student
+                    by_student: dict[str, list] = {}
+                    for sf in student_files:
+                        s = sf.get("uploader", "Unknown")
+                        by_student.setdefault(s, []).append(sf)
+
+                    st.markdown(
+                        f"<div style='font-size:12px;color:#94a3b8;margin-bottom:12px;'>"
+                        f"Total: <b style='color:#e2e8f0;'>{len(student_files)}</b> files from "
+                        f"<b style='color:#e2e8f0;'>{len(by_student)}</b> student(s)</div>",
+                        unsafe_allow_html=True,
+                    )
+
+                    for student_name, files in sorted(by_student.items()):
+                        with st.expander(f"👤 {student_name}  ({len(files)} file{'s' if len(files)>1 else ''})", expanded=True):
+                            for sf in sorted(files, key=lambda x: x.get("created_at",""), reverse=True):
+                                col_a, col_b = st.columns([4, 1])
+                                notes_disp = sf.get("notes","") or ""
+                                _nd2 = f"<br><span style='font-size:11px;color:#34d399;'>{notes_disp}</span>" if notes_disp else ""
+                                col_a.markdown(
+                                    f"<div style='padding:8px 12px;background:rgba(52,211,153,.05);"
+                                    f"border:1px solid rgba(52,211,153,.14);border-radius:10px;'>"
+                                    f"<span style='font-size:13px;color:#e2e8f0;'>"
+                                    f"{_file_icon(sf.get('file_name',''))} "
+                                    f"<b>{sf.get('file_name','')}</b></span>"
+                                    f"<span style='font-size:11px;color:#64748b;margin-left:10px;'>"
+                                    f"{sf.get('created_at','')[:16]}</span>"
+                                    f"{_nd2}</div>",
+                                    unsafe_allow_html=True,
+                                )
+                                if col_b.button("⬇ Get", key=f"dl_st_{sf['file_id']}", use_container_width=True):
+                                    with st.spinner("Fetching..."):
+                                        raw, fname, ftype = _pc.download_file(sf["file_id"])
+                                    if raw:
+                                        st.download_button(
+                                            label=f"💾 Save {fname}",
+                                            data=raw,
+                                            file_name=fname,
+                                            mime=ftype or "application/octet-stream",
+                                            key=f"save_st_{sf['file_id']}",
+                                        )
+                                    else:
+                                        st.error("Could not fetch. Try again.")
+
+
 def student_mission(presentation):
     if not st.session_state.get("mission_started") or "pack" not in st.session_state:
         page_intro(
@@ -2154,6 +2567,38 @@ def student_mission(presentation):
             "Student Mission",
             "Choose your topic, set your goal, and let Preluma guide you through a 5-step AI-powered preparation.",
         )
+
+        st.markdown("""
+        <div style='background:linear-gradient(135deg,rgba(14,165,233,.07),rgba(99,102,241,.07));
+            border:1px solid rgba(99,102,241,.18); border-radius:18px;
+            padding:18px 22px; margin:-4px 0 18px; line-height:1.85;'>
+          <div style='font-size:11px;font-weight:800;color:#818cf8;letter-spacing:.10em;
+              text-transform:uppercase;margin-bottom:10px;'>How the Mission Works</div>
+          <div style='display:flex;flex-direction:column;gap:7px;'>
+            <div style='font-size:13px;color:#cbd5e1;'>
+              <span style='color:#38bdf8;font-weight:700;'>① Brain Brief</span>
+              — AI generates a 2-minute primer on every key concept so you walk into class already primed.
+            </div>
+            <div style='font-size:13px;color:#cbd5e1;'>
+              <span style='color:#34d399;font-weight:700;'>② Examples</span>
+              — Real-world examples for each concept, grouped by topic tab, so theory connects to life.
+            </div>
+            <div style='font-size:13px;color:#cbd5e1;'>
+              <span style='color:#a78bfa;font-weight:700;'>③ Quiz + Skill Check</span>
+              — Readiness quiz with instant scoring, weak-skill detection, and a UltraTutor for follow-up.
+            </div>
+            <div style='font-size:13px;color:#cbd5e1;'>
+              <span style='color:#fb923c;font-weight:700;'>④ Mock Test</span>
+              — Timed question-by-question exam simulation with per-answer feedback and a final score.
+            </div>
+            <div style='font-size:13px;color:#cbd5e1;'>
+              <span style='color:#f87171;font-weight:700;'>⑤ Class Ready</span>
+              — Smart class questions you can raise during the lecture, plus a full downloadable study brief.
+            </div>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
         mission_control()
         if presentation:
             how_it_works()
@@ -2173,6 +2618,177 @@ def student_mission(presentation):
     else:
         mission_overview_screen()
 
+
+
+def student_profile_page():
+    """Student profile — personal stats, photo, mood, homework history."""
+    username  = st.session_state.get("username", "")
+    full_name = st.session_state.get("student", username)
+    role      = st.session_state.get("user_role", "student")
+
+    page_intro(
+        "student",
+        "Your learning identity",
+        "My Profile",
+        "Your personal dashboard — stats, achievements, and learning footprint.",
+    )
+
+    # ── Avatar + Identity card ────────────────────────────────────────────────
+    photo_src  = _get_photo_src(username)
+    mood_cfg   = {
+        "Normal Mode": ("😊", "#38bdf8", "rgba(56,189,248,.12)"),
+        "Coach Mode":  ("🏋️", "#34d399", "rgba(52,211,153,.12)"),
+        "Roast Mode":  ("🔥", "#f87171", "rgba(248,113,113,.12)"),
+    }
+    mood_name  = st.session_state.get("persona", "Normal Mode")
+    mood_emoji, mood_color, mood_bg = mood_cfg.get(mood_name, mood_cfg["Normal Mode"])
+
+    if photo_src:
+        avatar_html = f"<img src='{photo_src}' style='width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid rgba(56,189,248,.35);'>"
+    else:
+        initials = "".join(w[0].upper() for w in full_name.split()[:2]) if full_name else "?"
+        avatar_html = (
+            f"<div style='width:80px;height:80px;border-radius:50%;"
+            f"background:linear-gradient(135deg,#1e3a5f,#0f2a45);"
+            f"display:flex;align-items:center;justify-content:center;"
+            f"font-size:28px;font-weight:900;color:#38bdf8;"
+            f"border:3px solid rgba(56,189,248,.35);flex-shrink:0;'>{initials}</div>"
+        )
+
+    id_left = (
+        f"<div style='display:flex;align-items:center;gap:18px;'>"
+        f"{avatar_html}"
+        f"<div>"
+        f"<div style='font-size:22px;font-weight:900;color:#f1f5f9;margin-bottom:3px;'>{full_name}</div>"
+        f"<div style='font-size:12px;color:#64748b;margin-bottom:6px;'>@{username}</div>"
+        f"<div style='display:flex;gap:8px;flex-wrap:wrap;'>"
+        f"<span style='background:rgba(134,239,172,.12);border:1px solid rgba(134,239,172,.25);"
+        f"color:#86efac;font-size:10px;font-weight:800;letter-spacing:.08em;"
+        f"text-transform:uppercase;padding:3px 10px;border-radius:20px;'>STUDENT</span>"
+        f"<span style='background:{mood_bg};border:1px solid {mood_color}40;"
+        f"color:{mood_color};font-size:10px;font-weight:800;letter-spacing:.06em;"
+        f"padding:3px 10px;border-radius:20px;'>{mood_emoji} {mood_name}</span>"
+        f"</div></div></div>"
+    )
+
+    # ── Stats ─────────────────────────────────────────────────────────────────
+    from homework_core import load_submissions, load_student_mistakes, homework_for_student
+    all_subs   = load_submissions()
+    my_subs    = [s for s in all_subs if str(s.get("Student","")).strip().casefold() == full_name.strip().casefold()]
+    my_mistakes = load_student_mistakes(full_name)
+    my_hw       = homework_for_student(full_name)
+
+    total_submitted = len(my_subs)
+    percentages     = []
+    for s in my_subs:
+        try: percentages.append(float(s.get("Percentage", 0)))
+        except (TypeError, ValueError): pass
+    avg_score    = round(sum(percentages) / len(percentages), 1) if percentages else 0.0
+    best_score   = max(percentages) if percentages else 0.0
+    mistake_cnt  = len(my_mistakes)
+    hw_assigned  = len(my_hw)
+    completion   = round((total_submitted / hw_assigned) * 100) if hw_assigned else 0
+
+    def _score_color(pct):
+        if pct >= 80: return "#34d399"
+        if pct >= 60: return "#fbbf24"
+        return "#f87171"
+
+    stats_html = (
+        "<div style='display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;'>"
+    )
+    stats = [
+        ("📝", str(total_submitted), "Submitted",  "#38bdf8"),
+        ("📊", f"{avg_score}%",      "Avg Score",  _score_color(avg_score)),
+        ("🏆", f"{best_score}%",     "Best Score", _score_color(best_score)),
+        ("⚠️", str(mistake_cnt),     "Weak Areas", "#f87171"),
+    ]
+    for icon, val, lbl, color in stats:
+        stats_html += (
+            f"<div style='background:rgba(15,23,42,.70);border:1px solid rgba(255,255,255,.07);"
+            f"border-radius:14px;padding:14px 10px;text-align:center;'>"
+            f"<div style='font-size:18px;margin-bottom:4px;'>{icon}</div>"
+            f"<div style='font-size:20px;font-weight:900;color:{color};'>{val}</div>"
+            f"<div style='font-size:10px;color:#64748b;font-weight:700;margin-top:2px;"
+            f"letter-spacing:.06em;text-transform:uppercase;'>{lbl}</div>"
+            f"</div>"
+        )
+    stats_html += "</div>"
+
+    # Completion bar
+    bar_color = _score_color(completion)
+    completion_html = (
+        f"<div style='margin-top:10px;'>"
+        f"<div style='display:flex;justify-content:space-between;margin-bottom:6px;'>"
+        f"<span style='font-size:11px;color:#94a3b8;font-weight:700;'>Homework Completion</span>"
+        f"<span style='font-size:11px;color:{bar_color};font-weight:800;'>{completion}%  ({total_submitted}/{hw_assigned})</span>"
+        f"</div>"
+        f"<div style='height:6px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden;'>"
+        f"<div style='width:{completion}%;height:100%;border-radius:4px;background:{bar_color};'></div>"
+        f"</div></div>"
+    )
+
+    st.markdown(
+        f"<div style='background:linear-gradient(145deg,rgba(10,18,38,.97),rgba(6,12,26,.99));"
+        f"border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:22px 22px 18px;'>"
+        f"{id_left}{stats_html}{completion_html}"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+    # ── Mood Changer ──────────────────────────────────────────────────────────
+    st.markdown(
+        "<div style='font-size:11px;font-weight:800;color:#818cf8;"
+        "letter-spacing:.10em;text-transform:uppercase;margin:20px 0 4px;'>AI Mood</div>",
+        unsafe_allow_html=True,
+    )
+    _mood_selector()
+
+    # ── Recent submission history ─────────────────────────────────────────────
+    if my_subs:
+        st.markdown(
+            "<div style='font-size:11px;font-weight:800;color:#38bdf8;"
+            "letter-spacing:.10em;text-transform:uppercase;margin:20px 0 8px;'>"
+            "Recent Submissions</div>",
+            unsafe_allow_html=True,
+        )
+        for sub in sorted(my_subs, key=lambda s: s.get("Submitted At",""), reverse=True)[:5]:
+            pct = float(sub.get("Percentage", 0) or 0)
+            sc  = _score_color(pct)
+            st.markdown(
+                f"<div style='display:flex;align-items:center;gap:12px;"
+                f"background:rgba(15,23,42,.60);border:1px solid rgba(255,255,255,.06);"
+                f"border-radius:12px;padding:10px 14px;margin-bottom:6px;'>"
+                f"<div style='width:44px;height:44px;border-radius:10px;"
+                f"background:{sc}18;display:flex;align-items:center;justify-content:center;"
+                f"font-size:14px;font-weight:900;color:{sc};flex-shrink:0;'>{pct:.0f}%</div>"
+                f"<div style='flex:1;min-width:0;'>"
+                f"<div style='font-size:13px;font-weight:700;color:#e2e8f0;white-space:nowrap;"
+                f"overflow:hidden;text-overflow:ellipsis;'>HW #{sub.get('Homework ID','')}</div>"
+                f"<div style='font-size:11px;color:#475569;margin-top:2px;'>"
+                f"Score: {sub.get('Score','')}/{sub.get('Total','')} &nbsp;·&nbsp; "
+                f"Attempt #{sub.get('Attempt','1')} &nbsp;·&nbsp; {sub.get('Submitted At','')[:16]}</div>"
+                f"</div></div>",
+                unsafe_allow_html=True,
+            )
+
+    # ── Weak Areas ────────────────────────────────────────────────────────────
+    if my_mistakes:
+        with st.expander(f"⚠️ My Weak Areas ({mistake_cnt})", expanded=False):
+            seen_concepts = {}
+            for m in my_mistakes:
+                c = m.get("Weak Concept", "Unknown") or "Unknown"
+                seen_concepts[c] = seen_concepts.get(c, 0) + 1
+            for concept, count in sorted(seen_concepts.items(), key=lambda x: -x[1]):
+                st.markdown(
+                    f"<div style='display:flex;justify-content:space-between;align-items:center;"
+                    f"padding:7px 12px;background:rgba(248,113,113,.06);"
+                    f"border:1px solid rgba(248,113,113,.14);border-radius:10px;margin-bottom:5px;'>"
+                    f"<span style='font-size:13px;color:#fca5a5;font-weight:600;'>{concept}</span>"
+                    f"<span style='font-size:11px;color:#f87171;font-weight:800;'>{count}✗</span>"
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
 
 
 def teacher_profile_page():
@@ -2674,6 +3290,8 @@ def ask_preluma_ai_page():
         "Ask naturally. Preluma detects the topic, understands the learning goal, and adjusts the depth and teaching style.",
     )
 
+    _mood_selector()
+
     # No key notice
     if not llm_available():
         st.markdown(
@@ -3078,7 +3696,7 @@ def my_homework_page():
 
     options = question.get("Options", [])
     prev_answer = hw_answers.get(q_id)
-    default_idx = options.index(prev_answer) if prev_answer in options else 0
+    default_idx = options.index(prev_answer) if prev_answer in options else None
 
     chosen = st.radio(
         "Select your answer",
@@ -3091,20 +3709,20 @@ def my_homework_page():
     col1, col2 = st.columns([1, 2])
     if q_step > 0:
         if col1.button("Previous", use_container_width=True):
-            hw_answers[q_id] = chosen
+            hw_answers[q_id] = chosen if chosen is not None else ""
             st.session_state["_hw_answers"] = hw_answers
             st.session_state["_hw_q_step"] = q_step - 1
             st.rerun()
 
     if not is_last:
         if col2.button("Next Question", use_container_width=True, type="primary"):
-            hw_answers[q_id] = chosen
+            hw_answers[q_id] = chosen if chosen is not None else ""
             st.session_state["_hw_answers"] = hw_answers
             st.session_state["_hw_q_step"] = q_step + 1
             st.rerun()
     else:
         if col2.button("Submit Homework", use_container_width=True, type="primary"):
-            hw_answers[q_id] = chosen
+            hw_answers[q_id] = chosen if chosen is not None else ""
             st.session_state["_hw_answers"] = hw_answers
             final_answers = {int(k): v for k, v in hw_answers.items()}
             result = submit_homework(homework_id, student, final_answers)
@@ -4196,8 +4814,8 @@ def main():
 
     # Role guard — redirect teacher to Home if they land on student-only pages
     _role = st.session_state.get("user_role", "student")
-    student_only = {"Student Mission", "My Homework", "Ask Preluma AI", "Professor Defense", "Demo Guide", "Future Roadmap"}
-    teacher_only = {"Teacher Profile", "Teacher Studio", "Homework Center", "Class Dashboard"}
+    student_only = {"Student Mission", "My Homework", "Ask Preluma AI", "My Profile", "Class Projects", "Professor Defense", "Demo Guide", "Future Roadmap"}
+    teacher_only = {"Teacher Profile", "Teacher Studio", "Homework Center", "Class Dashboard", "Project Center"}
 
     if _role == "teacher" and page in student_only:
         st.session_state.active_page = "Home"
@@ -4208,13 +4826,16 @@ def main():
 
     pages = {
         "Home": home_page,
+        "My Profile": student_profile_page,
         "Student Mission": lambda: student_mission(presentation),
+        "Class Projects": student_project_page,
         "Ask Preluma AI": ask_preluma_ai_page,
         "Teacher Profile": teacher_profile_page,
         "teacher_detail": teacher_detail_page,
         "Teacher Studio": teacher_studio,
         "Homework Center": homework_center_page,
         "Class Dashboard": class_dashboard_page,
+        "Project Center": teacher_project_page,
         "Evidence Board": evidence_board,
         "Professor Defense": professor_defense,
         "Project Team": project_team,
