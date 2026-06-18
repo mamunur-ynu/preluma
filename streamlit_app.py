@@ -2050,35 +2050,54 @@ def teacher_profile_page():
     """, unsafe_allow_html=True)
 
     TEACHERS = [
-        {"initials":"ZY","name":"Zhou Yujue","cn":"周玉珏",
+        {"initials":"ZY","name":"Zhou Yujue","cn":"周玉珏","photo_key":"zhouyujue",
          "role":"Lecturer · AI Department",
          "course":"Python Programming &amp; AI Tools",
          "research":"AI, Time Series Analysis, Smart Healthcare",
          "email":"zhouyujue@ynu.edu.cn"},
-        {"initials":"GS","name":"Gao Song","cn":"高嵩",
+        {"initials":"GS","name":"Gao Song","cn":"高嵩","photo_key":"gaosong",
          "role":"Lecturer · Software Engineering",
          "course":"C++ Programming",
          "research":"Computer Vision, AI Security, Model Compression",
          "email":"gaos@ynu.edu.cn"},
-        {"initials":"TL","name":"Tang Li","cn":"唐丽",
+        {"initials":"TL","name":"Tang Li","cn":"唐丽","photo_key":"tangli",
          "role":"Lecturer · Cyberspace Security",
          "course":"Database",
          "research":"Data Security, Image Security",
          "email":"tangli@ynu.edu.cn"},
-        {"initials":"WP","name":"Wei Ping","cn":"韦平",
+        {"initials":"WP","name":"Wei Ping","cn":"韦平","photo_key":"weiping",
          "role":"Lecturer · Cyberspace Security",
          "course":"Statistics &amp; Probability",
          "research":"LLM &amp; Multi-agent, Cybersecurity, Multimedia Security",
          "email":"weip@ynu.edu.cn"},
     ]
 
+    import pathlib as _pl, base64 as _b64
+
+    def _photo_src(key: str) -> str | None:
+        for ext in ("jpg","jpeg","png","webp"):
+            p = _pl.Path(f"assets/teacher_photos/{key}.{ext}")
+            if p.exists():
+                data = _b64.b64encode(p.read_bytes()).decode()
+                return f"data:image/{ext};base64,{data}"
+        return None
+
     col1, col2 = st.columns(2)
     for idx, t in enumerate(TEACHERS):
         col = col1 if idx % 2 == 0 else col2
         with col:
+            photo = _photo_src(t["photo_key"])
+            if photo:
+                avatar_html = (
+                    f"<img src=\"{photo}\" style=\"width:64px;height:64px;"
+                    f"border-radius:50%;object-fit:cover;float:left;margin-right:16px;"
+                    f"border:2px solid rgba(56,189,248,.35);box-shadow:0 6px 20px rgba(99,102,241,.35);\">"
+                )
+            else:
+                avatar_html = f"<div class=\"tc-avatar\">{t['initials']}</div>"
             st.markdown(f"""
             <div class="tc-card">
-                <div class="tc-avatar">{t['initials']}</div>
+                {avatar_html}
                 <div class="tc-name">{t['name']}</div>
                 <div class="tc-cn">{t['cn']}</div>
                 <div class="tc-role">{t['role']}</div>
@@ -2086,7 +2105,7 @@ def teacher_profile_page():
                 <div class="tc-row"><div class="tc-key">Course</div><div class="tc-val">{t['course']}</div></div>
                 <div class="tc-row"><div class="tc-key">Research</div><div class="tc-val">{t['research']}</div></div>
                 <div class="tc-row"><div class="tc-key">Email</div><div class="tc-val">{t['email']}</div></div>
-                <div class="tc-row"><div class="tc-key">Photo</div><div class="tc-val">To be added with teacher consent</div></div>
+                <div class="tc-row"><div class="tc-key">Photo</div><div class="tc-val">{"✓ Added" if photo else "Pending teacher consent"}</div></div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -2191,6 +2210,77 @@ def teacher_studio():
         st.caption("result.txt — algorithm timing audit log.")
         for line in read_recent_logs(15):
             st.code(line, language="text")
+
+    # ── Profile Photo Upload ───────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("""
+    <div style='font-size:10px;font-weight:800;color:#38bdf8;letter-spacing:.10em;
+        text-transform:uppercase;margin-bottom:10px;'>Teacher Profile Photos</div>
+    <div style='font-size:13px;color:#94a3b8;margin-bottom:16px;'>
+        Upload profile photos here — they will appear on the Teacher Profile page.
+        Photos are only used within this course project.
+    </div>
+    """, unsafe_allow_html=True)
+
+    _TEACHER_PHOTO_MAP = {
+        "Zhou Yujue":              "zhouyujue",
+        "Gao Song":                "gaosong",
+        "Tang Li":                 "tangli",
+        "Wei Ping":                "weiping",
+        "Mamunur Rashid (Admin)":  "mim_admin",
+    }
+    _ADMIN_USERS = {"mim.ynu", "mamunur rashid (admin)"}
+    _logged_full = st.session_state.get("student", "")
+    _username    = st.session_state.get("username", "").lower()
+    _is_admin    = _username in _ADMIN_USERS or _logged_full.lower() in _ADMIN_USERS
+
+    import pathlib as _pl2
+    # Admin sees dropdown to pick any teacher; others upload for themselves only
+    if _is_admin:
+        _teacher_options = list(_TEACHER_PHOTO_MAP.keys())
+        _selected_teacher = st.selectbox(
+            "Upload photo for",
+            _teacher_options,
+            key="admin_photo_target",
+            help="As admin you can upload photos on behalf of any teacher.",
+        )
+        _photo_key = _TEACHER_PHOTO_MAP[_selected_teacher]
+        _upload_label = f"Select photo for {_selected_teacher}"
+    else:
+        _photo_key    = _TEACHER_PHOTO_MAP.get(_logged_full, "teacher")
+        _selected_teacher = _logged_full
+        _upload_label = f"Upload your photo"
+
+    # Show current status for chosen teacher
+    _existing = next(
+        (str(p) for ext in ("jpg","jpeg","png","webp")
+         for p in [_pl2.Path(f"assets/teacher_photos/{_photo_key}.{ext}")] if p.exists()),
+        None
+    )
+    if _existing:
+        st.success(f"✓ Photo already uploaded for **{_selected_teacher}**")
+        try:
+            st.image(_existing, width=100)
+        except Exception:
+            pass
+
+    photo_file = st.file_uploader(
+        _upload_label,
+        type=["jpg", "jpeg", "png", "webp"],
+        key="teacher_photo_upload",
+    )
+    if photo_file is not None:
+        photos_dir = _pl2.Path("assets/teacher_photos")
+        photos_dir.mkdir(parents=True, exist_ok=True)
+        ext   = photo_file.name.rsplit(".", 1)[-1].lower()
+        # Remove old photo for this teacher first
+        for old_ext in ("jpg","jpeg","png","webp"):
+            old = photos_dir / f"{_photo_key}.{old_ext}"
+            if old.exists(): old.unlink()
+        fname = f"{_photo_key}.{ext}"
+        (photos_dir / fname).write_bytes(photo_file.getbuffer())
+        st.success(f"✅ Photo saved for **{_selected_teacher}** — visible on Teacher Profile now.")
+        st.image(photo_file, width=120, caption=_selected_teacher)
 
 
 # Words that are not real questions and need a follow-up prompt instead of a topic answer
