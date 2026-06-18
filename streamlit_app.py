@@ -38,8 +38,11 @@ import json as _json_mod, time as _time_mod, hmac as _hmac_mod, base64 as _b64_m
 
 def _session_secret() -> bytes:
     """Use Supabase key as HMAC secret (or fallback). Never leaves the server."""
-    raw = _get_secret("SUPABASE_KEY") or "preluma-fallback-secret-2024"
-    return raw[:32].encode()
+    try:
+        raw = st.secrets.get("SUPABASE_KEY", "") or "preluma-fallback-secret-2024"
+    except Exception:
+        raw = "preluma-fallback-secret-2024"
+    return str(raw)[:32].encode()
 
 def _make_session_token(username: str, role: str, full_name: str) -> str:
     """Create a 30-day self-contained signed session token."""
