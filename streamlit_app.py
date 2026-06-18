@@ -23,6 +23,7 @@ from homework_core import (
     load_homework,
     load_questions,
     load_student_mistakes,
+    load_all_mistakes,
     mark_notifications_read,
     notifications_for_student,
     load_submissions,
@@ -2119,7 +2120,7 @@ def teacher_profile_page():
     col1, col2 = st.columns(2)
     cols = [col1, col2, col1, col2]
     for idx, t in enumerate(TEACHERS):
-        photo_src = _photo_src(t["photo_key"])
+        photo_src = _get_photo_src(t["photo_key"])
         av = f'<img src="{photo_src}" class="tpg-av">' if photo_src else f'<div class="tpg-av">{t["initials"]}</div>'
         with cols[idx]:
             st.markdown(f"""
@@ -3766,8 +3767,28 @@ def class_dashboard_page():
     </style>
     """, unsafe_allow_html=True)
 
-    _all_students = get_all_students()
+    # ── Cache all data once per session — avoids repeated file/Supabase reads ──
+    if "_cached_students" not in st.session_state:
+        st.session_state["_cached_students"] = get_all_students()
+    _all_students = st.session_state["_cached_students"]
     _student_names = [s.get("Full Name", s.get("Username","")) for s in _all_students]
+
+    # Cache homework + submissions for the whole dashboard (reused across all tabs)
+    if "_cached_hw" not in st.session_state:
+        st.session_state["_cached_hw"] = load_homework()
+    if "_cached_subs" not in st.session_state:
+        st.session_state["_cached_subs"] = load_submissions()
+    if "_cached_mistakes" not in st.session_state:
+        st.session_state["_cached_mistakes"] = load_all_mistakes()
+    _all_hw   = st.session_state["_cached_hw"]
+    _all_subs = st.session_state["_cached_subs"]
+    _all_mistakes_raw = st.session_state["_cached_mistakes"]
+
+    # Group mistakes by student name for O(1) lookup
+    _mistakes_by_student: dict = {}
+    for _m in _all_mistakes_raw:
+        _k = str(_m.get("Student", "")).strip().casefold()
+        _mistakes_by_student.setdefault(_k, []).append(_m)
 
     tab1, tab2, tab3, tab4 = st.tabs(
         ["📢  Send Announcement", "📊  Student Progress", "✏️  Edit Homework", "🔍  Student Lookup"]
@@ -3834,21 +3855,18 @@ def class_dashboard_page():
     # TAB 2 — Student Progress
     # ══════════════════════════════════════════════════════════════════
     with tab2:
-        all_subs = load_submissions()
-        all_hw   = load_homework()
-
         if not _student_names:
             st.info("No students registered yet.")
         else:
-            # Build per-student summary
+            # Build per-student summary using pre-cached data
             progress_rows = []
             for name in _student_names:
-                student_subs = [s for s in all_subs if s.get("Student") == name]
+                student_subs = [s for s in _all_subs if s.get("Student") == name]
                 scores = []
                 for s in student_subs:
                     try: scores.append(float(s.get("Percentage", 0)))
                     except: pass
-                mistakes = load_student_mistakes(name)
+                mistakes = _mistakes_by_student.get(name.strip().casefold(), [])
                 weak_concepts = list({m.get("Weak Concept","") for m in mistakes if m.get("Weak Concept")})
                 progress_rows.append({
                     "Student":        name,
@@ -3864,7 +3882,7 @@ def class_dashboard_page():
             m1.metric("Total Students", len(progress_rows))
             m2.metric("Active (submitted)", len(done_any))
             m3.metric("Not started", len(progress_rows) - len(done_any))
-            m4.metric("Total Submissions", len(all_subs))
+            m4.metric("Total Submissions", len(_all_subs))
 
             st.markdown("---")
             st.markdown(
@@ -3902,13 +3920,12 @@ def class_dashboard_page():
     # TAB 3 — Edit Homework
     # ══════════════════════════════════════════════════════════════════
     with tab3:
-        all_hw = load_homework()
-        if not all_hw:
+        if not _all_hw:
             st.info("No homework published yet. Create one in Homework Center.")
         else:
             hw_labels = {
                 f"#{row['Homework ID']} · {row['Title']} (Due: {row['Due Date']})": row
-                for row in all_hw
+                for row in _all_hw
             }
             selected_hw_label = st.selectbox(
                 "Select homework to edit",
@@ -3994,10 +4011,10 @@ def class_dashboard_page():
                 key="lookup_student_select",
             )
 
-            all_subs_lookup = [s for s in load_submissions() if s.get("Student") == lookup_name]
-            mistakes_lookup = load_student_mistakes(lookup_name)
+            all_subs_lookup = [s for s in _all_subs if s.get("Student") == lookup_name]
+            mistakes_lookup = _mistakes_by_student.get(lookup_name.strip().casefold(), [])
             hw_done_ids     = {s.get("Homework ID") for s in all_subs_lookup}
-            hw_pending      = [h for h in load_homework() if str(h.get("Homework ID")) not in hw_done_ids]
+            hw_pending      = [h for h in _all_hw if str(h.get("Homework ID")) not in hw_done_ids]
 
             scores = []
             for s in all_subs_lookup:
@@ -4026,7 +4043,7 @@ def class_dashboard_page():
                     except: pct_f = 0
                     bar_color = "#34d399" if pct_f >= 70 else "#f59e0b" if pct_f >= 40 else "#f87171"
                     hw_title = next(
-                        (h.get("Title","") for h in load_homework()
+                        (h.get("Title","") for h in _all_hw
                          if str(h.get("Homework ID")) == str(sub.get("Homework ID"))),
                         f"Homework #{sub.get('Homework ID','')}"
                     )

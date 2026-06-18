@@ -320,6 +320,12 @@ def load_student_mistakes(student: str) -> list[dict[str, Any]]:
     ]
 
 
+def load_all_mistakes() -> list[dict[str, Any]]:
+    """Load every row from mistakes CSV in a single read — use this in bulk loops."""
+    ensure_homework_files()
+    return _read_rows(MISTAKES_CSV)
+
+
 def homework_overview(homework_id: int | str) -> dict[str, Any]:
     submissions = load_submissions(homework_id)
     percentages = []
