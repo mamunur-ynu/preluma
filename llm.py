@@ -1,23 +1,25 @@
-"""LLM integration for Preluma. Supports Gemini, OpenAI, Anthropic, Groq, OpenRouter, and Together AI.
+"""LLM integration for Preluma. Supports Gemini, OpenAI, Anthropic, Groq, OpenRouter, Together AI, and Cerebras.
 Providers are tried in order. If one fails the next one takes over automatically."""
 
 import os
 import json
 import requests
 
-_OPENAI_URL    = "https://api.openai.com/v1/chat/completions"
-_ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
-_GROQ_URL      = "https://api.groq.com/openai/v1/chat/completions"
-_GEMINI_URL    = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+_OPENAI_URL     = "https://api.openai.com/v1/chat/completions"
+_ANTHROPIC_URL  = "https://api.anthropic.com/v1/messages"
+_GROQ_URL       = "https://api.groq.com/openai/v1/chat/completions"
+_GEMINI_URL     = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 _OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 _TOGETHER_URL   = "https://api.together.xyz/v1/chat/completions"
+_CEREBRAS_URL   = "https://api.cerebras.ai/v1/chat/completions"
 
-_OPENAI_MODEL    = os.environ.get("OPENAI_MODEL", "gpt-4.1-mini")
-_ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
-_GROQ_MODEL      = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
-_GEMINI_MODEL    = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
-_OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "openai/gpt-4.1-mini")
-_TOGETHER_MODEL   = os.environ.get("TOGETHER_MODEL", "meta-llama/Llama-3.3-70B-Instruct-Turbo")
+_OPENAI_MODEL     = os.environ.get("OPENAI_MODEL",     "gpt-4.1-mini")
+_ANTHROPIC_MODEL  = os.environ.get("ANTHROPIC_MODEL",  "claude-sonnet-4-20250514")
+_GROQ_MODEL       = os.environ.get("GROQ_MODEL",       "llama-3.3-70b-versatile")
+_GEMINI_MODEL     = os.environ.get("GEMINI_MODEL",     "gemini-1.5-flash")
+_OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
+_TOGETHER_MODEL   = os.environ.get("TOGETHER_MODEL",   "meta-llama/Llama-3.3-70B-Instruct-Turbo")
+_CEREBRAS_MODEL   = os.environ.get("CEREBRAS_MODEL",   "llama-3.3-70b")
 _TIMEOUT         = 20
 _MAX_TOKENS      = 2200
 
@@ -165,15 +167,35 @@ def _call_together(system: str, user: str) -> str:
     except Exception:
         return ""
 
+
+def _call_cerebras(system: str, user: str) -> str:
+    key = _key("CEREBRAS_API_KEY")
+    if not key:
+        return ""
+    try:
+        resp = requests.post(
+            _CEREBRAS_URL,
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={"model": _CEREBRAS_MODEL, "max_tokens": _MAX_TOKENS,
+                  "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]},
+            timeout=_TIMEOUT,
+        )
+        resp.raise_for_status()
+        return resp.json()["choices"][0]["message"]["content"].strip()
+    except Exception:
+        return ""
+
+
 def available_providers() -> list[str]:
     providers: list[str] = []
     mapping = [
-        ("OPENAI_API_KEY", "OpenAI"),
+        ("OPENAI_API_KEY",    "OpenAI"),
         ("ANTHROPIC_API_KEY", "Claude (Anthropic)"),
-        ("GEMINI_API_KEY", "Gemini"),
-        ("GROQ_API_KEY", "Groq"),
-        ("OPENROUTER_API_KEY", "OpenRouter"),
-        ("TOGETHER_API_KEY", "Together AI"),
+        ("GEMINI_API_KEY",    "Gemini"),
+        ("GROQ_API_KEY",      "Groq"),
+        ("CEREBRAS_API_KEY",  "Cerebras"),
+        ("OPENROUTER_API_KEY","OpenRouter"),
+        ("TOGETHER_API_KEY",  "Together AI"),
     ]
     for key_name, label in mapping:
         if _key(key_name):
@@ -192,7 +214,7 @@ def llm_available() -> bool:
 
 def _call_llm(system: str, user: str) -> str:
     # One provider answers; the next providers are automatic fallbacks.
-    for fn in (_call_openai, _call_anthropic, _call_gemini, _call_groq, _call_openrouter, _call_together):
+    for fn in (_call_groq, _call_cerebras, _call_gemini, _call_openrouter, _call_together, _call_openai, _call_anthropic):
         result = fn(system, user)
         if result:
             return result
