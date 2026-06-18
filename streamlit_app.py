@@ -198,7 +198,7 @@ def _get_photo_src(photo_key: str) -> str | None:
 
 # ─────────────────────────────────────────────────────────────────────────────
 
-APP_VERSION = "40.7"
+APP_VERSION = "40.8"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -2928,8 +2928,7 @@ def student_profile_page():
     avg_c  = _sc(avg_score)
     best_c = _sc(best_score)
 
-    st.markdown(f"""
-<style>
+    st.markdown(f"""<style>
 .sp-hero {{
     border-radius:24px; overflow:hidden;
     border:1px solid rgba(56,189,248,.16);
@@ -2995,59 +2994,38 @@ def student_profile_page():
 </style>
 """, unsafe_allow_html=True)
 
-    st.markdown(f"""
-<div class='sp-hero'>
-  <div class='sp-banner'></div>
-  <div class='sp-body'>
-    <div class='sp-top'>
-      <div class='sp-avatar-ring'>{avatar_inner}</div>
-      <div>
-        <div class='sp-name'>{full_name}</div>
-        <div class='sp-un'>@{username}</div>
-        <div class='sp-tags'>
-          <span class='sp-tag' style='background:rgba(134,239,172,.10);border:1px solid rgba(134,239,172,.22);color:#86efac;'>STUDENT</span>
-          <span class='sp-tag' style='background:{rank_color}18;border:1px solid {rank_color}40;color:{rank_color};'>{rank_emoji} {rank_name}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class='sp-stats'>
-      <div class='sp-stat'>
-        <div class='sp-sv' style='color:#38bdf8;'>{total_submitted}</div>
-        <div class='sp-sl'>Submitted</div>
-      </div>
-      <div class='sp-stat'>
-        <div class='sp-sv' style='color:{avg_c};'>{avg_score}%</div>
-        <div class='sp-sl'>Avg Score</div>
-      </div>
-      <div class='sp-stat'>
-        <div class='sp-sv' style='color:{best_c};'>{best_score:.0f}%</div>
-        <div class='sp-sl'>Best Score</div>
-      </div>
-      <div class='sp-stat'>
-        <div class='sp-sv' style='color:#f87171;'>{mistake_cnt}</div>
-        <div class='sp-sl'>Weak Areas</div>
-      </div>
-    </div>
-
-    <div style='margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;'>
-      <span style='font-size:11px;color:#64748b;font-weight:700;'>Homework Completion</span>
-      <span style='font-size:11px;font-weight:800;color:{bar_c};'>{completion}% &nbsp;({total_submitted}/{hw_assigned})</span>
-    </div>
-    <div class='sp-bar-wrap'>
-      <div class='sp-bar-fill' style='width:{completion}%;background:{bar_c};'></div>
-    </div>
-
-    <div style='margin-top:14px;display:flex;justify-content:space-between;align-items:center;'>
-      <span style='font-size:11px;color:#64748b;font-weight:700;'>Progress to next rank</span>
-      <span style='font-size:11px;font-weight:800;color:{rank_color};'>{rank_progress}%</span>
-    </div>
-    <div class='sp-bar-wrap' style='margin-top:6px;'>
-      <div class='sp-bar-fill' style='width:{rank_progress}%;background:linear-gradient(90deg,{rank_color}88,{rank_color});'></div>
-    </div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+    st.markdown(
+f"<div class='sp-hero'>"
+f"<div class='sp-banner'></div>"
+f"<div class='sp-body'>"
+f"<div class='sp-top'>"
+f"<div class='sp-avatar-ring'>{avatar_inner}</div>"
+f"<div>"
+f"<div class='sp-name'>{full_name}</div>"
+f"<div class='sp-un'>@{username}</div>"
+f"<div class='sp-tags'>"
+f"<span class='sp-tag' style='background:rgba(134,239,172,.10);border:1px solid rgba(134,239,172,.22);color:#86efac;'>STUDENT</span>"
+f"<span class='sp-tag' style='background:{rank_color}18;border:1px solid {rank_color}40;color:{rank_color};'>{rank_emoji} {rank_name}</span>"
+f"</div></div></div>"
+f"<div class='sp-stats'>"
+f"<div class='sp-stat'><div class='sp-sv' style='color:#38bdf8;'>{total_submitted}</div><div class='sp-sl'>Submitted</div></div>"
+f"<div class='sp-stat'><div class='sp-sv' style='color:{avg_c};'>{avg_score}%</div><div class='sp-sl'>Avg Score</div></div>"
+f"<div class='sp-stat'><div class='sp-sv' style='color:{best_c};'>{best_score:.0f}%</div><div class='sp-sl'>Best Score</div></div>"
+f"<div class='sp-stat'><div class='sp-sv' style='color:#f87171;'>{mistake_cnt}</div><div class='sp-sl'>Weak Areas</div></div>"
+f"</div>"
+f"<div style='margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;'>"
+f"<span style='font-size:11px;color:#64748b;font-weight:700;'>Homework Completion</span>"
+f"<span style='font-size:11px;font-weight:800;color:{bar_c};'>{completion}% &nbsp;({total_submitted}/{hw_assigned})</span>"
+f"</div>"
+f"<div class='sp-bar-wrap'><div class='sp-bar-fill' style='width:{completion}%;background:{bar_c};'></div></div>"
+f"<div style='margin-top:14px;display:flex;justify-content:space-between;align-items:center;'>"
+f"<span style='font-size:11px;color:#64748b;font-weight:700;'>Progress to next rank</span>"
+f"<span style='font-size:11px;font-weight:800;color:{rank_color};'>{rank_progress}%</span>"
+f"</div>"
+f"<div class='sp-bar-wrap' style='margin-top:6px;'>"
+f"<div class='sp-bar-fill' style='width:{rank_progress}%;background:linear-gradient(90deg,{rank_color}88,{rank_color});'></div>"
+f"</div></div></div>",
+unsafe_allow_html=True)
 
     # ── Recent Submissions ─────────────────────────────────────────────────────
     if my_subs:
