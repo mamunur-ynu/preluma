@@ -729,8 +729,9 @@ def sidebar():
         _nav_button("Evidence Board", "Evidence Board", _in_expander=True)
         _nav_button("Professor Defense", "Professor Defense", _in_expander=True)
         _nav_button("Project Team", "Project Team", _in_expander=True)
-        _nav_button("Demo Guide", "Demo Guide", _in_expander=True)
-        _nav_button("Future Roadmap", "Future Roadmap", _in_expander=True)
+        if _role == "student":
+            _nav_button("Demo Guide", "Demo Guide", _in_expander=True)
+            _nav_button("Future Roadmap", "Future Roadmap", _in_expander=True)
 
     # Logout button at bottom
     st.sidebar.markdown("<div style='margin-top:8px;'>", unsafe_allow_html=True)
@@ -2095,6 +2096,51 @@ def teacher_profile_page():
         else:
             st.warning("Please enter both a title and a topic.")
 
+    # ── Student team members ──────────────────────────────────────────────────
+    st.markdown("""
+    <div style="font-size:10px;font-weight:800;color:#38bdf8;letter-spacing:.10em;
+        text-transform:uppercase;margin:32px 0 16px;">
+        Student Development Team
+    </div>
+    """, unsafe_allow_html=True)
+
+    team_data = [
+        ("MR", "Mamunur Rashid",  "mamun",  "#0ea5e9",
+         "Core Development · UI/UX · Integration · Deployment",
+         ["streamlit_app.py", "llm.py", "engine.py", "homework_core.py", "storage_core.py"]),
+        ("FA", "Md Fahim Ahmed",   "fahim",  "#8b5cf6",
+         "Feature Logic · Quiz Testing · Interaction Feedback",
+         ["algorithms_core.py", "analytics_core.py", "teacher.py", "tests/"]),
+        ("JI", "Md Jiarul Islam",  "jiarul", "#10b981",
+         "Topic Data · Documentation · Presentation Support",
+         ["topics.py", "wiki_fetcher.py", "models.py", "result_generator.py"]),
+    ]
+
+    tcols = st.columns(3)
+    for i, (initials, name, uname, color, role, files) in enumerate(team_data):
+        with tcols[i]:
+            st.markdown(f"""
+            <div style="background:linear-gradient(145deg,rgba(10,18,36,.96),rgba(6,12,26,.98));
+                        border:1px solid {color}28;border-radius:18px;padding:20px 18px;">
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+                    <div style="width:52px;height:52px;border-radius:50%;
+                                background:linear-gradient(135deg,{color},{color}99);
+                                display:flex;align-items:center;justify-content:center;
+                                font-size:18px;font-weight:900;color:#fff;flex-shrink:0;">
+                        {initials}
+                    </div>
+                    <div>
+                        <div style="font-size:14px;font-weight:800;color:#f1f5f9;">{name}</div>
+                        <div style="font-size:10px;color:{color};font-weight:700;
+                                    letter-spacing:.06em;text-transform:uppercase;">@{uname}</div>
+                    </div>
+                </div>
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;line-height:1.5;">{role}</div>
+                <div style="font-size:10px;color:#475569;">
+                    {"  ·  ".join(f'<code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:4px;color:#94a3b8;">{f}</code>' for f in files)}
+                </div>
+            </div>""", unsafe_allow_html=True)
+
 
 # Teacher Studio: algorithm demos and class analytics
 
@@ -3077,160 +3123,188 @@ def roadmap():
 # App entry point — called by Streamlit on every page load or user interaction
 
 def login_page():
-    """Beautiful full-screen login & register page."""
+    """Beautiful full-screen login & register page with role toggle + invite code."""
+    import streamlit as st
 
-    # Gradient background
     st.markdown("""
 <style>
-.login-wrap {
-    max-width: 420px;
-    margin: 0 auto;
-    padding: 40px 0 20px;
+.login-wrap { max-width:440px; margin:0 auto; padding:30px 0 20px; }
+.login-logo { text-align:center; margin-bottom:28px; }
+.login-logo-name { font-size:44px; font-weight:900; color:#06b6d4; letter-spacing:-1px; line-height:1; }
+.login-logo-tag  { font-size:13px; color:#475569; font-weight:500; letter-spacing:.04em; margin-top:4px; }
+.role-btn-active {
+    flex:1; text-align:center; padding:12px 8px; border-radius:14px; cursor:pointer;
+    font-size:12px; font-weight:800; letter-spacing:.07em; border:2px solid;
+    transition:all .2s;
 }
-.login-logo {
-    text-align: center;
-    margin-bottom: 32px;
+.cred-box {
+    background:rgba(6,182,212,.06); border:1px solid rgba(6,182,212,.14);
+    border-radius:12px; padding:12px 16px; margin-top:18px;
 }
-.login-logo-name {
-    font-size: 42px;
-    font-weight: 900;
-    color: #06b6d4;
-    letter-spacing: -1px;
-    line-height: 1;
-}
-.login-logo-tag {
-    font-size: 13px;
-    color: #475569;
-    font-weight: 500;
-    letter-spacing: .04em;
-    margin-top: 4px;
-}
-.login-card {
-    background: rgba(15,23,42,.82);
-    border: 1px solid rgba(6,182,212,.18);
-    border-radius: 20px;
-    padding: 36px 32px 28px;
-    backdrop-filter: blur(16px);
-    box-shadow: 0 24px 64px rgba(0,0,0,.5);
-}
-.login-tab-hint {
-    font-size: 11.5px;
-    color: #64748b;
-    text-align: center;
-    margin-bottom: 20px;
-}
-.demo-box {
-    background: rgba(6,182,212,.06);
-    border: 1px solid rgba(6,182,212,.14);
-    border-radius: 12px;
-    padding: 12px 16px;
-    margin-top: 20px;
-}
-.demo-title {
-    font-size: 11px;
-    font-weight: 700;
-    color: #06b6d4;
-    letter-spacing: .08em;
-    margin-bottom: 8px;
-}
-.demo-row {
-    font-size: 11.5px;
-    color: #94a3b8;
-    line-height: 1.8;
-    font-family: monospace;
+.cred-title { font-size:10px; font-weight:800; color:#06b6d4; letter-spacing:.1em; margin-bottom:8px; }
+.cred-row   { font-size:11.5px; color:#94a3b8; line-height:1.9; font-family:monospace; }
+.invite-box {
+    background:rgba(103,232,249,.05); border:1px solid rgba(103,232,249,.18);
+    border-radius:12px; padding:14px 16px; margin-bottom:14px;
+    font-size:12px; color:#94a3b8; line-height:1.6;
 }
 </style>
 """, unsafe_allow_html=True)
 
     st.markdown("<div class='login-wrap'>", unsafe_allow_html=True)
-
-    # Logo
     st.markdown("""
 <div class='login-logo'>
     <div class='login-logo-name'>Preluma</div>
     <div class='login-logo-tag'>Light Up Before Class</div>
 </div>""", unsafe_allow_html=True)
 
-    # Tabs: Login / Register
-    # Role selector — Teacher or Student
-    st.markdown("""
-<div style='display:flex;gap:10px;margin-bottom:18px;'>
-    <div style='flex:1;text-align:center;padding:10px;border-radius:12px;
-                background:rgba(103,232,249,.08);border:1px solid rgba(103,232,249,.2);
-                font-size:12px;color:#67e8f9;font-weight:700;letter-spacing:.06em;'>
-        TEACHER LOGIN<br>
-        <span style='font-size:10px;color:#475569;font-weight:400;'>Use your assigned credentials</span>
-    </div>
-    <div style='flex:1;text-align:center;padding:10px;border-radius:12px;
-                background:rgba(134,239,172,.08);border:1px solid rgba(134,239,172,.2);
-                font-size:12px;color:#86efac;font-weight:700;letter-spacing:.06em;'>
-        STUDENT LOGIN<br>
-        <span style='font-size:10px;color:#475569;font-weight:400;'>Use your username & password</span>
-    </div>
-</div>
-<p style='font-size:12px;color:#475569;text-align:center;margin-bottom:4px;'>
-    Both teachers and students use the same login form below.
-</p>
-""", unsafe_allow_html=True)
+    # ── Role toggle ──────────────────────────────────────────────
+    st.session_state.setdefault("login_role", "Student")
+    col_t, col_s = st.columns(2)
 
-    tab_login, tab_reg = st.tabs(["Log In", "New Student? Register Here"])
+    t_active = st.session_state.login_role == "Teacher"
+    s_active = st.session_state.login_role == "Student"
 
-    with tab_login:
-        with st.form("login_form", clear_on_submit=False):
-            username = st.text_input("Username", placeholder="Enter your username")
-            password = st.text_input("Password", type="password", placeholder="Enter your password")
-            submitted = st.form_submit_button("Log In", use_container_width=True, type="primary")
+    t_bg  = "rgba(103,232,249,.14)" if t_active else "rgba(103,232,249,.04)"
+    t_bc  = "#67e8f9"               if t_active else "rgba(103,232,249,.2)"
+    t_col = "#e2e8f0"               if t_active else "#67e8f9"
+    s_bg  = "rgba(134,239,172,.14)" if s_active else "rgba(134,239,172,.04)"
+    s_bc  = "#86efac"               if s_active else "rgba(134,239,172,.2)"
+    s_col = "#e2e8f0"               if s_active else "#86efac"
 
-        if submitted:
-            if not username or not password:
-                st.error("Please enter both username and password.")
-            else:
-                user = authenticate(username, password)
-                if user:
-                    st.session_state.logged_in  = True
-                    st.session_state.user_role  = user["Role"]
-                    st.session_state.username   = user["Username"]
-                    st.session_state.student    = user["Full Name"]
-                    st.session_state.active_page = "Home"
-                    st.rerun()
-                else:
-                    st.error("Incorrect username or password.")
+    with col_t:
+        if st.button("TEACHER", key="role_teacher", use_container_width=True,
+                     type="primary" if t_active else "secondary"):
+            st.session_state.login_role = "Teacher"
+            st.rerun()
+    with col_s:
+        if st.button("STUDENT", key="role_student", use_container_width=True,
+                     type="primary" if s_active else "secondary"):
+            st.session_state.login_role = "Student"
+            st.rerun()
 
-        # Credentials reference box
+    st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+
+    # ── TEACHER mode ─────────────────────────────────────────────
+    if st.session_state.login_role == "Teacher":
         st.markdown("""
-<div class='demo-box'>
-    <div class='demo-title'>CREDENTIALS</div>
-    <div class='demo-row'>
-        <span style='color:#67e8f9;font-weight:700;'>TEACHER</span><br>
-        &nbsp;&nbsp;username: <b>teacher</b> &nbsp;|&nbsp; password: teach123<br><br>
-        <span style='color:#86efac;font-weight:700;'>STUDENTS</span><br>
-        &nbsp;&nbsp;mamun &nbsp;|&nbsp; fahim &nbsp;|&nbsp; jiarul &nbsp;— password: <b>preluma1</b>
-    </div>
+<div class='invite-box'>
+    <b style='color:#67e8f9;'>Teacher Access</b><br>
+    If you already have a teacher account, log in below.<br>
+    To create a new teacher account, enter the <b>Teacher Invite Code</b>
+    provided by the course admin.
 </div>""", unsafe_allow_html=True)
 
-    with tab_reg:
-        st.markdown(
-            "<p style='font-size:12px;color:#64748b;margin-bottom:12px;'>"
-            "New students can create their own account. "
-            "Teachers are added by the admin.</p>",
-            unsafe_allow_html=True,
-        )
-        with st.form("register_form", clear_on_submit=True):
-            reg_name     = st.text_input("Full Name", placeholder="e.g. Alice Wang")
-            reg_user     = st.text_input("Username", placeholder="Choose a username (min 3 chars)")
-            reg_pass     = st.text_input("Password", type="password", placeholder="Min 6 characters")
-            reg_pass2    = st.text_input("Confirm Password", type="password", placeholder="Repeat password")
-            reg_submit   = st.form_submit_button("Create Student Account", use_container_width=True, type="primary")
+        tab_tlogin, tab_treg = st.tabs(["Teacher Log In", "New Teacher? Use Invite Code"])
 
-        if reg_submit:
-            if reg_pass != reg_pass2:
-                st.error("Passwords do not match.")
-            else:
-                ok, msg = register(reg_user, reg_pass, reg_name, role="student")
-                if ok:
-                    st.success(f"{msg} You can now log in from the 'Log In' tab.")
+        with tab_tlogin:
+            with st.form("teacher_login_form"):
+                t_user = st.text_input("Username", placeholder="Teacher username")
+                t_pass = st.text_input("Password", type="password", placeholder="Password")
+                t_sub  = st.form_submit_button("Log In as Teacher", use_container_width=True, type="primary")
+
+            if t_sub:
+                if not t_user or not t_pass:
+                    st.error("Please fill in all fields.")
                 else:
-                    st.error(msg)
+                    user = authenticate(t_user, t_pass)
+                    if user and user["Role"] == "teacher":
+                        st.session_state.logged_in   = True
+                        st.session_state.user_role   = "teacher"
+                        st.session_state.username    = user["Username"]
+                        st.session_state.student     = user["Full Name"]
+                        st.session_state.active_page = "Home"
+                        st.rerun()
+                    elif user and user["Role"] == "student":
+                        st.error("This is a student account. Please switch to Student mode.")
+                    else:
+                        st.error("Incorrect username or password.")
+
+        with tab_treg:
+            st.markdown(
+                "<p style='font-size:12px;color:#64748b;margin-bottom:10px;'>"
+                "Enter the invite code given to you by the course admin to create a teacher account.</p>",
+                unsafe_allow_html=True,
+            )
+            with st.form("teacher_reg_form"):
+                tr_name   = st.text_input("Full Name", placeholder="Your full name")
+                tr_user   = st.text_input("Username",  placeholder="Choose a username (min 3 chars)")
+                tr_pass   = st.text_input("Password",  type="password", placeholder="Min 6 characters")
+                tr_pass2  = st.text_input("Confirm Password", type="password", placeholder="Repeat password")
+                tr_code   = st.text_input("Teacher Invite Code", type="password",
+                                          placeholder="Enter the secret invite code")
+                tr_submit = st.form_submit_button("Create Teacher Account", use_container_width=True, type="primary")
+
+            if tr_submit:
+                import streamlit as _st
+                # Get invite code from secrets, fallback to default
+                try:
+                    valid_code = st.secrets.get("TEACHER_INVITE_CODE", "PRELUMA-TEACH-2024")
+                except Exception:
+                    valid_code = "PRELUMA-TEACH-2024"
+
+                if tr_pass != tr_pass2:
+                    st.error("Passwords do not match.")
+                elif tr_code.strip() != valid_code:
+                    st.error("Invalid invite code. Contact your course admin for access.")
+                else:
+                    ok, msg = register(tr_user, tr_pass, tr_name, role="teacher")
+                    if ok:
+                        st.success(f"Teacher account created! You can now log in.")
+                    else:
+                        st.error(msg)
+
+    # ── STUDENT mode ─────────────────────────────────────────────
+    else:
+        tab_login, tab_reg = st.tabs(["Log In", "New Student? Register Here"])
+
+        with tab_login:
+            with st.form("student_login_form"):
+                username  = st.text_input("Username", placeholder="Enter your username")
+                password  = st.text_input("Password", type="password", placeholder="Enter your password")
+                submitted = st.form_submit_button("Log In", use_container_width=True, type="primary")
+
+            if submitted:
+                if not username or not password:
+                    st.error("Please enter both username and password.")
+                else:
+                    user = authenticate(username, password)
+                    if user and user["Role"] == "teacher":
+                        st.error("This is a teacher account. Please switch to Teacher mode.")
+                    elif user:
+                        st.session_state.logged_in   = True
+                        st.session_state.user_role   = user["Role"]
+                        st.session_state.username    = user["Username"]
+                        st.session_state.student     = user["Full Name"]
+                        st.session_state.active_page = "Home"
+                        st.rerun()
+                    else:
+                        st.error("Incorrect username or password.")
+
+
+
+        with tab_reg:
+            st.markdown(
+                "<p style='font-size:12px;color:#64748b;margin-bottom:10px;'>"
+                "Create your student account to track progress and access homework.</p>",
+                unsafe_allow_html=True,
+            )
+            with st.form("student_reg_form"):
+                reg_name  = st.text_input("Full Name", placeholder="e.g. Alice Wang")
+                reg_user  = st.text_input("Username",  placeholder="Choose a username (min 3 chars)")
+                reg_pass  = st.text_input("Password",  type="password", placeholder="Min 6 characters")
+                reg_pass2 = st.text_input("Confirm Password", type="password", placeholder="Repeat password")
+                reg_sub   = st.form_submit_button("Create Student Account", use_container_width=True, type="primary")
+
+            if reg_sub:
+                if reg_pass != reg_pass2:
+                    st.error("Passwords do not match.")
+                else:
+                    ok, msg = register(reg_user, reg_pass, reg_name, role="student")
+                    if ok:
+                        st.success(f"{msg} Go to Log In tab.")
+                    else:
+                        st.error(msg)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
