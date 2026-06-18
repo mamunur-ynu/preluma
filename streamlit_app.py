@@ -2538,6 +2538,18 @@ def my_homework_page():
         st.session_state["_hw_active_id"] = homework_id
 
     # Assignment info card
+    _cb = selected.get('Created By', '') or ''
+    _att = selected.get('Attachment', '') or ''
+    _teacher_badge = (
+        f"<span style='font-size:12px;color:#64748b;'>Assigned by: "
+        f"<b style='color:#38bdf8;'>{_cb}</b></span>"
+        if _cb else ""
+    )
+    _att_badge = (
+        f"<span style='font-size:12px;color:#64748b;margin-left:16px;'>📎 "
+        f"<b style='color:#a5b4fc;'>{_att}</b></span>"
+        if _att else ""
+    )
     st.markdown(
         f"<div style='background:linear-gradient(145deg,rgba(120,53,15,.22),rgba(12,18,29,.92));"
         f"border:1px solid rgba(245,158,11,.20);border-radius:20px;padding:20px 24px;margin:10px 0 20px;'>"
@@ -2546,11 +2558,13 @@ def my_homework_page():
         f"<div style='font-size:17px;font-weight:800;color:#f8fafc;margin-bottom:6px;'>"
         f"{selected.get('Title', '')}</div>"
         f"<div style='font-size:13px;color:#94a3b8;margin-bottom:10px;'>{selected.get('Instructions', '')}</div>"
-        f"<div style='display:flex;gap:16px;'>"
+        f"<div style='display:flex;gap:16px;flex-wrap:wrap;'>"
         f"<span style='font-size:12px;color:#64748b;'>Due: <b style='color:#fbbf24;'>"
         f"{selected.get('Due Date', '')}</b></span>"
         f"<span style='font-size:12px;color:#64748b;'>Difficulty: <b style='color:#fbbf24;'>"
-        f"{selected.get('Difficulty', '')}</b></span></div></div>",
+        f"{selected.get('Difficulty', '')}</b></span>"
+        f"{_teacher_badge}{_att_badge}"
+        f"</div></div>",
         unsafe_allow_html=True,
     )
 
@@ -2812,6 +2826,26 @@ def _default_homework_questions(topic: str) -> list[dict]:
 
 
 def homework_center_page():
+    _TEACHER_OPTIONS = [
+        "Zhou Yujue (周玉珏) · AI Dept",
+        "Gao Song (高嵩) · Software Engineering",
+        "Tang Li (唐丽) · Cyberspace Security",
+        "Wei Ping (韦平) · Cyberspace Security",
+    ]
+    _TEACHER_NAMES = {
+        "Zhou Yujue (周玉珏) · AI Dept":              "Zhou Yujue",
+        "Gao Song (高嵩) · Software Engineering":     "Gao Song",
+        "Tang Li (唐丽) · Cyberspace Security":        "Tang Li",
+        "Wei Ping (韦平) · Cyberspace Security":       "Wei Ping",
+    }
+    # Auto-select teacher from logged-in user if they match
+    _logged_name = st.session_state.get("student", "") or ""
+    _default_teacher_idx = 0
+    for i, k in enumerate(_TEACHER_OPTIONS):
+        if any(n in _logged_name for n in ["Zhou","Gao","Tang","Wei"]):
+            if _logged_name.split()[0] in k:
+                _default_teacher_idx = i
+
     page_intro(
         "homework",
         "Teacher assignment workspace",
@@ -2822,7 +2856,32 @@ def homework_center_page():
     create_tab, overview_tab = st.tabs(["Create Homework", "Class Overview"])
 
     with create_tab:
+        # File uploader must live outside the form to allow re-upload without submit
+        uploaded_file = st.file_uploader(
+            "Attach homework file (optional)",
+            type=["pdf", "doc", "docx", "txt"],
+            help="Upload a PDF or Word document as the homework reference material.",
+            key="hw_file_upload",
+        )
+        attachment_name = ""
+        if uploaded_file is not None:
+            import pathlib as _pl
+            att_dir = _pl.Path("data/homework_attachments")
+            att_dir.mkdir(parents=True, exist_ok=True)
+            safe_name = uploaded_file.name.replace(" ", "_")
+            att_path = att_dir / safe_name
+            att_path.write_bytes(uploaded_file.getbuffer())
+            attachment_name = safe_name
+            st.success(f"📎 File ready: {safe_name}")
+
         with st.form("teacher_homework_creator", border=False):
+            # Teacher selector
+            teacher_sel = st.selectbox(
+                "Assigned by (Teacher)",
+                _TEACHER_OPTIONS,
+                index=_default_teacher_idx,
+                help="Select which teacher is publishing this homework.",
+            )
             c1, c2 = st.columns(2)
             title = c1.text_input("Homework title", value="Introduction Practice")
             topic = c2.text_input("Topic", value="Machine Learning")
@@ -2841,6 +2900,8 @@ def homework_center_page():
             publish = st.form_submit_button("Publish Homework", use_container_width=True)
 
         if publish:
+            teacher_display = teacher_sel
+            teacher_name    = _TEACHER_NAMES.get(teacher_sel, teacher_sel)
             homework_id = create_homework(
                 title=title,
                 topic=topic,
@@ -2848,10 +2909,11 @@ def homework_center_page():
                 due_date=due_date,
                 difficulty=difficulty,
                 assigned_to=assigned_to,
-                created_by="Teacher Demo",
+                created_by=teacher_display,
                 questions=_default_homework_questions(topic),
+                attachment=attachment_name,
             )
-            st.success(f"Homework #{homework_id} published. Student notifications were created.")
+            st.success(f"✅ Homework #{homework_id} published by **{teacher_name}**. Students have been notified.")
 
     with overview_tab:
         rows = load_homework()

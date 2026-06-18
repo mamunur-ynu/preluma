@@ -15,7 +15,7 @@ NOTIFICATIONS_CSV = DATA_DIR / "notifications.csv"
 
 HOMEWORK_FIELDS = [
     "Homework ID", "Title", "Topic", "Instructions", "Due Date",
-    "Difficulty", "Assigned To", "Created By", "Created At", "Published"
+    "Difficulty", "Assigned To", "Created By", "Created At", "Published", "Attachment"
 ]
 QUESTION_FIELDS = [
     "Homework ID", "Question ID", "Question", "Option A", "Option B",
@@ -89,6 +89,7 @@ def create_homework(
     assigned_to: str,
     created_by: str,
     questions: list[dict[str, Any]],
+    attachment: str = "",
 ) -> int:
     ensure_homework_files()
     homework_id = _next_id(HOMEWORK_CSV, "Homework ID")
@@ -103,6 +104,7 @@ def create_homework(
         "Created By": created_by,
         "Created At": now_text(),
         "Published": "Yes",
+        "Attachment": attachment or "",
     })
 
     question_id = 1
