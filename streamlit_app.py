@@ -667,7 +667,10 @@ st.markdown(CSS, unsafe_allow_html=True)
 # Session state helpers and shared utilities used across all pages
 
 def init_state():
-    from auth import ensure_setup as _auth_setup; _auth_setup()
+    # ensure_setup only runs once per session to avoid repeated Supabase calls
+    if not st.session_state.get("_setup_done", False):
+        from auth import ensure_setup as _auth_setup; _auth_setup()
+        st.session_state["_setup_done"] = True
     st.session_state.setdefault("logged_in", False)
     st.session_state.setdefault("user_role", "")
     st.session_state.setdefault("username", "")
@@ -2091,16 +2094,6 @@ def teacher_profile_page():
 
     TEACHERS = _teacher_list()
 
-    import pathlib as _pl, base64 as _b64
-
-    def _photo_src(key):
-        for ext in ("jpg","jpeg","png","webp"):
-            p = _pl.Path(f"assets/teacher_photos/{key}.{ext}")
-            if p.exists():
-                data = p.read_bytes()
-                return f"data:image/{ext};base64,{_b64.b64encode(data).decode()}"
-        return None
-
     st.markdown("""
     <style>
     .tpg-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:8px; }
@@ -2251,18 +2244,7 @@ def teacher_detail_page():
     _is_self   = _username == t["photo_key"]
     _can_photo = _is_admin or _is_self
 
-    def _photo_bytes(key):
-        for ext in ("jpg","jpeg","png","webp"):
-            p = _pl.Path(f"assets/teacher_photos/{key}.{ext}")
-            if p.exists():
-                return p.read_bytes(), ext
-        return None, None
-
-    def _photo_src(key):
-        data, ext = _photo_bytes(key)
-        return f"data:image/{ext};base64,{_b64.b64encode(data).decode()}" if data else None
-
-    photo_src = _photo_src(t["photo_key"])
+    photo_src = _get_photo_src(t["photo_key"])
 
     # ── Back button ──
     if st.button("← Back to Teacher List", key="td_back"):
@@ -2383,13 +2365,17 @@ def teacher_detail_page():
                 key=f"td_upload_{idx}_{t['photo_key']}",
             )
             if up is not None:
+                img_bytes = up.getbuffer().tobytes()
+                ext = up.name.rsplit(".",1)[-1].lower()
+                # Save locally (current session)
                 photos_dir = _pl.Path("assets/teacher_photos")
                 photos_dir.mkdir(parents=True, exist_ok=True)
-                ext = up.name.rsplit(".",1)[-1].lower()
                 for old_ext in ("jpg","jpeg","png","webp"):
                     old = photos_dir / f"{t['photo_key']}.{old_ext}"
                     if old.exists(): old.unlink()
-                (photos_dir / f"{t['photo_key']}.{ext}").write_bytes(up.getbuffer())
+                (photos_dir / f"{t['photo_key']}.{ext}").write_bytes(img_bytes)
+                # Save to Supabase (persistent across deploys)
+                _save_photo_sb(t["photo_key"], img_bytes, ext)
                 st.success("✅ Profile photo updated!")
                 st.rerun()
 
@@ -2400,6 +2386,7 @@ def teacher_detail_page():
                     for old_ext in ("jpg","jpeg","png","webp"):
                         old = _pl.Path(f"assets/teacher_photos/{t['photo_key']}.{old_ext}")
                         if old.exists(): old.unlink()
+                    _delete_photo_sb(t["photo_key"])
                     st.success("Photo removed.")
                     st.rerun()
 
@@ -2562,7 +2549,10 @@ def teacher_studio():
             old = photos_dir / f"{_photo_key}.{old_ext}"
             if old.exists(): old.unlink()
         fname = f"{_photo_key}.{ext}"
-        (photos_dir / fname).write_bytes(photo_file.getbuffer())
+        img_bytes = photo_file.getbuffer().tobytes()
+        (photos_dir / fname).write_bytes(img_bytes)
+        # Also save to Supabase for persistence across deploys
+        _save_photo_sb(_photo_key, img_bytes, ext)
         st.success(f"✅ Photo saved for **{_selected_teacher}** — visible on Teacher Profile now.")
         st.image(photo_file, width=120, caption=_selected_teacher)
 
