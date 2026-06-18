@@ -2280,6 +2280,80 @@ def _file_row(f: dict, dl_key: str, save_key: str) -> None:
             col_b.error("Failed")
 
 
+def _file_category(fname: str) -> tuple[str, str]:
+    """Return (category_label, accent_color) based on file extension."""
+    ext = "." + fname.rsplit(".", 1)[-1].lower() if "." in fname else ""
+    if ext in {".pdf", ".doc", ".docx", ".txt"}:
+        return ("📄 Documents", "#38bdf8")
+    if ext in {".ppt", ".pptx"}:
+        return ("🎯 Presentations", "#a78bfa")
+    if ext in {".png", ".jpg", ".jpeg"}:
+        return ("🖼️ Images", "#fb923c")
+    if ext in {".zip"}:
+        return ("📦 Archives", "#34d399")
+    return ("📎 Other Files", "#94a3b8")
+
+
+def _render_file_folders(files: list[dict], key_prefix: str) -> None:
+    """Group files by category and render each as a labeled folder section."""
+    if not files:
+        return
+    cats: dict[str, list] = {}
+    cat_colors: dict[str, str] = {}
+    for f in files:
+        lbl, color = _file_category(f.get("file_name", ""))
+        cats.setdefault(lbl, []).append(f)
+        cat_colors[lbl] = color
+
+    for cat_label, cat_files in cats.items():
+        accent = cat_colors[cat_label]
+        st.markdown(
+            f"<div style='display:flex;align-items:center;gap:8px;margin:14px 0 6px;'>"
+            f"<div style='height:1px;flex:1;background:rgba(255,255,255,.05);'></div>"
+            f"<span style='font-size:10px;font-weight:800;letter-spacing:.10em;"
+            f"text-transform:uppercase;color:{accent};white-space:nowrap;'>{cat_label}</span>"
+            f"<div style='height:1px;flex:1;background:rgba(255,255,255,.05);'></div>"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+        for i, f in enumerate(sorted(cat_files, key=lambda x: x.get("created_at", ""), reverse=True)):
+            _file_row(f, f"{key_prefix}_dl_{i}", f"{key_prefix}_sv_{i}")
+
+
+def _upload_panel(project_id: str, uploader: str, role: str, key_pfx: str) -> None:
+    """Compact upload widget — file picker + notes + upload button."""
+    up = st.file_uploader(
+        f"Add file (PDF, PPT, DOCX, ZIP, IMG — max {_MAX_FILE_MB} MB)",
+        type=[e.lstrip(".") for e in _ALLOWED_EXTS],
+        key=f"{key_pfx}_up",
+        accept_multiple_files=False,
+    )
+    if up is not None:
+        size_mb = up.size / (1024 * 1024)
+        if size_mb > _MAX_FILE_MB:
+            st.warning(f"File too large ({size_mb:.1f} MB). Max is {_MAX_FILE_MB} MB.")
+        else:
+            notes_val = st.text_input("Notes (optional)", key=f"{key_pfx}_notes",
+                                      placeholder="e.g. Final version, Draft v2")
+            if st.button(f"⬆ Upload  '{up.name}'", key=f"{key_pfx}_btn", type="primary",
+                         use_container_width=True):
+                with st.spinner("Uploading..."):
+                    ok, _ = _pc.upload_file(
+                        project_id    = project_id,
+                        uploader      = uploader,
+                        uploader_role = role,
+                        file_name     = up.name,
+                        file_bytes    = up.getvalue(),
+                        file_type     = up.type or "",
+                        notes         = notes_val,
+                    )
+                if ok:
+                    st.success("✓ Uploaded!")
+                    st.rerun()
+                else:
+                    st.error("Upload failed. Check your connection and try again.")
+
+
 def student_project_page():
     """Student view — My Projects (personal) + Class Projects (teacher-assigned)."""
     student  = st.session_state.get("student", "")
@@ -2293,104 +2367,171 @@ def student_project_page():
         "Manage your personal projects and submit work for teacher-assigned class projects.",
     )
 
+    # ── Page-level CSS ───────────────────────────────────────────────
+    st.markdown("""
+    <style>
+    .proj-card {
+        background: linear-gradient(135deg, rgba(15,23,42,.95) 0%, rgba(30,27,75,.60) 100%);
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 18px;
+        padding: 20px 22px 16px;
+        margin-bottom: 6px;
+        position: relative;
+        overflow: hidden;
+    }
+    .proj-card::before {
+        content:'';
+        position:absolute;
+        top:0;left:0;right:0;height:3px;
+        background: var(--pc-accent, linear-gradient(90deg,#818cf8,#38bdf8));
+        border-radius:18px 18px 0 0;
+    }
+    .proj-title  { font-size:18px;font-weight:800;color:#f1f5f9;margin-bottom:4px; }
+    .proj-desc   { font-size:13px;color:#94a3b8;line-height:1.6;margin-bottom:10px; }
+    .proj-meta   { display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:#475569; }
+    .proj-badge  {
+        display:inline-block;padding:3px 12px;border-radius:30px;font-size:11px;
+        font-weight:700;letter-spacing:.06em;
+    }
+    .folder-upload {
+        background:rgba(99,102,241,.06);
+        border:1px dashed rgba(99,102,241,.28);
+        border-radius:14px;
+        padding:14px 16px;
+        margin-top:10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     tab_mine, tab_class = st.tabs(["📁 My Projects", "🏫 Class Projects"])
 
     # ════════════════════════════════════════════════════════════════
-    # TAB 1 — My Projects (personal, private until Complete)
+    # TAB 1 — My Projects
     # ════════════════════════════════════════════════════════════════
     with tab_mine:
-        # Create new personal project
-        with st.expander("➕ Create New Project", expanded=False):
-            with st.form("create_personal_proj", border=False):
-                np_title = st.text_input("Project title *", placeholder="e.g. AI Research Report")
-                np_desc  = st.text_area("Description", height=80,
+
+        # ── Create new project panel ─────────────────────────────
+        st.markdown("""
+        <div style='background:linear-gradient(135deg,rgba(99,102,241,.10),rgba(56,189,248,.07));
+            border:1px solid rgba(99,102,241,.22);border-radius:18px;padding:18px 20px 6px;margin-bottom:14px;'>
+          <div style='font-size:13px;font-weight:800;color:#818cf8;letter-spacing:.08em;
+              text-transform:uppercase;margin-bottom:12px;'>➕ Create New Project</div>
+        """, unsafe_allow_html=True)
+
+        with st.form("create_personal_proj", border=False):
+            np_title = st.text_input("Project title *", placeholder="e.g. Preluma AI Learning Platform")
+            col_desc, col_side = st.columns([3, 2])
+            with col_desc:
+                np_desc = st.text_area("Description", height=90,
                     placeholder="What is this project about? What are you building or researching?")
+            with col_side:
                 np_status = st.radio(
-                    "Status",
+                    "Visibility",
                     ["In Progress", "Complete"],
                     index=0,
-                    horizontal=True,
-                    help="In Progress = private (only you see it). Complete = teacher can view it.",
+                    help="In Progress = private (only you). Complete = teacher can view it.",
                 )
-                create_personal_btn = st.form_submit_button("Create Project", type="primary", use_container_width=True)
+                np_files = st.file_uploader(
+                    f"Attach files now (optional)",
+                    type=[e.lstrip(".") for e in _ALLOWED_EXTS],
+                    accept_multiple_files=True,
+                    key="np_init_files",
+                )
+            create_personal_btn = st.form_submit_button(
+                "Create Project", type="primary", use_container_width=True)
 
-            if create_personal_btn:
-                if not np_title.strip():
-                    st.warning("Please enter a project title.")
-                else:
-                    new_pid = _pc.create_personal_project(np_title, np_desc, me, np_status)
-                    st.success(f"✓ Project created!")
-                    st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
+        if create_personal_btn:
+            if not np_title.strip():
+                st.warning("Please enter a project title.")
+            else:
+                new_pid = _pc.create_personal_project(np_title, np_desc, me, np_status)
+                if np_files:
+                    with st.spinner(f"Uploading {len(np_files)} file(s)..."):
+                        for uf in np_files:
+                            sz = uf.size / (1024 * 1024)
+                            if sz <= _MAX_FILE_MB:
+                                _pc.upload_file(
+                                    project_id    = new_pid,
+                                    uploader      = me,
+                                    uploader_role = "student",
+                                    file_name     = uf.name,
+                                    file_bytes    = uf.getvalue(),
+                                    file_type     = uf.type or "",
+                                    notes         = "",
+                                )
+                st.success("✓ Project created!")
+                st.rerun()
 
+        # ── List existing personal projects ──────────────────────
         my_projects = _pc.load_personal_projects(me, include_in_progress=True)
 
         if not my_projects:
             st.markdown(
-                "<div style='background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.14);"
-                "border-radius:16px;padding:22px;text-align:center;color:#94a3b8;'>"
-                "You have no personal projects yet. Create one above to get started!</div>",
+                "<div style='border:1px dashed rgba(167,139,250,.20);border-radius:16px;"
+                "padding:28px;text-align:center;color:#64748b;margin-top:8px;'>"
+                "You have no personal projects yet.<br>"
+                "<span style='font-size:12px;'>Create one above — start in progress, "
+                "mark complete when ready to share with your teacher.</span></div>",
                 unsafe_allow_html=True,
             )
         else:
-            for mp in sorted(my_projects, key=lambda x: x.get("Created At",""), reverse=True):
-                mpid   = mp.get("Project ID", "")
-                mstatus = mp.get("Status", "In Progress")
-                is_complete = mstatus == "Complete"
-                sbadge_color = "#34d399" if is_complete else "#fbbf24"
-                _project_card(mp, mstatus, sbadge_color)
+            for mp in sorted(my_projects, key=lambda x: x.get("Created At", ""), reverse=True):
+                mpid      = mp.get("Project ID", "")
+                mstatus   = mp.get("Status", "In Progress")
+                is_done   = mstatus == "Complete"
+                accent_g  = "linear-gradient(90deg,#34d399,#059669)" if is_done else "linear-gradient(90deg,#fbbf24,#f59e0b)"
+                badge_bg  = "rgba(52,211,153,.15)" if is_done else "rgba(251,191,36,.12)"
+                badge_fc  = "#34d399" if is_done else "#fbbf24"
+                badge_ico = "✅" if is_done else "🔄"
+                desc_txt  = mp.get("Description", "") or ""
+                due_txt   = mp.get("Due Date", "") or ""
+                created   = (mp.get("Created At", "") or "")[:10]
 
-                # Toggle status button
-                toggle_col, _ = st.columns([2, 3])
-                toggle_label = "✓ Mark as Complete" if not is_complete else "↩ Move Back to In Progress"
-                toggle_new   = "Complete" if not is_complete else "In Progress"
-                if toggle_col.button(toggle_label, key=f"toggle_{mpid}", use_container_width=True):
+                st.markdown(
+                    f"<div class='proj-card' style='--pc-accent:{accent_g};'>"
+                    f"<div style='display:flex;justify-content:space-between;align-items:flex-start;'>"
+                    f"<div class='proj-title'>{mp.get('Title','Untitled')}</div>"
+                    f"<span class='proj-badge' style='background:{badge_bg};color:{badge_fc};'>"
+                    f"{badge_ico} {mstatus}</span></div>"
+                    f"<div class='proj-desc'>{desc_txt}</div>"
+                    f"<div class='proj-meta'>"
+                    f"<span>🗓 Created {created}</span>"
+                    + (f"<span>📅 Due: {due_txt}</span>" if due_txt else "")
+                    + f"<span>🆔 {mpid}</span></div></div>",
+                    unsafe_allow_html=True,
+                )
+
+                # Status toggle + upload side by side
+                btn_col, up_toggle_col = st.columns([1, 1])
+                toggle_label = "✅ Mark as Complete" if not is_done else "🔄 Move to In Progress"
+                toggle_new   = "Complete" if not is_done else "In Progress"
+                if btn_col.button(toggle_label, key=f"tog_{mpid}", use_container_width=True):
                     _pc.update_project_status(mpid, toggle_new)
                     st.rerun()
 
-                # Upload file to this project
-                with st.expander(f"📎 Upload file to: {mp.get('Title','')}"):
-                    mp_up = st.file_uploader(
-                        f"Choose file (max {_MAX_FILE_MB} MB)",
-                        type=[e.lstrip(".") for e in _ALLOWED_EXTS],
-                        key=f"mp_up_{mpid}",
-                    )
-                    mp_notes = st.text_input("Notes (optional)", key=f"mp_notes_{mpid}",
-                                             placeholder="e.g. Draft v2, Final submission")
-                    if mp_up is not None:
-                        size_mb = mp_up.size / (1024 * 1024)
-                        if size_mb > _MAX_FILE_MB:
-                            st.warning(f"File too large ({size_mb:.1f} MB). Max is {_MAX_FILE_MB} MB.")
-                        elif st.button(f"Upload '{mp_up.name}'", key=f"mp_submit_{mpid}", type="primary"):
-                            with st.spinner("Uploading..."):
-                                ok, fid = _pc.upload_file(
-                                    project_id    = mpid,
-                                    uploader      = me,
-                                    uploader_role = "student",
-                                    file_name     = mp_up.name,
-                                    file_bytes    = mp_up.getvalue(),
-                                    file_type     = mp_up.type or "",
-                                    notes         = mp_notes,
-                                )
-                            if ok:
-                                st.success("✓ Uploaded!")
-                                st.rerun()
-                            else:
-                                st.error("Upload failed. Check your connection and try again.")
+                show_upload_key = f"show_up_{mpid}"
+                if up_toggle_col.button("📎 Upload Files", key=f"upbtn_{mpid}", use_container_width=True):
+                    st.session_state[show_upload_key] = not st.session_state.get(show_upload_key, False)
 
-                # Show files for this project
+                if st.session_state.get(show_upload_key, False):
+                    st.markdown("<div class='folder-upload'>", unsafe_allow_html=True)
+                    _upload_panel(mpid, me, "student", f"mp_{mpid}")
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+                # Files grouped by category
                 mp_files = _pc.get_project_files(project_id=mpid, uploader=me)
                 if mp_files:
+                    _render_file_folders(mp_files, f"mpf_{mpid}")
+                else:
                     st.markdown(
-                        f"<div style='font-size:11px;color:#64748b;margin:8px 0 4px;'>"
-                        f"{len(mp_files)} file(s) uploaded</div>",
+                        "<div style='font-size:12px;color:#334155;padding:6px 2px;'>"
+                        "No files uploaded yet.</div>",
                         unsafe_allow_html=True,
                     )
-                    for i, mpf in enumerate(sorted(mp_files, key=lambda x: x.get("created_at",""), reverse=True)):
-                        _file_row(mpf, f"dl_mp_{mpid}_{i}", f"sv_mp_{mpid}_{i}")
 
-                st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+                st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
 
     # ════════════════════════════════════════════════════════════════
     # TAB 2 — Class Projects (teacher-assigned)
@@ -2400,74 +2541,67 @@ def student_project_page():
 
         if not class_projects:
             st.markdown(
-                "<div style='background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.14);"
-                "border-radius:16px;padding:22px;text-align:center;color:#94a3b8;'>"
-                "No class projects yet. Your teacher will publish assignments here.</div>",
+                "<div style='background:rgba(56,189,248,.05);border:1px dashed rgba(56,189,248,.20);"
+                "border-radius:16px;padding:28px;text-align:center;color:#64748b;'>"
+                "No class projects yet.<br>"
+                "<span style='font-size:12px;'>Your teacher will publish assignments here.</span></div>",
                 unsafe_allow_html=True,
             )
         else:
             for p in class_projects:
                 pid = p.get("Project ID", "")
                 already_uploaded = _pc.student_has_uploaded(pid, me)
-                badge     = "✓ Submitted" if already_uploaded else "Pending"
-                badge_col = "#34d399" if already_uploaded else "#fbbf24"
+                badge_lbl = "✅ Submitted" if already_uploaded else "⏳ Pending"
+                badge_bg  = "rgba(52,211,153,.15)" if already_uploaded else "rgba(251,191,36,.12)"
+                badge_fc  = "#34d399" if already_uploaded else "#fbbf24"
+                accent_g  = "linear-gradient(90deg,#38bdf8,#0ea5e9)"
+                desc_txt  = p.get("Description", "") or ""
+                due_txt   = p.get("Due Date", "") or ""
+                created   = (p.get("Created At", "") or "")[:10]
 
-                _project_card(p, badge, badge_col)
+                st.markdown(
+                    f"<div class='proj-card' style='--pc-accent:{accent_g};'>"
+                    f"<div style='display:flex;justify-content:space-between;align-items:flex-start;'>"
+                    f"<div class='proj-title'>{p.get('Title','Untitled')}</div>"
+                    f"<span class='proj-badge' style='background:{badge_bg};color:{badge_fc};'>"
+                    f"{badge_lbl}</span></div>"
+                    f"<div class='proj-desc'>{desc_txt}</div>"
+                    f"<div class='proj-meta'>"
+                    f"<span>👤 {p.get('Created By','Teacher')}</span>"
+                    + (f"<span>📅 Due: {due_txt}</span>" if due_txt else "")
+                    + f"<span>🗓 {created}</span></div></div>",
+                    unsafe_allow_html=True,
+                )
 
                 # Teacher reference materials
                 teacher_files = _pc.get_project_files(project_id=pid, uploader_role="teacher")
                 if teacher_files:
                     st.markdown(
-                        "<div style='font-size:11px;font-weight:800;color:#38bdf8;letter-spacing:.08em;"
-                        "text-transform:uppercase;margin:10px 0 5px;'>Teacher Materials</div>",
+                        "<div style='font-size:10px;font-weight:800;color:#38bdf8;"
+                        "letter-spacing:.10em;text-transform:uppercase;margin:12px 0 4px;'>"
+                        "📚 Teacher Materials</div>",
                         unsafe_allow_html=True,
                     )
-                    for i, tf in enumerate(teacher_files):
-                        _file_row(tf, f"dl_tf_{pid}_{i}", f"sv_tf_{pid}_{i}")
+                    _render_file_folders(teacher_files, f"tf_{pid}")
 
-                # Submit file
+                # Submit section
                 st.markdown(
-                    "<div style='font-size:11px;font-weight:800;color:#a78bfa;letter-spacing:.08em;"
-                    "text-transform:uppercase;margin:12px 0 5px;'>Submit Your Work</div>",
+                    "<div style='font-size:10px;font-weight:800;color:#a78bfa;"
+                    "letter-spacing:.10em;text-transform:uppercase;margin:14px 0 4px;'>"
+                    "⬆ Submit Your Work</div>",
                     unsafe_allow_html=True,
                 )
-                up = st.file_uploader(
-                    f"Choose file (max {_MAX_FILE_MB} MB)",
-                    type=[e.lstrip(".") for e in _ALLOWED_EXTS],
-                    key=f"cl_up_{pid}",
-                )
-                cl_notes = st.text_input("Notes (optional)", key=f"cl_notes_{pid}",
-                                         placeholder="e.g. Final version")
-                if up is not None:
-                    size_mb = up.size / (1024 * 1024)
-                    if size_mb > _MAX_FILE_MB:
-                        st.warning(f"File is {size_mb:.1f} MB — max is {_MAX_FILE_MB} MB.")
-                    elif st.button(f"Upload '{up.name}'", key=f"cl_submit_{pid}", type="primary"):
-                        with st.spinner("Uploading..."):
-                            ok, fid = _pc.upload_file(
-                                project_id    = pid,
-                                uploader      = me,
-                                uploader_role = "student",
-                                file_name     = up.name,
-                                file_bytes    = up.getvalue(),
-                                file_type     = up.type or "",
-                                notes         = cl_notes,
-                            )
-                        if ok:
-                            st.success(f"✓ Submitted!")
-                            st.rerun()
-                        else:
-                            st.error("Upload failed. Please try again.")
+                st.markdown("<div class='folder-upload'>", unsafe_allow_html=True)
+                _upload_panel(pid, me, "student", f"cl_{pid}")
+                st.markdown("</div>", unsafe_allow_html=True)
 
-                # My submissions for this class project
+                # My submissions
                 my_cl_files = _pc.get_project_files(project_id=pid, uploader=me, uploader_role="student")
                 if my_cl_files:
                     with st.expander(f"My submissions ({len(my_cl_files)})", expanded=False):
-                        for i, mf in enumerate(sorted(my_cl_files, key=lambda x: x.get("created_at",""), reverse=True)):
-                            _file_row(mf, f"dl_cl_{pid}_{i}", f"sv_cl_{pid}_{i}")
+                        _render_file_folders(my_cl_files, f"clf_{pid}")
 
-                st.markdown("<hr style='border-color:rgba(255,255,255,.04);margin:14px 0;'>",
-                            unsafe_allow_html=True)
+                st.markdown("<div style='height:14px;'></div>", unsafe_allow_html=True)
 
 
 def teacher_project_page():
