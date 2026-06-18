@@ -2013,46 +2013,18 @@ def student_mission(presentation):
 
 
 def teacher_profile_page():
-    """Teacher profile page — all 4 course teachers at Yunnan University."""
+    """Teacher profile page — clickable cards with detail panel + admin photo upload."""
     page_intro(
         "teacher",
         "Course Teachers · Yunnan University",
         "Teacher Profile",
-        "The teaching team behind this course — department, research, and contact details.",
+        "The teaching team behind this course. Click a teacher card to view full details.",
     )
-    st.markdown("""
-    <style>
-    .tc-card {
-        background:linear-gradient(145deg,rgba(10,18,36,.96),rgba(6,12,26,.98));
-        border:1px solid rgba(255,255,255,.07); border-radius:20px;
-        padding:22px 24px; margin-bottom:18px;
-    }
-    .tc-avatar {
-        width:64px; height:64px; border-radius:50%;
-        background:linear-gradient(135deg,#0ea5e9,#6366f1);
-        display:flex; align-items:center; justify-content:center;
-        font-size:22px; font-weight:900; color:#fff; flex-shrink:0;
-        border:2px solid rgba(56,189,248,.30);
-        box-shadow:0 6px 20px rgba(99,102,241,.35); float:left; margin-right:16px;
-    }
-    .tc-name { font-size:20px; font-weight:900; color:#f1f5f9; margin-bottom:2px; }
-    .tc-cn   { font-size:14px; font-weight:700; color:#38bdf8; margin-bottom:3px; }
-    .tc-role { font-size:12px; color:#64748b; margin-bottom:10px; }
-    .tc-row  {
-        display:flex; gap:10px; align-items:flex-start; padding:6px 0;
-        border-bottom:1px solid rgba(255,255,255,.04);
-    }
-    .tc-row:last-child { border-bottom:none; }
-    .tc-key { min-width:110px; font-size:11.5px; color:#475569; font-weight:600; }
-    .tc-val { font-size:12.5px; color:#cbd5e1; }
-    .tc-clearfix { clear:both; padding-top:10px; }
-    </style>
-    """, unsafe_allow_html=True)
 
     TEACHERS = [
         {"initials":"ZY","name":"Zhou Yujue","cn":"周玉珏","photo_key":"zhouyujue",
          "role":"Lecturer · AI Department",
-         "course":"Python Programming &amp; AI Tools",
+         "course":"Python Programming & AI Tools",
          "research":"AI, Time Series Analysis, Smart Healthcare",
          "email":"zhouyujue@ynu.edu.cn"},
         {"initials":"GS","name":"Gao Song","cn":"高嵩","photo_key":"gaosong",
@@ -2067,49 +2039,161 @@ def teacher_profile_page():
          "email":"tangli@ynu.edu.cn"},
         {"initials":"WP","name":"Wei Ping","cn":"韦平","photo_key":"weiping",
          "role":"Lecturer · Cyberspace Security",
-         "course":"Statistics &amp; Probability",
-         "research":"LLM &amp; Multi-agent, Cybersecurity, Multimedia Security",
+         "course":"Statistics & Probability",
+         "research":"LLM & Multi-agent, Cybersecurity, Multimedia Security",
          "email":"weip@ynu.edu.cn"},
     ]
 
     import pathlib as _pl, base64 as _b64
 
-    def _photo_src(key: str) -> str | None:
+    def _photo_bytes(key):
         for ext in ("jpg","jpeg","png","webp"):
             p = _pl.Path(f"assets/teacher_photos/{key}.{ext}")
             if p.exists():
-                data = _b64.b64encode(p.read_bytes()).decode()
-                return f"data:image/{ext};base64,{data}"
+                return p.read_bytes(), ext
+        return None, None
+
+    def _photo_src(key):
+        data, ext = _photo_bytes(key)
+        if data:
+            return f"data:image/{ext};base64,{_b64.b64encode(data).decode()}"
         return None
 
+    # Track selected teacher
+    if "tp_selected" not in st.session_state:
+        st.session_state.tp_selected = None
+
+    st.markdown("""
+    <style>
+    .tp2-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+    .tp2-card {
+        background:linear-gradient(145deg,rgba(10,18,36,.97),rgba(6,12,26,.99));
+        border:1px solid rgba(255,255,255,.07); border-radius:20px;
+        padding:20px; cursor:pointer; transition:border-color .2s;
+        display:flex; align-items:center; gap:16px;
+    }
+    .tp2-card:hover { border-color:rgba(56,189,248,.35); }
+    .tp2-card.active { border-color:#38bdf8; background:linear-gradient(145deg,rgba(14,165,233,.10),rgba(6,12,26,.99)); }
+    .tp2-av {
+        width:60px; height:60px; border-radius:50%; flex-shrink:0;
+        background:linear-gradient(135deg,#0ea5e9,#6366f1);
+        display:flex; align-items:center; justify-content:center;
+        font-size:20px; font-weight:900; color:#fff;
+        border:2px solid rgba(56,189,248,.3);
+        box-shadow:0 4px 16px rgba(99,102,241,.3);
+        object-fit:cover;
+    }
+    .tp2-name { font-size:17px; font-weight:800; color:#f1f5f9; margin-bottom:2px; }
+    .tp2-cn   { font-size:13px; color:#38bdf8; margin-bottom:3px; }
+    .tp2-role { font-size:11px; color:#64748b; }
+    .tp2-detail {
+        background:linear-gradient(145deg,rgba(14,165,233,.08),rgba(6,12,26,.99));
+        border:1px solid rgba(56,189,248,.20); border-radius:20px;
+        padding:28px 32px; margin-bottom:20px;
+        display:flex; gap:28px; align-items:flex-start; flex-wrap:wrap;
+    }
+    .tp2-photo-big {
+        width:120px; height:120px; border-radius:16px; object-fit:cover;
+        border:2px solid rgba(56,189,248,.35); flex-shrink:0;
+    }
+    .tp2-photo-ph {
+        width:120px; height:120px; border-radius:16px; flex-shrink:0;
+        background:linear-gradient(135deg,#0ea5e9,#6366f1);
+        display:flex; align-items:center; justify-content:center;
+        font-size:40px; font-weight:900; color:#fff;
+        border:2px solid rgba(56,189,248,.35);
+    }
+    .tp2-row { display:flex; gap:12px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+    .tp2-row:last-child { border-bottom:none; }
+    .tp2-key { min-width:110px; font-size:12px; color:#475569; font-weight:600; }
+    .tp2-val { font-size:13px; color:#cbd5e1; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # ── 4 clickable cards in 2×2 grid ──
     col1, col2 = st.columns(2)
+    cols = [col1, col2, col1, col2]
     for idx, t in enumerate(TEACHERS):
-        col = col1 if idx % 2 == 0 else col2
-        with col:
-            photo = _photo_src(t["photo_key"])
-            if photo:
-                avatar_html = (
-                    f"<img src=\"{photo}\" style=\"width:64px;height:64px;"
-                    f"border-radius:50%;object-fit:cover;float:left;margin-right:16px;"
-                    f"border:2px solid rgba(56,189,248,.35);box-shadow:0 6px 20px rgba(99,102,241,.35);\">"
-                )
-            else:
-                avatar_html = f"<div class=\"tc-avatar\">{t['initials']}</div>"
+        photo_src = _photo_src(t["photo_key"])
+        is_active = st.session_state.tp_selected == idx
+        active_cls = "active" if is_active else ""
+
+        if photo_src:
+            av_html = f'<img src="{photo_src}" class="tp2-av">'
+        else:
+            av_html = f'<div class="tp2-av">{t["initials"]}</div>'
+
+        with cols[idx]:
             st.markdown(f"""
-            <div class="tc-card">
-                {avatar_html}
-                <div class="tc-name">{t['name']}</div>
-                <div class="tc-cn">{t['cn']}</div>
-                <div class="tc-role">{t['role']}</div>
-                <div class="tc-clearfix"></div>
-                <div class="tc-row"><div class="tc-key">Course</div><div class="tc-val">{t['course']}</div></div>
-                <div class="tc-row"><div class="tc-key">Research</div><div class="tc-val">{t['research']}</div></div>
-                <div class="tc-row"><div class="tc-key">Email</div><div class="tc-val">{t['email']}</div></div>
-                <div class="tc-row"><div class="tc-key">Photo</div><div class="tc-val">{"✓ Added" if photo else "Pending teacher consent"}</div></div>
+            <div class="tp2-card {active_cls}">
+                {av_html}
+                <div>
+                    <div class="tp2-name">{t['name']}</div>
+                    <div class="tp2-cn">{t['cn']}</div>
+                    <div class="tp2-role">{t['role']}</div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
+            btn_label = "✕ Close" if is_active else "View Details →"
+            if st.button(btn_label, key=f"tp_btn_{idx}", use_container_width=True):
+                st.session_state.tp_selected = None if is_active else idx
+                st.rerun()
 
-    # Quick homework assign
+    # ── Detail panel for selected teacher ──
+    sel = st.session_state.tp_selected
+    if sel is not None and 0 <= sel < len(TEACHERS):
+        t = TEACHERS[sel]
+        photo_src = _photo_src(t["photo_key"])
+
+        if photo_src:
+            ph_html = f'<img src="{photo_src}" class="tp2-photo-big">'
+        else:
+            ph_html = f'<div class="tp2-photo-ph">{t["initials"]}</div>'
+
+        st.markdown(f"""
+        <div class="tp2-detail">
+            {ph_html}
+            <div style="flex:1;min-width:200px;">
+                <div style="font-size:22px;font-weight:900;color:#f1f5f9;margin-bottom:2px;">{t['name']}</div>
+                <div style="font-size:15px;color:#38bdf8;margin-bottom:4px;">{t['cn']}</div>
+                <div style="font-size:12px;color:#64748b;margin-bottom:14px;">{t['role']}</div>
+                <div class="tp2-row"><div class="tp2-key">Course</div><div class="tp2-val">{t['course']}</div></div>
+                <div class="tp2-row"><div class="tp2-key">Research</div><div class="tp2-val">{t['research']}</div></div>
+                <div class="tp2-row"><div class="tp2-key">Email</div><div class="tp2-val">{t['email']}</div></div>
+                <div class="tp2-row"><div class="tp2-key">University</div><div class="tp2-val">Yunnan University (云南大学)</div></div>
+                <div class="tp2-row"><div class="tp2-key">Campus</div><div class="tp2-val">Chenggong Campus, Kunming</div></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Admin: photo upload right here in the detail panel
+        _username = st.session_state.get("username", "").lower()
+        _is_admin = _username in {"mim.ynu", "mamunur rashid (admin)"}
+        if _is_admin:
+            st.markdown(
+                f"<div style='font-size:11px;font-weight:700;color:#f59e0b;"
+                f"text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;'>"
+                f"Admin: Upload photo for {t['name']}</div>",
+                unsafe_allow_html=True,
+            )
+            up = st.file_uploader(
+                "Choose photo (JPG/PNG)",
+                type=["jpg","jpeg","png","webp"],
+                key=f"tp_upload_{sel}",
+            )
+            if up is not None:
+                photos_dir = _pl.Path("assets/teacher_photos")
+                photos_dir.mkdir(parents=True, exist_ok=True)
+                ext = up.name.rsplit(".",1)[-1].lower()
+                for old_ext in ("jpg","jpeg","png","webp"):
+                    old = photos_dir / f"{t['photo_key']}.{old_ext}"
+                    if old.exists(): old.unlink()
+                fname = f"{t['photo_key']}.{ext}"
+                (photos_dir / fname).write_bytes(up.getbuffer())
+                st.success(f"✅ Photo uploaded for {t['name']}!")
+                st.rerun()
+
+    # ── Quick Assign Homework ──
     st.markdown("""
     <div style="font-size:10px;font-weight:800;color:#f59e0b;letter-spacing:.10em;
         text-transform:uppercase;margin:28px 0 14px;">Quick Assign Homework</div>
@@ -2132,7 +2216,7 @@ def teacher_profile_page():
                 due_date=hw_due.strip() or "TBD",
                 difficulty=hw_diff,
                 assigned_to=hw_assign.strip() or "All Students",
-                created_by="Teacher",
+                created_by=st.session_state.get("student", "Teacher"),
                 questions=_default_homework_questions(hw_topic.strip()),
             )
             st.success(f"Homework #{hw_id} published to students.")
