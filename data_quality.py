@@ -37,12 +37,14 @@ REQUIRED_PACK_FIELDS: list[str] = [
 # CSV schemas — (filepath, required_columns)
 CSV_SCHEMAS: dict[str, list[str]] = {
     "data/students.csv": [
-        "Record ID", "Student", "Topic", "Timestamp",
-        "Correct", "Total", "Percentage",
+        "Record ID", "Student", "Topic",
+        "Readiness", "Weak Skill", "Quiz Score", "Quiz Total",
+        "Lecture Time", "Learning Mode", "Created At",
     ],
     "data/homework.csv": [
-        "Homework ID", "Title", "Topic", "Questions",
-        "Due Date", "Created By", "Created At", "Published",
+        "Homework ID", "Title", "Topic", "Instructions",
+        "Due Date", "Difficulty", "Assigned To",
+        "Created By", "Created At", "Published", "Attachment",
     ],
     "data/projects.csv": [
         "Project ID", "Title", "Description", "Due Date",
