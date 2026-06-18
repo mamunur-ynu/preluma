@@ -27,7 +27,7 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "33.0 Peak Defense Ready"
+APP_VERSION = "34.0 Peak Defense Ready"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -2064,6 +2064,38 @@ def teacher_profile_page():
         </div>
         """, unsafe_allow_html=True)
 
+    # Quick homework assign — teacher can assign directly from profile page
+    st.markdown("""
+    <div style="font-size:10px;font-weight:800;color:#f59e0b;letter-spacing:.10em;
+        text-transform:uppercase;margin:28px 0 14px;">
+        Quick Assign Homework
+    </div>
+    """, unsafe_allow_html=True)
+    with st.form("tp_quick_assign", border=False):
+        qa1, qa2 = st.columns(2)
+        hw_title  = qa1.text_input("Homework title", placeholder="e.g. Neural Networks Practice")
+        hw_topic  = qa2.text_input("Topic", placeholder="e.g. Machine Learning")
+        qa3, qa4, qa5 = st.columns(3)
+        hw_due    = qa3.text_input("Due date", placeholder="e.g. Friday 8 PM")
+        hw_diff   = qa4.selectbox("Difficulty", ["Beginner", "Intermediate", "Advanced"])
+        hw_assign = qa5.text_input("Assign to", value="All Students")
+        submit_hw = st.form_submit_button("Publish Homework", use_container_width=True)
+    if submit_hw:
+        if hw_title.strip() and hw_topic.strip():
+            hw_id = create_homework(
+                title=hw_title.strip(),
+                topic=hw_topic.strip(),
+                instructions=f"Read the topic summary and answer all questions about {hw_topic.strip()}.",
+                due_date=hw_due.strip() or "TBD",
+                difficulty=hw_diff,
+                assigned_to=hw_assign.strip() or "All Students",
+                created_by="Teacher Zhou Yujue",
+                questions=_default_homework_questions(hw_topic.strip()),
+            )
+            st.success(f"Homework #{hw_id} published to students.")
+        else:
+            st.warning("Please enter both a title and a topic.")
+
 
 # Teacher Studio: algorithm demos and class analytics
 
@@ -2349,21 +2381,77 @@ def ask_preluma_ai_page():
             answer_text = _natural_answer_text(response, depth)
             st.session_state.tutor_history.append({"question":question.strip(),"topic":detected_topic,"response":response,"answer_text":answer_text,"source":source,"depth":depth})
 
-    st.markdown("<div class='ai-chat-shell'>", unsafe_allow_html=True)
-    for index, item in enumerate(st.session_state.get("tutor_history", [])[-8:]):
-        st.markdown(f"<div class='chat-user'>{item['question']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='ai-meta'>{item['topic']} · {item['source']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='ai-main-answer'>{item.get('answer_text','')}</div>", unsafe_allow_html=True)
-        if not item.get("clarification"):
-            response = item.get("response", {})
-            with st.expander("Study support: mistake, exam line, and extra details"):
-                if response.get("common_mistake"):
-                    st.markdown(f"**Common mistake:** {response['common_mistake']}")
-                if response.get("exam_angle"):
-                    st.markdown(f"**Exam/Viva memory line:** {response['exam_angle']}")
-                if response.get("real_life_example"):
-                    st.markdown(f"**Example:** {response['real_life_example']}")
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("""
+    <style>
+    /* Premium chat shell */
+    .ai-chat-shell {
+        margin-top:24px;
+        display:flex; flex-direction:column; gap:0;
+    }
+    /* User bubble — right side */
+    .chat-user {
+        background:linear-gradient(135deg,rgba(56,189,248,.16),rgba(99,102,241,.12));
+        border:1px solid rgba(56,189,248,.28); border-radius:20px 20px 4px 20px;
+        padding:12px 18px; margin:0 0 4px auto;
+        font-size:14px; color:#e2e8f0; line-height:1.55;
+        max-width:72%; text-align:left;
+        box-shadow:0 2px 12px rgba(56,189,248,.10);
+    }
+    /* AI meta label */
+    .ai-meta {
+        font-size:10px; color:#334155; margin:0 0 4px 4px;
+        font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+    }
+    /* AI bubble — left side */
+    .ai-main-answer {
+        background:linear-gradient(145deg,rgba(15,23,42,.96),rgba(8,14,30,.98));
+        border:1px solid rgba(255,255,255,.08); border-radius:4px 20px 20px 20px;
+        padding:16px 20px; margin:0 auto 20px 0;
+        font-size:14px; color:#cbd5e1; line-height:1.78;
+        max-width:85%;
+        box-shadow:0 4px 20px rgba(0,0,0,.30);
+    }
+    /* Quick prompt pills */
+    .quick-pills { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 14px; }
+    </style>
+    """, unsafe_allow_html=True)
+    history = st.session_state.get("tutor_history", [])[-8:]
+    if history:
+        st.markdown("<div class='ai-chat-shell'>", unsafe_allow_html=True)
+        for index, item in enumerate(history):
+            # User bubble — right aligned
+            st.markdown(
+                f"<div class='chat-user'>{item['question']}</div>",
+                unsafe_allow_html=True,
+            )
+            # AI label + bubble
+            topic_lbl = item.get("topic", "AI")
+            src_lbl   = item.get("source", "Preluma AI")
+            st.markdown(
+                f"<div class='ai-meta'>{topic_lbl} &nbsp;·&nbsp; {src_lbl}</div>",
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                f"<div class='ai-main-answer'>{item.get('answer_text','')}</div>",
+                unsafe_allow_html=True,
+            )
+            # Study support expander (only for real AI answers)
+            if not item.get("clarification"):
+                response = item.get("response", {})
+                has_extra = any([
+                    response.get("common_mistake"),
+                    response.get("exam_angle"),
+                    response.get("real_life_example"),
+                ])
+                if has_extra:
+                    with st.expander("Study support — mistake, exam line, example"):
+                        if response.get("common_mistake"):
+                            st.markdown(f"**Common mistake:** {response['common_mistake']}")
+                        if response.get("exam_angle"):
+                            st.markdown(f"**Exam line:** {response['exam_angle']}")
+                        if response.get("real_life_example"):
+                            st.markdown(f"**Example:** {response['real_life_example']}")
+        st.markdown("</div>", unsafe_allow_html=True)
 
 
 def my_homework_page():
