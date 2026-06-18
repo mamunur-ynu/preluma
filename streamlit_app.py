@@ -1113,7 +1113,7 @@ def home_page():
 
     st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
     # Stats row
-    stats = [("28", "AI Topics", "#38bdf8"), ("5", "Mission Steps", "#818cf8"),
+    stats = [("29", "AI Topics", "#38bdf8"), ("5", "Mission Steps", "#818cf8"),
              ("3+", "Algorithms", "#34d399"), ("6+", "AI Providers", "#fb923c")]
     sc = st.columns(4)
     for col, (num, lbl, color) in zip(sc, stats):
@@ -1204,7 +1204,7 @@ def home_page():
           <div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:4px;">
             Choose Topic</div>
           <div style="font-size:12px;color:#64748b;line-height:1.55;">
-            Pick your next lecture topic from 18 curated options or type your own.</div>
+            Pick your next lecture topic from 29 curated options or type your own.</div>
         </div>
         <div style="flex:1;padding:0 16px;border-right:1px solid rgba(255,255,255,.06);">
           <div style="font-size:11px;font-weight:800;color:#0ea5e9;letter-spacing:.08em;
@@ -1257,8 +1257,8 @@ def home_page():
             st.session_state.active_page = "Ask Preluma AI"; st.rerun()
         if qs3.button("My Homework", use_container_width=True):
             st.session_state.active_page = "My Homework"; st.rerun()
-        if qs4.button("Teacher Studio", use_container_width=True):
-            st.session_state.active_page = "Teacher Studio"; st.rerun()
+        if qs4.button("Class Projects", use_container_width=True):
+            st.session_state.active_page = "Class Projects"; st.rerun()
 
     # Footer tag
     st.markdown(f"""
@@ -1301,7 +1301,7 @@ def hero():
         <h1>Prepare before class.<br><span>Understand more during class.</span></h1>
         <div class='hero-sub'>Built for Yunnan University students. Preluma turns passive pre-class preparation into a guided, AI-powered learning mission with Brain Brief, Quiz, UltraTutor, and Smart Class Questions.</div>
         <div class='hero-stats'>
-          <div><div class='hero-stat-num'>18</div><div class='hero-stat-lbl'>Curated Topics</div></div>
+          <div><div class='hero-stat-num'>29</div><div class='hero-stat-lbl'>Curated Topics</div></div>
           <div><div class='hero-stat-num'>4</div><div class='hero-stat-lbl'>Skill Checks</div></div>
           <div><div class='hero-stat-num'>AI</div><div class='hero-stat-lbl'>Smart Tutor</div></div>
           <div><div class='hero-stat-num'>CSV</div><div class='hero-stat-lbl'>Data Persistence</div></div>
@@ -1814,7 +1814,7 @@ def class_questions_and_download():
 # How it works
 def how_it_works():
     st.markdown("""<div class='kpi-grid'>
-      <div class='kpi-card'><div class='kpi-num'>18</div><div class='kpi-lbl'>Curated Topics</div></div>
+      <div class='kpi-card'><div class='kpi-num'>29</div><div class='kpi-lbl'>Curated Topics</div></div>
       <div class='kpi-card'><div class='kpi-num'>4</div><div class='kpi-lbl'>Skill Checks</div></div>
       <div class='kpi-card'><div class='kpi-num'>AI</div><div class='kpi-lbl'>Smart Tutor</div></div>
       <div class='kpi-card'><div class='kpi-num'>CSV</div><div class='kpi-lbl'>Persistent Data</div></div>
@@ -2328,6 +2328,7 @@ def _render_file_folders(files: list[dict], key_prefix: str) -> None:
         cats.setdefault(lbl, []).append(f)
         cat_colors[lbl] = color
 
+    global_idx = 0  # unique across all categories — prevents DuplicateWidgetID
     for cat_label, cat_files in cats.items():
         accent = cat_colors[cat_label]
         st.markdown(
@@ -2339,8 +2340,9 @@ def _render_file_folders(files: list[dict], key_prefix: str) -> None:
             f"</div>",
             unsafe_allow_html=True,
         )
-        for i, f in enumerate(sorted(cat_files, key=lambda x: x.get("created_at", ""), reverse=True)):
-            _file_row(f, f"{key_prefix}_dl_{i}", f"{key_prefix}_sv_{i}")
+        for f in sorted(cat_files, key=lambda x: x.get("created_at", ""), reverse=True):
+            _file_row(f, f"{key_prefix}_dl_{global_idx}", f"{key_prefix}_sv_{global_idx}")
+            global_idx += 1
 
 
 def _upload_panel(project_id: str, uploader: str, role: str, key_pfx: str) -> None:

@@ -36,20 +36,24 @@ REQUIRED_PACK_FIELDS: list[str] = [
 
 # CSV schemas — (filepath, required_columns)
 CSV_SCHEMAS: dict[str, list[str]] = {
+    # Columns written by streamlit_app.py save_result() / Readiness quiz
     "data/students.csv": [
         "Record ID", "Student", "Topic",
         "Readiness", "Weak Skill", "Quiz Score", "Quiz Total",
         "Lecture Time", "Learning Mode", "Created At",
     ],
+    # Columns written by homework_core.py HOMEWORK_FIELDS
     "data/homework.csv": [
         "Homework ID", "Title", "Topic", "Instructions",
         "Due Date", "Difficulty", "Assigned To",
         "Created By", "Created At", "Published", "Attachment",
     ],
+    # Columns written by project_core.py (V40 adds Type / Owner / Status)
     "data/projects.csv": [
         "Project ID", "Title", "Description", "Due Date",
         "Created By", "Created At", "Published", "Type", "Owner", "Status",
     ],
+    # Columns written by project_core.py upload_file()
     "data/project_file_meta.csv": [
         "file_id", "project_id", "uploader", "uploader_role",
         "file_name", "file_type", "notes", "created_at", "local_path",
@@ -256,11 +260,14 @@ def check_homework_data() -> dict[str, Any]:
     warnings: list[str] = []
     rows = _read_csv("data/homework.csv")
 
+    VALID_DIFFICULTIES = {"Easy", "Medium", "Hard", ""}
+
     for i, row in enumerate(rows, 1):
-        hw_id = row.get("Homework ID", "").strip()
-        title = row.get("Title", "").strip()
-        topic = row.get("Topic", "").strip()
-        q_raw = row.get("Questions", "").strip()
+        hw_id      = row.get("Homework ID", "").strip()
+        title      = row.get("Title", "").strip()
+        topic      = row.get("Topic", "").strip()
+        difficulty = row.get("Difficulty", "").strip()
+        published  = row.get("Published", "").strip().lower()
 
         if not hw_id:
             errors.append(f"Row {i}: empty Homework ID")
@@ -268,13 +275,10 @@ def check_homework_data() -> dict[str, Any]:
             errors.append(f"Row {i} (ID={hw_id}): empty Title")
         if not topic:
             warnings.append(f"Row {i} (ID={hw_id}): empty Topic")
-        if q_raw:
-            try:
-                q_int = int(q_raw)
-                if q_int <= 0:
-                    warnings.append(f"Row {i} (ID={hw_id}): Questions={q_int} (expected > 0)")
-            except ValueError:
-                errors.append(f"Row {i} (ID={hw_id}): Questions='{q_raw}' is not an integer")
+        if difficulty and difficulty not in VALID_DIFFICULTIES:
+            warnings.append(f"Row {i} (ID={hw_id}): Difficulty='{difficulty}' — expected Easy/Medium/Hard")
+        if published and published not in {"true", "false", "yes", "no", "1", "0"}:
+            warnings.append(f"Row {i} (ID={hw_id}): Published='{published}' — unexpected value")
 
     elapsed = time.perf_counter_ns() - t_start
     return {
