@@ -3152,7 +3152,28 @@ def login_page():
 </div>""", unsafe_allow_html=True)
 
     # Tabs: Login / Register
-    tab_login, tab_reg = st.tabs(["Log In", "Create Account"])
+    # Role selector — Teacher or Student
+    st.markdown("""
+<div style='display:flex;gap:10px;margin-bottom:18px;'>
+    <div style='flex:1;text-align:center;padding:10px;border-radius:12px;
+                background:rgba(103,232,249,.08);border:1px solid rgba(103,232,249,.2);
+                font-size:12px;color:#67e8f9;font-weight:700;letter-spacing:.06em;'>
+        TEACHER LOGIN<br>
+        <span style='font-size:10px;color:#475569;font-weight:400;'>Use your assigned credentials</span>
+    </div>
+    <div style='flex:1;text-align:center;padding:10px;border-radius:12px;
+                background:rgba(134,239,172,.08);border:1px solid rgba(134,239,172,.2);
+                font-size:12px;color:#86efac;font-weight:700;letter-spacing:.06em;'>
+        STUDENT LOGIN<br>
+        <span style='font-size:10px;color:#475569;font-weight:400;'>Use your username & password</span>
+    </div>
+</div>
+<p style='font-size:12px;color:#475569;text-align:center;margin-bottom:4px;'>
+    Both teachers and students use the same login form below.
+</p>
+""", unsafe_allow_html=True)
+
+    tab_login, tab_reg = st.tabs(["Log In", "New Student? Register Here"])
 
     with tab_login:
         with st.form("login_form", clear_on_submit=False):
@@ -3175,25 +3196,31 @@ def login_page():
                 else:
                     st.error("Incorrect username or password.")
 
-        # Demo credentials
+        # Credentials reference box
         st.markdown("""
 <div class='demo-box'>
-    <div class='demo-title'>DEMO ACCOUNTS</div>
+    <div class='demo-title'>CREDENTIALS</div>
     <div class='demo-row'>
-        Teacher &nbsp;→&nbsp; <b>teacher</b> / teach123<br>
-        Student &nbsp;→&nbsp; <b>mamun</b> / preluma1<br>
-        Student &nbsp;→&nbsp; <b>fahim</b> / preluma1<br>
-        Student &nbsp;→&nbsp; <b>jiarul</b> / preluma1
+        <span style='color:#67e8f9;font-weight:700;'>TEACHER</span><br>
+        &nbsp;&nbsp;username: <b>teacher</b> &nbsp;|&nbsp; password: teach123<br><br>
+        <span style='color:#86efac;font-weight:700;'>STUDENTS</span><br>
+        &nbsp;&nbsp;mamun &nbsp;|&nbsp; fahim &nbsp;|&nbsp; jiarul &nbsp;— password: <b>preluma1</b>
     </div>
 </div>""", unsafe_allow_html=True)
 
     with tab_reg:
+        st.markdown(
+            "<p style='font-size:12px;color:#64748b;margin-bottom:12px;'>"
+            "New students can create their own account. "
+            "Teachers are added by the admin.</p>",
+            unsafe_allow_html=True,
+        )
         with st.form("register_form", clear_on_submit=True):
             reg_name     = st.text_input("Full Name", placeholder="e.g. Alice Wang")
             reg_user     = st.text_input("Username", placeholder="Choose a username (min 3 chars)")
             reg_pass     = st.text_input("Password", type="password", placeholder="Min 6 characters")
             reg_pass2    = st.text_input("Confirm Password", type="password", placeholder="Repeat password")
-            reg_submit   = st.form_submit_button("Create Account", use_container_width=True, type="primary")
+            reg_submit   = st.form_submit_button("Create Student Account", use_container_width=True, type="primary")
 
         if reg_submit:
             if reg_pass != reg_pass2:
@@ -3201,7 +3228,7 @@ def login_page():
             else:
                 ok, msg = register(reg_user, reg_pass, reg_name, role="student")
                 if ok:
-                    st.success(f"{msg} You can now log in.")
+                    st.success(f"{msg} You can now log in from the 'Log In' tab.")
                 else:
                     st.error(msg)
 
