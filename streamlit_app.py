@@ -45,7 +45,7 @@ def _sb_session_headers() -> dict:
     return {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
 
 def _save_session_cookie(username: str, role: str, full_name: str) -> None:
-    """Save 30-day session token to Supabase."""
+    """Save 30-day session token to Supabase AND persist in URL query param."""
     if not _supabase_available():
         return
     token = _secrets_mod.token_hex(32)
@@ -59,12 +59,25 @@ def _save_session_cookie(username: str, role: str, full_name: str) -> None:
                         "full_name": full_name, "expires_at": expires},
                   timeout=5)
         st.session_state["_session_token"] = token
+        # Store token in URL so it survives browser refresh
+        try:
+            st.query_params["t"] = token
+        except Exception:
+            pass
     except Exception:
         pass
 
 def _load_session_cookie() -> dict | None:
-    """Check Supabase for a valid saved session token."""
-    token = st.session_state.get("_session_token", "")
+    """Check Supabase for a valid saved session token.
+    Reads token from URL query param (survives browser refresh) OR session_state."""
+    # Try URL query param first (persists across browser refresh)
+    token = ""
+    try:
+        token = st.query_params.get("t", "")
+    except Exception:
+        pass
+    if not token:
+        token = st.session_state.get("_session_token", "")
     if not token or not _supabase_available():
         return None
     try:
@@ -78,14 +91,20 @@ def _load_session_cookie() -> dict | None:
         if rows and isinstance(rows, list):
             r = rows[0]
             if r.get("expires_at", 0) > int(_time_mod.time()):
+                st.session_state["_session_token"] = token
                 return {"u": r["username"], "r": r["role"], "n": r["full_name"]}
     except Exception:
         pass
     return None
 
 def _clear_session_cookie() -> None:
-    """Delete saved session token from Supabase."""
+    """Delete saved session token from Supabase and remove from URL."""
     token = st.session_state.get("_session_token", "")
+    if not token:
+        try:
+            token = st.query_params.get("t", "")
+        except Exception:
+            pass
     if token and _supabase_available():
         try:
             import requests as _req
@@ -95,6 +114,10 @@ def _clear_session_cookie() -> None:
         except Exception:
             pass
     st.session_state.pop("_session_token", None)
+    try:
+        st.query_params.clear()
+    except Exception:
+        pass
 
 # ─── Supabase Photo Storage ───────────────────────────────────────────────────
 _PHOTO_TABLE = "preluma_photos"
@@ -2460,10 +2483,11 @@ def teacher_detail_page():
                 key=f"td_upload_{idx}_{t['photo_key']}",
             )
             if up is not None:
-                img_bytes = up.getbuffer().tobytes()
+                img_bytes = up.getvalue()
                 ext = up.name.rsplit(".",1)[-1].lower()
-                # Save locally (current session)
-                photos_dir = _pl.Path("assets/teacher_photos")
+                if ext == "jpeg": ext = "jpg"
+                # Save locally (correct folder — same as _get_photo_src reads from)
+                photos_dir = _pl.Path("photos")
                 photos_dir.mkdir(parents=True, exist_ok=True)
                 for old_ext in ("jpg","jpeg","png","webp"):
                     old = photos_dir / f"{t['photo_key']}.{old_ext}"
@@ -2471,6 +2495,9 @@ def teacher_detail_page():
                 (photos_dir / f"{t['photo_key']}.{ext}").write_bytes(img_bytes)
                 # Save to Supabase (persistent across deploys)
                 _save_photo_sb(t["photo_key"], img_bytes, ext)
+                # Clear photo cache so new image shows immediately
+                cache_key = f"_sbp_{t['photo_key']}"
+                st.session_state.pop(cache_key, None)
                 st.success("✅ Profile photo updated!")
                 st.rerun()
 
@@ -2478,10 +2505,12 @@ def teacher_detail_page():
             with action_col2:
                 st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
                 if st.button("🗑️ Remove Photo", key=f"td_remove_{idx}", use_container_width=True):
+                    photos_dir = _pl.Path("photos")
                     for old_ext in ("jpg","jpeg","png","webp"):
-                        old = _pl.Path(f"assets/teacher_photos/{t['photo_key']}.{old_ext}")
+                        old = photos_dir / f"{t['photo_key']}.{old_ext}"
                         if old.exists(): old.unlink()
                     _delete_photo_sb(t["photo_key"])
+                    st.session_state.pop(f"_sbp_{t['photo_key']}", None)
                     st.success("Photo removed.")
                     st.rerun()
 
