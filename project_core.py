@@ -1,12 +1,17 @@
 """
-project_core.py — Preluma Project Management Module
+project_core.py — Preluma Project Management Module  (V39.1)
 
-Stores:
+Two project types:
+  "class"    — created by teacher, students submit files against it
+  "personal" — created by a student; status "In Progress" = private (teacher cannot see),
+               status "Complete" = teacher can view and download
+
+Storage:
   • Project metadata  → data/projects.csv  (local, re-creatable)
   • Project files     → Supabase preluma_project_files table (permanent base64 blobs)
                         Falls back to data/project_files/ directory when Supabase unavailable
 
-Supabase table required (run once in Supabase SQL editor):
+Supabase table required (run ONCE in Supabase SQL editor):
     create table if not exists preluma_project_files (
       file_id       text primary key,
       project_id    text not null,
@@ -33,13 +38,15 @@ from typing import Any
 
 import requests as _requests
 
-DATA_DIR         = Path("data")
-PROJECTS_CSV     = DATA_DIR / "projects.csv"
-LOCAL_FILES_DIR  = DATA_DIR / "project_files"
+DATA_DIR        = Path("data")
+PROJECTS_CSV    = DATA_DIR / "projects.csv"
+LOCAL_FILES_DIR = DATA_DIR / "project_files"
 
+# Type   : "class" | "personal"
+# Status : "In Progress" | "Complete"   (personal projects only)
 PROJECT_FIELDS = [
     "Project ID", "Title", "Description", "Due Date",
-    "Created By", "Created At", "Published",
+    "Created By", "Created At", "Published", "Type", "Owner", "Status",
 ]
 
 
@@ -97,8 +104,15 @@ def _read_projects() -> list[dict]:
     _ensure_projects_csv()
     if not PROJECTS_CSV.exists():
         return []
+    rows = []
     with PROJECTS_CSV.open("r", newline="", encoding="utf-8") as f:
-        return list(csv.DictReader(f))
+        for row in csv.DictReader(f):
+            # Backward-compat: old rows without Type/Owner/Status
+            row.setdefault("Type", "class")
+            row.setdefault("Owner", "")
+            row.setdefault("Status", "Complete")
+            rows.append(row)
+    return rows
 
 
 def _append_project(row: dict) -> None:
@@ -108,12 +122,22 @@ def _append_project(row: dict) -> None:
         csv.DictWriter(f, fieldnames=PROJECT_FIELDS).writerow(clean)
 
 
+def _rewrite_projects(rows: list[dict]) -> None:
+    """Overwrite entire CSV with updated rows."""
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with PROJECTS_CSV.open("w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=PROJECT_FIELDS)
+        w.writeheader()
+        for row in rows:
+            clean = {field: row.get(field, "") for field in PROJECT_FIELDS}
+            w.writerow(clean)
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Supabase file helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _sb_upload_file(row: dict) -> bool:
-    """Insert a file record into preluma_project_files."""
     try:
         resp = _requests.post(
             _sb_files_url(),
@@ -129,8 +153,9 @@ def _sb_upload_file(row: dict) -> bool:
 def _sb_get_files(project_id: str | None = None,
                   uploader: str | None = None,
                   uploader_role: str | None = None) -> list[dict]:
-    """Fetch file records, optionally filtered."""
-    params: dict = {"select": "file_id,project_id,uploader,uploader_role,file_name,file_type,notes,created_at"}
+    params: dict[str, str] = {
+        "select": "file_id,project_id,uploader,uploader_role,file_name,file_type,notes,created_at"
+    }
     filters = []
     if project_id:
         filters.append(f"project_id=eq.{project_id}")
@@ -141,9 +166,7 @@ def _sb_get_files(project_id: str | None = None,
     if filters:
         params["and"] = "(" + ",".join(filters) + ")"
     try:
-        resp = _requests.get(
-            _sb_files_url(), headers=_sb_headers(), params=params, timeout=10
-        )
+        resp = _requests.get(_sb_files_url(), headers=_sb_headers(), params=params, timeout=10)
         if resp.status_code == 200:
             return resp.json()
     except Exception:
@@ -152,7 +175,6 @@ def _sb_get_files(project_id: str | None = None,
 
 
 def _sb_get_file_data(file_id: str) -> dict | None:
-    """Fetch a single file record including its base64 data."""
     try:
         resp = _requests.get(
             _sb_files_url(),
@@ -202,8 +224,8 @@ def _ensure_local_meta() -> None:
 
 def _local_save_file(row: dict, file_bytes: bytes) -> bool:
     _ensure_local_meta()
-    safe_name = "".join(c if c.isalnum() or c in "._-" else "_" for c in row["file_name"])
-    local_path = LOCAL_FILES_DIR / f"{row['file_id']}_{safe_name}"
+    safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in row["file_name"])
+    local_path = LOCAL_FILES_DIR / f"{row['file_id']}_{safe}"
     try:
         local_path.write_bytes(file_bytes)
         row["local_path"] = str(local_path)
@@ -235,7 +257,6 @@ def _local_get_files(project_id: str | None = None,
 
 
 def _local_get_file_bytes(file_id: str) -> tuple[bytes | None, str]:
-    """Returns (bytes, filename) or (None, '')."""
     _ensure_local_meta()
     if not _LOCAL_META_CSV.exists():
         return None, ""
@@ -249,35 +270,89 @@ def _local_get_file_bytes(file_id: str) -> tuple[bytes | None, str]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Public API
+# Public API — Projects
 # ─────────────────────────────────────────────────────────────────────────────
 
-def create_project(
-    title: str,
-    description: str,
-    due_date: str,
-    created_by: str,
-) -> str:
-    """Create a project record. Returns the new project_id."""
-    project_id = _new_id()
+def create_class_project(title: str, description: str, due_date: str, created_by: str) -> str:
+    """Create a teacher-assigned class project. Returns project_id."""
+    pid = _new_id()
     _append_project({
-        "Project ID": project_id,
-        "Title": title.strip(),
+        "Project ID": pid,
+        "Title":      title.strip(),
         "Description": description.strip(),
-        "Due Date": due_date.strip(),
+        "Due Date":   due_date.strip(),
         "Created By": created_by.strip(),
         "Created At": _now(),
-        "Published": "Yes",
+        "Published":  "Yes",
+        "Type":       "class",
+        "Owner":      "",
+        "Status":     "Complete",
     })
-    return project_id
+    return pid
 
 
-def load_projects(published_only: bool = True) -> list[dict]:
+def create_personal_project(title: str, description: str, owner: str,
+                             status: str = "In Progress") -> str:
+    """
+    Create a student's personal project.
+    status = 'In Progress'  →  visible only to the student
+    status = 'Complete'     →  visible to teachers as well
+    Returns project_id.
+    """
+    pid = _new_id()
+    _append_project({
+        "Project ID": pid,
+        "Title":      title.strip(),
+        "Description": description.strip(),
+        "Due Date":   "",
+        "Created By": owner.strip(),
+        "Created At": _now(),
+        "Published":  "Yes",
+        "Type":       "personal",
+        "Owner":      owner.strip(),
+        "Status":     status,
+    })
+    return pid
+
+
+def update_project_status(project_id: str, new_status: str) -> bool:
+    """Update Status of a personal project ('In Progress' ↔ 'Complete')."""
     rows = _read_projects()
-    if published_only:
-        return [r for r in rows if r.get("Published", "Yes") == "Yes"]
+    changed = False
+    for row in rows:
+        if row.get("Project ID") == project_id:
+            row["Status"] = new_status
+            changed = True
+    if changed:
+        _rewrite_projects(rows)
+    return changed
+
+
+def load_class_projects() -> list[dict]:
+    """All teacher-created class projects."""
+    return [r for r in _read_projects() if r.get("Type", "class") == "class" and r.get("Published") == "Yes"]
+
+
+def load_personal_projects(owner: str, include_in_progress: bool = True) -> list[dict]:
+    """Personal projects owned by a specific student."""
+    owner_key = owner.strip().casefold()
+    rows = [r for r in _read_projects()
+            if r.get("Type") == "personal"
+            and r.get("Owner", "").strip().casefold() == owner_key]
+    if not include_in_progress:
+        rows = [r for r in rows if r.get("Status") == "Complete"]
     return rows
 
+
+def load_all_complete_personal_projects() -> list[dict]:
+    """All students' completed personal projects — for teacher view."""
+    return [r for r in _read_projects()
+            if r.get("Type") == "personal" and r.get("Status") == "Complete"]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Public API — Files
+# ─────────────────────────────────────────────────────────────────────────────
 
 def upload_file(
     project_id: str,
@@ -288,11 +363,8 @@ def upload_file(
     file_type: str = "",
     notes: str = "",
 ) -> tuple[bool, str]:
-    """
-    Upload a file for a project.
-    Returns (success, file_id or error_message).
-    """
-    file_id = _new_id()
+    """Upload a file. Returns (success, file_id_or_error)."""
+    file_id  = _new_id()
     b64_data = base64.b64encode(file_bytes).decode()
     row = {
         "file_id":       file_id,
@@ -309,7 +381,6 @@ def upload_file(
         ok = _sb_upload_file(row)
         if ok:
             return True, file_id
-        # Fallback to local if Supabase upload fails
     ok = _local_save_file(dict(row), file_bytes)
     return ok, file_id if ok else "Upload failed"
 
@@ -319,7 +390,7 @@ def get_project_files(
     uploader: str | None = None,
     uploader_role: str | None = None,
 ) -> list[dict]:
-    """Get file metadata (no binary data) — fast list for display."""
+    """Metadata only — no binary data. Fast for listing."""
     if _supabase_available():
         rows = _sb_get_files(project_id, uploader, uploader_role)
         if rows is not None:
@@ -328,10 +399,7 @@ def get_project_files(
 
 
 def download_file(file_id: str) -> tuple[bytes | None, str, str]:
-    """
-    Download file bytes.
-    Returns (bytes, file_name, file_type).
-    """
+    """Returns (bytes, file_name, mime_type)."""
     if _supabase_available():
         rec = _sb_get_file_data(file_id)
         if rec:
@@ -347,8 +415,7 @@ def download_file(file_id: str) -> tuple[bytes | None, str, str]:
 def delete_file(file_id: str) -> bool:
     if _supabase_available():
         return _sb_delete_file(file_id)
-    # Local delete — mark as deleted (simple: just remove from meta CSV)
-    return False  # simplified for now
+    return False
 
 
 def student_has_uploaded(project_id: str, student: str) -> bool:
