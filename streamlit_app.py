@@ -30,7 +30,74 @@ from homework_core import (
     submit_homework,
 )
 
-APP_VERSION = "35.0 Login System"
+# ─── Persistent Session (Remember Me) via Supabase ───────────────────────────
+import json as _json_mod, time as _time_mod, secrets as _secrets_mod
+
+_SESSION_TABLE = "preluma_sessions"
+
+def _sb_session_url() -> str:
+    base = _get_secret("SUPABASE_URL").rstrip("/")
+    return f"{base}/rest/v1/{_SESSION_TABLE}"
+
+def _sb_session_headers() -> dict:
+    key = _get_secret("SUPABASE_KEY")
+    return {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+
+def _save_session_cookie(username: str, role: str, full_name: str) -> None:
+    """Save 30-day session token to Supabase."""
+    if not _supabase_available():
+        return
+    token = _secrets_mod.token_hex(32)
+    expires = int(_time_mod.time()) + 30 * 24 * 3600
+    try:
+        import requests as _req
+        _req.post(_sb_session_url(),
+                  headers={**_sb_session_headers(),
+                            "Prefer": "resolution=merge-duplicates,return=minimal"},
+                  json={"token": token, "username": username, "role": role,
+                        "full_name": full_name, "expires_at": expires},
+                  timeout=5)
+        st.session_state["_session_token"] = token
+    except Exception:
+        pass
+
+def _load_session_cookie() -> dict | None:
+    """Check Supabase for a valid saved session token."""
+    token = st.session_state.get("_session_token", "")
+    if not token or not _supabase_available():
+        return None
+    try:
+        import requests as _req
+        resp = _req.get(_sb_session_url(),
+                        headers=_sb_session_headers(),
+                        params={"token": f"eq.{token}",
+                                "select": "username,role,full_name,expires_at"},
+                        timeout=5)
+        rows = resp.json()
+        if rows and isinstance(rows, list):
+            r = rows[0]
+            if r.get("expires_at", 0) > int(_time_mod.time()):
+                return {"u": r["username"], "r": r["role"], "n": r["full_name"]}
+    except Exception:
+        pass
+    return None
+
+def _clear_session_cookie() -> None:
+    """Delete saved session token from Supabase."""
+    token = st.session_state.get("_session_token", "")
+    if token and _supabase_available():
+        try:
+            import requests as _req
+            _req.delete(_sb_session_url(),
+                        headers=_sb_session_headers(),
+                        params={"token": f"eq.{token}"}, timeout=5)
+        except Exception:
+            pass
+    st.session_state.pop("_session_token", None)
+
+# ─────────────────────────────────────────────────────────────────────────────
+
+APP_VERSION = "36.0 Login System"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -4005,7 +4072,6 @@ def main():
     # Login gate — show login page if not authenticated
     # ── Auto-login from saved cookie (Remember Me) ──────────────────────────
     if not st.session_state.get("logged_in", False):
-        _cookie_mgr()  # initialise cookie component early
         _saved = _load_session_cookie()
         if _saved and _saved.get("u") and _saved.get("r"):
             st.session_state.logged_in   = True
