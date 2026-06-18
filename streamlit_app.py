@@ -96,6 +96,100 @@ def _clear_session_cookie() -> None:
             pass
     st.session_state.pop("_session_token", None)
 
+# ─── Supabase Photo Storage ───────────────────────────────────────────────────
+_PHOTO_TABLE = "preluma_photos"
+
+def _sb_photo_url() -> str:
+    base = _get_secret("SUPABASE_URL").rstrip("/")
+    return f"{base}/rest/v1/{_PHOTO_TABLE}"
+
+def _sb_photo_headers() -> dict:
+    key = _get_secret("SUPABASE_KEY")
+    return {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+
+def _load_photo_sb(photo_key: str) -> tuple[bytes | None, str]:
+    """Return (img_bytes, ext) from Supabase, or (None, '') if not found."""
+    if not _supabase_available():
+        return None, ""
+    try:
+        import requests as _req
+        resp = _req.get(_sb_photo_url(),
+                        headers=_sb_photo_headers(),
+                        params={"photo_key": f"eq.{photo_key}",
+                                "select": "photo_data,ext"},
+                        timeout=8)
+        rows = resp.json()
+        if rows and isinstance(rows, list):
+            r = rows[0]
+            data = base64.b64decode(r.get("photo_data", ""))
+            return data, r.get("ext", "jpg")
+    except Exception:
+        pass
+    return None, ""
+
+def _save_photo_sb(photo_key: str, img_bytes: bytes, ext: str) -> bool:
+    """Upsert photo into Supabase."""
+    if not _supabase_available():
+        return False
+    try:
+        import requests as _req
+        resp = _req.post(_sb_photo_url(),
+                         headers={**_sb_photo_headers(),
+                                   "Prefer": "resolution=merge-duplicates,return=minimal"},
+                         json={"photo_key": photo_key,
+                               "photo_data": base64.b64encode(img_bytes).decode(),
+                               "ext": ext},
+                         timeout=10)
+        return resp.status_code in (200, 201, 204)
+    except Exception:
+        return False
+
+def _delete_photo_sb(photo_key: str) -> None:
+    """Remove photo from Supabase."""
+    if not _supabase_available():
+        return
+    try:
+        import requests as _req
+        _req.delete(_sb_photo_url(),
+                    headers=_sb_photo_headers(),
+                    params={"photo_key": f"eq.{photo_key}"},
+                    timeout=8)
+    except Exception:
+        pass
+
+def _get_photo_src(photo_key: str) -> str | None:
+    """
+    Unified photo loader. Returns data-URI string or None.
+    Priority: local filesystem → Supabase → None.
+    Result cached in session_state to avoid repeat reads.
+    """
+    cache_key = f"_sbp_{photo_key}"
+    if cache_key in st.session_state:
+        return st.session_state[cache_key]
+
+    photos_dir = Path("photos")
+    for ext in ("jpg", "jpeg", "png", "webp"):
+        fp = photos_dir / f"{photo_key}.{ext}"
+        if fp.exists():
+            mime = "jpeg" if ext in ("jpg", "jpeg") else ext
+            src = f"data:image/{mime};base64," + base64.b64encode(fp.read_bytes()).decode()
+            st.session_state[cache_key] = src
+            return src
+
+    # Fallback: Supabase
+    img_bytes, ext = _load_photo_sb(photo_key)
+    if img_bytes:
+        mime = "jpeg" if ext in ("jpg", "jpeg") else ext
+        src = f"data:image/{mime};base64," + base64.b64encode(img_bytes).decode()
+        # Also save locally for this session
+        photos_dir.mkdir(exist_ok=True)
+        (photos_dir / f"{photo_key}.{ext}").write_bytes(img_bytes)
+        st.session_state[cache_key] = src
+        return src
+
+    st.session_state[cache_key] = None
+    return None
+
 # ─────────────────────────────────────────────────────────────────────────────
 
 APP_VERSION = "36.0 Login System"
