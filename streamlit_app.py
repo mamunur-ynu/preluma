@@ -975,22 +975,23 @@ def home_page():
         else "linear-gradient(135deg,#020617 0%,#0f172a 50%,#1e1b4b 100%)"
     )
 
-    # Full-width hero
+    # ── Full-width hero ──────────────────────────────────────────────────────
     st.markdown(f"""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap');
     @keyframes glow-pulse {{
-      0%,100% {{ opacity:.55; transform:scale(1); }}
-      50%      {{ opacity:.80; transform:scale(1.06); }}
+      0%,100% {{ opacity:.50; transform:scale(1); }}
+      50%      {{ opacity:.80; transform:scale(1.08); }}
     }}
     @keyframes float-up {{
-      from {{ opacity:0; transform:translateY(18px); }}
+      from {{ opacity:0; transform:translateY(22px); }}
       to   {{ opacity:1; transform:translateY(0); }}
     }}
     .hp-hero {{
       position:relative; overflow:hidden;
-      min-height:560px;
+      min-height:480px;
       background:{bg_hero};
-      background-size:cover; background-position:center 15%;
+      background-size:cover; background-position:center 20%;
       box-shadow:0 40px 100px rgba(0,0,0,.60);
       margin-left:-2.5rem; margin-right:-2.5rem; margin-top:-1.5rem;
       margin-bottom:0; border-radius:0;
@@ -998,68 +999,51 @@ def home_page():
     .hp-overlay {{
       position:absolute; inset:0;
       background:
-        linear-gradient(110deg, rgba(2,6,23,.94) 0%, rgba(4,10,28,.88) 28%,
-                        rgba(8,16,40,.48) 50%, rgba(8,14,32,.12) 70%, transparent 88%),
-        radial-gradient(ellipse at 12% 60%, rgba(56,189,248,.14) 0%, transparent 46%),
-        linear-gradient(to top, rgba(2,6,23,1) 0%, rgba(2,6,23,.72) 10%, transparent 24%);
+        linear-gradient(110deg, rgba(2,6,23,.96) 0%, rgba(4,10,28,.90) 30%,
+                        rgba(8,16,40,.55) 55%, rgba(8,14,32,.18) 75%, transparent 92%),
+        radial-gradient(ellipse at 10% 55%, rgba(56,189,248,.16) 0%, transparent 50%),
+        linear-gradient(to top, rgba(2,6,23,1) 0%, rgba(2,6,23,.80) 8%, transparent 22%);
     }}
     .hp-glow {{
-      position:absolute; right:-120px; top:-80px;
-      width:480px; height:480px; border-radius:50%;
-      background:radial-gradient(circle, rgba(99,102,241,.28) 0%, transparent 68%);
+      position:absolute; right:-80px; top:-60px;
+      width:420px; height:420px; border-radius:50%;
+      background:radial-gradient(circle, rgba(99,102,241,.26) 0%, transparent 68%);
       animation:glow-pulse 5s ease-in-out infinite;
     }}
-    .hp-glow2 {{
-      position:absolute; left:-60px; bottom:-100px;
-      width:340px; height:340px; border-radius:50%;
-      background:radial-gradient(circle, rgba(14,165,233,.18) 0%, transparent 65%);
-      animation:glow-pulse 7s ease-in-out infinite reverse;
-    }}
     .hp-content {{
-      position:relative; z-index:2; padding:52px 52px 48px;
-      animation:float-up .6s ease both;
+      position:relative; z-index:2; padding:48px 52px 52px;
+      animation:float-up .55s ease both;
+      max-width:680px;
     }}
     .hp-badge {{
       display:inline-flex; align-items:center; gap:7px;
       background:rgba(56,189,248,.10); border:1px solid rgba(56,189,248,.28);
-      border-radius:30px; padding:6px 16px; margin-bottom:22px;
+      border-radius:30px; padding:5px 15px; margin-bottom:20px;
     }}
     .hp-badge-dot {{
-      width:7px; height:7px; border-radius:50%; background:#38bdf8;
-      box-shadow:0 0 8px rgba(56,189,248,.8);
+      width:6px; height:6px; border-radius:50%; background:#38bdf8;
+      box-shadow:0 0 8px rgba(56,189,248,.9);
     }}
     .hp-badge-txt {{
-      color:#7dd3fc; font-size:12px; font-weight:700; letter-spacing:.07em;
+      color:#7dd3fc; font-size:11px; font-weight:700; letter-spacing:.09em;
       text-transform:uppercase;
     }}
     .hp-h1 {{
-      font-size:clamp(30px,3.8vw,54px); font-weight:900; color:#f8fafc;
-      margin:0 0 18px; line-height:1.10; letter-spacing:-.03em;
-      text-shadow:0 4px 30px rgba(0,0,0,.50);
+      font-family:'Syne', ui-sans-serif, system-ui, sans-serif;
+      font-size:clamp(32px,4.2vw,58px); font-weight:900; color:#f0f8ff;
+      margin:0 0 14px; line-height:1.08; letter-spacing:-.04em;
+      text-shadow:0 2px 40px rgba(0,0,0,.55);
     }}
-    .hp-h1 span {{ color:#38bdf8; }}
+    .hp-h1 em {{ font-style:normal; color:#38bdf8; }}
     .hp-sub {{
-      font-size:17px; color:#94a3b8; line-height:1.65;
-      max-width:580px; margin-bottom:36px;
-    }}
-    .hp-cta-row {{ display:flex; gap:14px; flex-wrap:wrap; }}
-    .hp-cta-primary {{
-      background:linear-gradient(135deg,#0ea5e9 0%,#6366f1 100%);
-      border-radius:14px; padding:14px 32px;
-      font-weight:800; font-size:15px; color:#fff;
-      box-shadow:0 8px 28px rgba(99,102,241,.38);
-      letter-spacing:.01em;
-    }}
-    .hp-cta-ghost {{
-      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14);
-      border-radius:14px; padding:14px 26px;
-      font-weight:600; font-size:15px; color:#cbd5e1;
+      font-family:'Inter', ui-sans-serif, sans-serif;
+      font-size:16px; color:#8da4c0; line-height:1.70;
+      max-width:520px; margin-bottom:0; letter-spacing:.01em;
     }}
     </style>
     <div class='hp-hero'>
       <div class='hp-overlay'></div>
       <div class='hp-glow'></div>
-      <div class='hp-glow2'></div>
       <div class='hp-content'>
         <div class='hp-badge'>
           <span class='hp-badge-dot'></span>
@@ -1067,19 +1051,29 @@ def home_page():
         </div>
         <h1 class='hp-h1'>
           Prepare before class.<br>
-          <span>Understand more during class.</span>
+          <em>Understand more during class.</em>
         </h1>
         <p class='hp-sub'>
-          Preluma is an AI-powered pre-class learning system for university students.
-          Brain Brief, adaptive quiz, multi-provider AI tutor, and teacher analytics —
-          all in one Python app.
+          AI-powered pre-class learning — Brain Brief, adaptive quiz,
+          multi-provider tutor &amp; teacher analytics. All in Python.
         </p>
       </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # CTA buttons — real Streamlit buttons overlaid below the hero
-    cta1, cta2, _ = st.columns([1.4, 1.2, 2])
+    # CTA buttons — float up into the bottom edge of the hero
+    st.markdown("""
+    <style>
+    .hp-btn-wrap {{
+      margin-top: -28px;
+      padding: 0 0 0 52px;
+      position: relative; z-index: 10;
+    }}
+    </style>
+    <div class='hp-btn-wrap'></div>
+    """, unsafe_allow_html=True)
+
+    cta1, cta2, _ = st.columns([1.5, 1.3, 3])
     _role = st.session_state.get("user_role", "student")
     if _role == "student":
         if cta1.button("🚀 Start Learning Mission", use_container_width=True, type="primary"):
@@ -3027,7 +3021,9 @@ def student_profile_page():
     font-size:14px; font-weight:900; flex-shrink:0;
 }}
 </style>
+""", unsafe_allow_html=True)
 
+    st.markdown(f"""
 <div class='sp-hero'>
   <div class='sp-banner'></div>
   <div class='sp-body'>
