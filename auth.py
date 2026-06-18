@@ -208,12 +208,17 @@ def _write_row(row: dict) -> None:
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
 
+_SETUP_DONE: bool = False  # module-level flag — runs only ONCE per Python process
+
 def ensure_setup() -> None:
     """
     Idempotent — call once at app startup.
     Seeds all DEMO_USERS into whatever backend is active.
     Works whether using Supabase or CSV, and survives every deploy.
     """
+    global _SETUP_DONE
+    if _SETUP_DONE:
+        return
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     existing = {u["Username"] for u in _read_all()}
     for username, password, role, full_name in DEMO_USERS:
@@ -228,6 +233,7 @@ def ensure_setup() -> None:
                 "Created At":    _now(),
             })
             existing.add(uname)
+    _SETUP_DONE = True
 
 
 def authenticate(username: str, password: str) -> Optional[dict]:

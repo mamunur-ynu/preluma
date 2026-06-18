@@ -31,46 +31,52 @@ from homework_core import (
     submit_homework,
 )
 
-# ─── Persistent Session (Remember Me) via Supabase ───────────────────────────
-import json as _json_mod, time as _time_mod, secrets as _secrets_mod
+# ─── Persistent Session (Remember Me) — locally-signed HMAC token ────────────
+# No network call needed on browser refresh — token lives in URL query param "t"
+# Token format: base64url(payload).hmac_sig
+import json as _json_mod, time as _time_mod, hmac as _hmac_mod, base64 as _b64_mod
 
-_SESSION_TABLE = "preluma_sessions"
+def _session_secret() -> bytes:
+    """Use Supabase key as HMAC secret (or fallback). Never leaves the server."""
+    raw = _get_secret("SUPABASE_KEY") or "preluma-fallback-secret-2024"
+    return raw[:32].encode()
 
-def _sb_session_url() -> str:
-    base = _get_secret("SUPABASE_URL").rstrip("/")
-    return f"{base}/rest/v1/{_SESSION_TABLE}"
+def _make_session_token(username: str, role: str, full_name: str) -> str:
+    """Create a 30-day self-contained signed session token."""
+    payload = _json_mod.dumps({
+        "u": username, "r": role, "n": full_name,
+        "exp": int(_time_mod.time()) + 30 * 24 * 3600,
+    })
+    b64 = _b64_mod.urlsafe_b64encode(payload.encode()).decode().rstrip("=")
+    sig = _hmac_mod.new(_session_secret(), b64.encode(), "sha256").hexdigest()[:24]
+    return f"{b64}.{sig}"
 
-def _sb_session_headers() -> dict:
-    key = _get_secret("SUPABASE_KEY")
-    return {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+def _verify_session_token(token: str) -> dict | None:
+    """Verify token signature and expiry locally — zero network calls."""
+    try:
+        b64, sig = token.rsplit(".", 1)
+        expected = _hmac_mod.new(_session_secret(), b64.encode(), "sha256").hexdigest()[:24]
+        if not _hmac_mod.compare_digest(sig, expected):
+            return None
+        padded = b64 + "=" * (-len(b64) % 4)
+        payload = _json_mod.loads(_b64_mod.urlsafe_b64decode(padded).decode())
+        if payload.get("exp", 0) < int(_time_mod.time()):
+            return None
+        return payload
+    except Exception:
+        return None
 
 def _save_session_cookie(username: str, role: str, full_name: str) -> None:
-    """Save 30-day session token to Supabase AND persist in URL query param."""
-    if not _supabase_available():
-        return
-    token = _secrets_mod.token_hex(32)
-    expires = int(_time_mod.time()) + 30 * 24 * 3600
+    """Sign + save token into URL query param (survives browser refresh)."""
+    token = _make_session_token(username, role, full_name)
+    st.session_state["_session_token"] = token
     try:
-        import requests as _req
-        _req.post(_sb_session_url(),
-                  headers={**_sb_session_headers(),
-                            "Prefer": "resolution=merge-duplicates,return=minimal"},
-                  json={"token": token, "username": username, "role": role,
-                        "full_name": full_name, "expires_at": expires},
-                  timeout=5)
-        st.session_state["_session_token"] = token
-        # Store token in URL so it survives browser refresh
-        try:
-            st.query_params["t"] = token
-        except Exception:
-            pass
+        st.query_params["t"] = token
     except Exception:
         pass
 
 def _load_session_cookie() -> dict | None:
-    """Check Supabase for a valid saved session token.
-    Reads token from URL query param (survives browser refresh) OR session_state."""
-    # Try URL query param first (persists across browser refresh)
+    """Restore session from URL query param — no Supabase round-trip needed."""
     token = ""
     try:
         token = st.query_params.get("t", "")
@@ -78,41 +84,20 @@ def _load_session_cookie() -> dict | None:
         pass
     if not token:
         token = st.session_state.get("_session_token", "")
-    if not token or not _supabase_available():
+    if not token:
         return None
-    try:
-        import requests as _req
-        resp = _req.get(_sb_session_url(),
-                        headers=_sb_session_headers(),
-                        params={"token": f"eq.{token}",
-                                "select": "username,role,full_name,expires_at"},
-                        timeout=5)
-        rows = resp.json()
-        if rows and isinstance(rows, list):
-            r = rows[0]
-            if r.get("expires_at", 0) > int(_time_mod.time()):
-                st.session_state["_session_token"] = token
-                return {"u": r["username"], "r": r["role"], "n": r["full_name"]}
-    except Exception:
-        pass
+    payload = _verify_session_token(token)
+    if payload:
+        st.session_state["_session_token"] = token
+        try:
+            st.query_params["t"] = token   # keep it in URL
+        except Exception:
+            pass
+        return {"u": payload["u"], "r": payload["r"], "n": payload["n"]}
     return None
 
 def _clear_session_cookie() -> None:
-    """Delete saved session token from Supabase and remove from URL."""
-    token = st.session_state.get("_session_token", "")
-    if not token:
-        try:
-            token = st.query_params.get("t", "")
-        except Exception:
-            pass
-    if token and _supabase_available():
-        try:
-            import requests as _req
-            _req.delete(_sb_session_url(),
-                        headers=_sb_session_headers(),
-                        params={"token": f"eq.{token}"}, timeout=5)
-        except Exception:
-            pass
+    """Wipe token from session_state and URL on logout."""
     st.session_state.pop("_session_token", None)
     try:
         st.query_params.clear()
@@ -2606,79 +2591,6 @@ def teacher_studio():
         for line in read_recent_logs(15):
             st.code(line, language="text")
 
-    # ── Profile Photo Upload ───────────────────────────────────────────────────
-    st.markdown("---")
-    st.markdown("""
-    <div style='font-size:10px;font-weight:800;color:#38bdf8;letter-spacing:.10em;
-        text-transform:uppercase;margin-bottom:10px;'>Teacher Profile Photos</div>
-    <div style='font-size:13px;color:#94a3b8;margin-bottom:16px;'>
-        Upload profile photos here — they will appear on the Teacher Profile page.
-        Photos are only used within this course project.
-    </div>
-    """, unsafe_allow_html=True)
-
-    _TEACHER_PHOTO_MAP = {
-        "Zhou Yujue":              "zhouyujue",
-        "Gao Song":                "gaosong",
-        "Tang Li":                 "tangli",
-        "Wei Ping":                "weiping",
-        "Mamunur Rashid (Admin)":  "mim_admin",
-    }
-    _ADMIN_USERS = {"mim.ynu", "mamunur rashid (admin)"}
-    _logged_full = st.session_state.get("student", "")
-    _username    = st.session_state.get("username", "").lower()
-    _is_admin    = _username in _ADMIN_USERS or _logged_full.lower() in _ADMIN_USERS
-
-    import pathlib as _pl2
-    # Admin sees dropdown to pick any teacher; others upload for themselves only
-    if _is_admin:
-        _teacher_options = list(_TEACHER_PHOTO_MAP.keys())
-        _selected_teacher = st.selectbox(
-            "Upload photo for",
-            _teacher_options,
-            key="admin_photo_target",
-            help="As admin you can upload photos on behalf of any teacher.",
-        )
-        _photo_key = _TEACHER_PHOTO_MAP[_selected_teacher]
-        _upload_label = f"Select photo for {_selected_teacher}"
-    else:
-        _photo_key    = _TEACHER_PHOTO_MAP.get(_logged_full, "teacher")
-        _selected_teacher = _logged_full
-        _upload_label = f"Upload your photo"
-
-    # Show current status for chosen teacher
-    _existing = next(
-        (str(p) for ext in ("jpg","jpeg","png","webp")
-         for p in [_pl2.Path(f"assets/teacher_photos/{_photo_key}.{ext}")] if p.exists()),
-        None
-    )
-    if _existing:
-        st.success(f"✓ Photo already uploaded for **{_selected_teacher}**")
-        try:
-            st.image(_existing, width=100)
-        except Exception:
-            pass
-
-    photo_file = st.file_uploader(
-        _upload_label,
-        type=["jpg", "jpeg", "png", "webp"],
-        key="teacher_photo_upload",
-    )
-    if photo_file is not None:
-        photos_dir = _pl2.Path("assets/teacher_photos")
-        photos_dir.mkdir(parents=True, exist_ok=True)
-        ext   = photo_file.name.rsplit(".", 1)[-1].lower()
-        # Remove old photo for this teacher first
-        for old_ext in ("jpg","jpeg","png","webp"):
-            old = photos_dir / f"{_photo_key}.{old_ext}"
-            if old.exists(): old.unlink()
-        fname = f"{_photo_key}.{ext}"
-        img_bytes = photo_file.getbuffer().tobytes()
-        (photos_dir / fname).write_bytes(img_bytes)
-        # Also save to Supabase for persistence across deploys
-        _save_photo_sb(_photo_key, img_bytes, ext)
-        st.success(f"✅ Photo saved for **{_selected_teacher}** — visible on Teacher Profile now.")
-        st.image(photo_file, width=120, caption=_selected_teacher)
 
 
 # Words that are not real questions and need a follow-up prompt instead of a topic answer
@@ -3921,14 +3833,66 @@ def class_dashboard_page():
     # TAB 1 — Send Announcement
     # ══════════════════════════════════════════════════════════════════
     with tab1:
-        st.markdown("""
-        <div class="db-card">
-          <div class="db-lbl db-lbl-blue">Send an announcement to students</div>
-          <div class="db-val">Write a message below — it will appear in every selected student's
-          notification inbox instantly.</div>
+        # ── Sender info card ─────────────────────────────────────────
+        _ann_username = st.session_state.get("username", "").lower()
+        _ann_fullname = st.session_state.get("student", "Teacher")
+
+        # Match logged-in teacher to _teacher_list()
+        _TLIST = _teacher_list()
+        _ann_teacher = next(
+            (t for t in _TLIST if t["photo_key"] == _ann_username
+             or t["name"].lower() == _ann_fullname.lower()),
+            None
+        )
+        # Build sender display info
+        if _ann_teacher:
+            _ann_name   = _ann_teacher["name"]
+            _ann_cn     = _ann_teacher["cn"]
+            _ann_role   = _ann_teacher["role"]
+            _ann_course = _ann_teacher["course"]
+            _ann_email  = _ann_teacher["email"]
+            _ann_photo  = _get_photo_src(_ann_teacher["photo_key"])
+        else:
+            _ann_name   = _ann_fullname
+            _ann_cn     = ""
+            _ann_role   = "Teacher"
+            _ann_course = ""
+            _ann_email  = ""
+            _ann_photo  = None
+
+        _ann_avatar = (
+            f'<img src="{_ann_photo}" style="width:56px;height:56px;border-radius:12px;'
+            f'object-fit:cover;border:2px solid rgba(56,189,248,.4);">'
+            if _ann_photo else
+            f'<div style="width:56px;height:56px;border-radius:12px;'
+            f'background:linear-gradient(135deg,#0ea5e9,#6366f1);'
+            f'display:flex;align-items:center;justify-content:center;'
+            f'font-size:20px;font-weight:900;color:#fff;">'
+            f'{"".join(w[0] for w in _ann_name.split()[:2]).upper()}</div>'
+        )
+
+        st.markdown(f"""
+        <div style="background:linear-gradient(135deg,rgba(14,165,233,.08) 0%,rgba(99,102,241,.06) 100%);
+            border:1px solid rgba(56,189,248,.18);border-radius:20px;padding:20px 24px;
+            margin-bottom:20px;display:flex;gap:18px;align-items:center;">
+          {_ann_avatar}
+          <div style="flex:1;">
+            <div style="font-size:11px;font-weight:800;color:#38bdf8;letter-spacing:.10em;
+                text-transform:uppercase;margin-bottom:4px;">Sender · This Announcement</div>
+            <div style="font-size:18px;font-weight:800;color:#f1f5f9;line-height:1.2;">
+                {_ann_name}
+                {"<span style='font-size:14px;color:#38bdf8;margin-left:8px;'>"+_ann_cn+"</span>" if _ann_cn else ""}
+            </div>
+            <div style="font-size:12px;color:#64748b;margin-top:2px;">{_ann_role}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+            {"<div style='font-size:11px;color:#94a3b8;background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.15);border-radius:8px;padding:4px 10px;'>📚 "+_ann_course+"</div>" if _ann_course else ""}
+            {"<div style='font-size:11px;color:#94a3b8;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.15);border-radius:8px;padding:4px 10px;'>✉️ "+_ann_email+"</div>" if _ann_email else ""}
+          </div>
         </div>
         """, unsafe_allow_html=True)
 
+        # ── Announcement form ────────────────────────────────────────
         with st.form("announcement_form", border=False):
             ann_title = st.text_input(
                 "Announcement title",
@@ -3939,10 +3903,16 @@ def class_dashboard_page():
                 placeholder="Write your announcement here...",
                 height=120,
             )
-            ann_target = st.radio(
+            _fc1, _fc2 = st.columns(2)
+            ann_target = _fc1.radio(
                 "Send to",
                 ["All Students", "Specific Students"],
                 horizontal=True,
+            )
+            ann_include_details = _fc2.checkbox(
+                "Include my contact details in notification",
+                value=True,
+                help="Students will see your name, course and email in the notification.",
             )
             ann_specific = []
             if ann_target == "Specific Students":
@@ -3961,17 +3931,23 @@ def class_dashboard_page():
                 if not targets:
                     st.warning("Select at least one student.")
                 else:
-                    _sender = st.session_state.get("student", "Teacher")
+                    # Build message body
+                    _body = ann_msg.strip()
+                    if ann_include_details and (_ann_course or _ann_email):
+                        _details_parts = []
+                        if _ann_course: _details_parts.append(f"Course: {_ann_course}")
+                        if _ann_email:  _details_parts.append(f"Email: {_ann_email}")
+                        _body += f"\n\n— {_ann_name}" + (f" | {' | '.join(_details_parts)}" if _details_parts else "")
                     for name in targets:
                         create_notification(
                             student=name,
                             notification_type="Announcement",
                             title=ann_title.strip(),
-                            message=ann_msg.strip(),
+                            message=_body,
                             reference_id=0,
                         )
                     st.success(
-                        f"✅ Announcement sent to **{len(targets)} student(s)**."
+                        f"✅ Announcement sent to **{len(targets)} student(s)** from **{_ann_name}**."
                     )
 
     # ══════════════════════════════════════════════════════════════════
