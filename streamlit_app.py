@@ -198,7 +198,7 @@ def _get_photo_src(photo_key: str) -> str | None:
 
 # ─────────────────────────────────────────────────────────────────────────────
 
-APP_VERSION = "40.0"
+APP_VERSION = "40.3"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -1060,35 +1060,6 @@ def home_page():
       </div>
     </div>
     """, unsafe_allow_html=True)
-
-    # CTA buttons — float up into the bottom edge of the hero
-    st.markdown("""
-    <style>
-    .hp-btn-wrap {{
-      margin-top: -28px;
-      padding: 0 0 0 52px;
-      position: relative; z-index: 10;
-    }}
-    </style>
-    <div class='hp-btn-wrap'></div>
-    """, unsafe_allow_html=True)
-
-    cta1, cta2, _ = st.columns([1.5, 1.3, 3])
-    _role = st.session_state.get("user_role", "student")
-    if _role == "student":
-        if cta1.button("🚀 Start Learning Mission", use_container_width=True, type="primary"):
-            st.session_state.active_page = "Student Mission"
-            st.rerun()
-        if cta2.button("💬 Ask Preluma AI", use_container_width=True):
-            st.session_state.active_page = "Ask Preluma AI"
-            st.rerun()
-    else:
-        if cta1.button("📊 Teacher Studio", use_container_width=True, type="primary"):
-            st.session_state.active_page = "Teacher Studio"
-            st.rerun()
-        if cta2.button("📋 Class Dashboard", use_container_width=True):
-            st.session_state.active_page = "Class Dashboard"
-            st.rerun()
 
     # Full page background wrapper — keeps the entire page cohesive
     st.markdown("""
