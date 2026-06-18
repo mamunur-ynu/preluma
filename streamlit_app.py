@@ -14,7 +14,7 @@ from topics import TOPIC_OPTIONS, validate_topics
 from wiki_fetcher import smart_answer_from_pack
 from storage_core import append_student_row, next_record_id, read_recent_logs, timestamp
 from llm import active_provider as _provider, available_providers, llm_available, llm_tutor, detect_topic_from_question, llm_free_chat
-from auth import authenticate, register, get_all_students, username_exists
+from auth import authenticate, register, get_all_students, username_exists, storage_backend
 from homework_core import (
     create_homework,
     homework_for_student,
@@ -598,6 +598,7 @@ st.markdown(CSS, unsafe_allow_html=True)
 # Session state helpers and shared utilities used across all pages
 
 def init_state():
+    from auth import ensure_setup as _auth_setup; _auth_setup()
     st.session_state.setdefault("logged_in", False)
     st.session_state.setdefault("user_role", "")
     st.session_state.setdefault("username", "")
@@ -612,6 +613,7 @@ def init_state():
     st.session_state.setdefault("homework_result", None)
     st.session_state.setdefault("selected_homework_id", None)
     st.session_state.setdefault("ai_context_note", "")
+    st.session_state.setdefault("_ai_draft", "")
     seed_homework_demo()
 
 
@@ -621,7 +623,7 @@ def reset_session():
         "questions", "quiz_result", "latest_session", "tutor_history",
         "score_history", "class_questions", "mission_started",
         "mission_step", "practice_reflection", "homework_result",
-        "selected_homework_id", "ai_context_note",
+        "selected_homework_id", "ai_context_note", "_ai_draft",
     ]
     for key in keys:
         st.session_state.pop(key, None)
@@ -758,6 +760,18 @@ def sidebar():
     )
 
     st.sidebar.markdown("</div>", unsafe_allow_html=True)  # close sb-nav-wrap
+
+    # Storage backend status
+    _sb = storage_backend()
+    _sb_label = "☁ Supabase (persistent)" if _sb == "supabase" else "⚠ CSV (deploy resets data)"
+    _sb_color = "rgba(167,243,208,.7)" if _sb == "supabase" else "rgba(253,230,138,.7)"
+    st.sidebar.markdown(
+        f"<div style='margin:0 0 6px;padding:5px 10px;border-radius:8px;"
+        f"background:rgba(255,255,255,.03);text-align:center;'>"
+        f"<span style='font-size:10px;color:{_sb_color};'>{_sb_label}</span>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
 
     st.sidebar.caption(f"v{APP_VERSION}")
     return st.session_state.active_page, True  # presentation always True
@@ -2096,50 +2110,6 @@ def teacher_profile_page():
         else:
             st.warning("Please enter both a title and a topic.")
 
-    # ── Student team members ──────────────────────────────────────────────────
-    st.markdown("""
-    <div style="font-size:10px;font-weight:800;color:#38bdf8;letter-spacing:.10em;
-        text-transform:uppercase;margin:32px 0 16px;">
-        Student Development Team
-    </div>
-    """, unsafe_allow_html=True)
-
-    team_data = [
-        ("MR", "Mamunur Rashid",  "mamun",  "#0ea5e9",
-         "Core Development · UI/UX · Integration · Deployment",
-         ["streamlit_app.py", "llm.py", "engine.py", "homework_core.py", "storage_core.py"]),
-        ("FA", "Md Fahim Ahmed",   "fahim",  "#8b5cf6",
-         "Feature Logic · Quiz Testing · Interaction Feedback",
-         ["algorithms_core.py", "analytics_core.py", "teacher.py", "tests/"]),
-        ("JI", "Md Jiarul Islam",  "jiarul", "#10b981",
-         "Topic Data · Documentation · Presentation Support",
-         ["topics.py", "wiki_fetcher.py", "models.py", "result_generator.py"]),
-    ]
-
-    tcols = st.columns(3)
-    for i, (initials, name, uname, color, role, files) in enumerate(team_data):
-        with tcols[i]:
-            st.markdown(f"""
-            <div style="background:linear-gradient(145deg,rgba(10,18,36,.96),rgba(6,12,26,.98));
-                        border:1px solid {color}28;border-radius:18px;padding:20px 18px;">
-                <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
-                    <div style="width:52px;height:52px;border-radius:50%;
-                                background:linear-gradient(135deg,{color},{color}99);
-                                display:flex;align-items:center;justify-content:center;
-                                font-size:18px;font-weight:900;color:#fff;flex-shrink:0;">
-                        {initials}
-                    </div>
-                    <div>
-                        <div style="font-size:14px;font-weight:800;color:#f1f5f9;">{name}</div>
-                        <div style="font-size:10px;color:{color};font-weight:700;
-                                    letter-spacing:.06em;text-transform:uppercase;">@{uname}</div>
-                    </div>
-                </div>
-                <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;line-height:1.5;">{role}</div>
-                <div style="font-size:10px;color:#475569;">
-                    {"  ·  ".join(f'<code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:4px;color:#94a3b8;">{f}</code>' for f in files)}
-                </div>
-            </div>""", unsafe_allow_html=True)
 
 
 # Teacher Studio: algorithm demos and class analytics
@@ -2296,7 +2266,7 @@ def _natural_answer_text(response: dict, depth: str) -> str:
 def _clear_ai_chat() -> None:
     st.session_state.tutor_history = []
     st.session_state.ai_context_note = ""
-    st.session_state.pop("ai_question_input", None)
+    st.session_state._ai_draft = ""
 
 
 def ask_preluma_ai_page():
@@ -2346,10 +2316,14 @@ def ask_preluma_ai_page():
         unsafe_allow_html=True,
     )
 
-    st.session_state.setdefault("ai_question_input", "")
+    # _ai_draft is the safe key — callbacks write to it BEFORE the widget renders
+    def _apply_quick(p: str) -> None:
+        current = st.session_state.get("_ai_draft", "").strip()
+        st.session_state._ai_draft = f"{p}: {current}" if current else p
+
     question = st.text_area(
         "Your question",
-        key="ai_question_input",
+        key="_ai_draft",
         placeholder="Ask naturally, for example: I do not understand machine learning. First explain the basic idea, then tell me how it learns from data.",
         height=130,
     )
@@ -2357,10 +2331,13 @@ def ask_preluma_ai_page():
     quick = st.columns(4)
     quick_prompts = ["Explain simply", "Give a real example", "Go deeper", "Quiz me"]
     for col, prompt in zip(quick, quick_prompts):
-        if col.button(prompt, use_container_width=True):
-            base = question.strip() or mission_topic
-            st.session_state.ai_question_input = f"{prompt}: {base}"
-            st.rerun()
+        col.button(
+            prompt,
+            use_container_width=True,
+            key=f"qp_{prompt.replace(' ','_')}",
+            on_click=_apply_quick,
+            args=(prompt,),
+        )
 
     ask_col, clear_col = st.columns([5, 1])
     ask = ask_col.button("Ask Preluma AI", use_container_width=True)
@@ -2422,9 +2399,12 @@ def ask_preluma_ai_page():
                 if response is None:
                     fallback_pack = build_pack(detected_topic, use_wikipedia=True)
                     response = tutor_sections(fallback_pack, routed_question, st.session_state.get("persona", "Normal Mode"))
-            response["concept"] = detected_topic
-            answer_text = _natural_answer_text(response, depth)
-            st.session_state.tutor_history.append({"question":question.strip(),"topic":detected_topic,"response":response,"answer_text":answer_text,"source":source,"depth":depth})
+            try:
+                response["concept"] = detected_topic
+                answer_text = _natural_answer_text(response, depth)
+                st.session_state.tutor_history.append({"question":question.strip(),"topic":detected_topic,"response":response,"answer_text":answer_text,"source":source,"depth":depth})
+            except Exception as _e:
+                st.error(f"Could not format answer. Please try again. ({type(_e).__name__})")
 
     st.markdown("""
     <style>
@@ -3124,8 +3104,6 @@ def roadmap():
 
 def login_page():
     """Beautiful full-screen login & register page with role toggle + invite code."""
-    import streamlit as st
-
     st.markdown("""
 <style>
 .login-wrap { max-width:440px; margin:0 auto; padding:30px 0 20px; }
@@ -3236,7 +3214,6 @@ def login_page():
                 tr_submit = st.form_submit_button("Create Teacher Account", use_container_width=True, type="primary")
 
             if tr_submit:
-                import streamlit as _st
                 # Get invite code from secrets, fallback to default
                 try:
                     valid_code = st.secrets.get("TEACHER_INVITE_CODE", "PRELUMA-TEACH-2024")
