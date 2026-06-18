@@ -1041,15 +1041,25 @@ def home_page():
         "text-transform:uppercase;margin-bottom:12px;'>Jump to</div>",
         unsafe_allow_html=True,
     )
+    _role_home = st.session_state.get("user_role", "student")
     qs1, qs2, qs3, qs4 = st.columns(4)
-    if qs1.button("Student Mission", use_container_width=True, type="primary"):
-        st.session_state.active_page = "Student Mission"; st.rerun()
-    if qs2.button("Ask Preluma AI", use_container_width=True):
-        st.session_state.active_page = "Ask Preluma AI"; st.rerun()
-    if qs3.button("My Homework", use_container_width=True):
-        st.session_state.active_page = "My Homework"; st.rerun()
-    if qs4.button("Teacher Studio", use_container_width=True):
-        st.session_state.active_page = "Teacher Studio"; st.rerun()
+    if _role_home == "teacher":
+        if qs1.button("Teacher Profile", use_container_width=True, type="primary"):
+            st.session_state.active_page = "Teacher Profile"; st.rerun()
+        if qs2.button("Teacher Studio", use_container_width=True):
+            st.session_state.active_page = "Teacher Studio"; st.rerun()
+        if qs3.button("Homework Center", use_container_width=True):
+            st.session_state.active_page = "Homework Center"; st.rerun()
+        qs4.write("")
+    else:
+        if qs1.button("Student Mission", use_container_width=True, type="primary"):
+            st.session_state.active_page = "Student Mission"; st.rerun()
+        if qs2.button("Ask Preluma AI", use_container_width=True):
+            st.session_state.active_page = "Ask Preluma AI"; st.rerun()
+        if qs3.button("My Homework", use_container_width=True):
+            st.session_state.active_page = "My Homework"; st.rerun()
+        if qs4.button("Teacher Studio", use_container_width=True):
+            st.session_state.active_page = "Teacher Studio"; st.rerun()
 
     # Footer tag
     st.markdown(f"""
@@ -1994,96 +2004,87 @@ def student_mission(presentation):
 
 
 def teacher_profile_page():
-    """Teacher profile page — course teacher info for Zhou Yujue."""
+    """Teacher profile page — all 4 course teachers at Yunnan University."""
     page_intro(
         "teacher",
-        "Course Teacher · Yunnan University",
+        "Course Teachers · Yunnan University",
         "Teacher Profile",
-        "Course teacher information — department, school, and contact details.",
+        "The teaching team behind this course — department, research, and contact details.",
     )
     st.markdown("""
     <style>
-    .tp-avatar {
-        width:88px; height:88px; border-radius:50%;
-        background:linear-gradient(135deg,#0ea5e9,#6366f1);
-        display:flex; align-items:center; justify-content:center;
-        font-size:32px; font-weight:900; color:#fff; flex-shrink:0;
-        border:3px solid rgba(56,189,248,.35);
-        box-shadow:0 8px 28px rgba(99,102,241,.40);
-    }
-    .tp-banner {
-        background:linear-gradient(135deg,rgba(14,165,233,.09),rgba(99,102,241,.07));
-        border:1px solid rgba(56,189,248,.15); border-radius:24px;
-        padding:28px 32px; margin-bottom:28px;
-        display:flex; align-items:center; gap:28px;
-    }
-    .tp-name { font-size:26px; font-weight:900; color:#f1f5f9; margin-bottom:4px; }
-    .tp-cn   { font-size:18px; font-weight:700; color:#38bdf8; margin-bottom:6px; }
-    .tp-role { font-size:13px; color:#64748b; }
-    .tp-card {
+    .tc-card {
         background:linear-gradient(145deg,rgba(10,18,36,.96),rgba(6,12,26,.98));
         border:1px solid rgba(255,255,255,.07); border-radius:20px;
-        padding:22px 24px; margin-bottom:14px;
+        padding:22px 24px; margin-bottom:18px;
     }
-    .tp-card-lbl {
-        font-size:10px; font-weight:800; color:#38bdf8;
-        letter-spacing:.10em; text-transform:uppercase; margin-bottom:10px;
+    .tc-avatar {
+        width:64px; height:64px; border-radius:50%;
+        background:linear-gradient(135deg,#0ea5e9,#6366f1);
+        display:flex; align-items:center; justify-content:center;
+        font-size:22px; font-weight:900; color:#fff; flex-shrink:0;
+        border:2px solid rgba(56,189,248,.30);
+        box-shadow:0 6px 20px rgba(99,102,241,.35); float:left; margin-right:16px;
     }
-    .tp-row {
-        display:flex; gap:12px; align-items:flex-start; padding:8px 0;
+    .tc-name { font-size:20px; font-weight:900; color:#f1f5f9; margin-bottom:2px; }
+    .tc-cn   { font-size:14px; font-weight:700; color:#38bdf8; margin-bottom:3px; }
+    .tc-role { font-size:12px; color:#64748b; margin-bottom:10px; }
+    .tc-row  {
+        display:flex; gap:10px; align-items:flex-start; padding:6px 0;
         border-bottom:1px solid rgba(255,255,255,.04);
     }
-    .tp-row:last-child { border-bottom:none; }
-    .tp-key { min-width:130px; font-size:12px; color:#475569; font-weight:600; }
-    .tp-val { font-size:13px; color:#cbd5e1; }
+    .tc-row:last-child { border-bottom:none; }
+    .tc-key { min-width:110px; font-size:11.5px; color:#475569; font-weight:600; }
+    .tc-val { font-size:12.5px; color:#cbd5e1; }
+    .tc-clearfix { clear:both; padding-top:10px; }
     </style>
-    <div class="tp-banner">
-        <div class="tp-avatar">ZY</div>
-        <div>
-            <div class="tp-name">Zhou Yujue</div>
-            <div class="tp-cn">周玉珏</div>
-            <div class="tp-role">
-                Lecturer &nbsp;&bull;&nbsp; School of Software &nbsp;&bull;&nbsp; Yunnan University
-            </div>
-        </div>
-    </div>
     """, unsafe_allow_html=True)
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.markdown("""
-        <div class="tp-card">
-            <div class="tp-card-lbl">Course and Teaching</div>
-            <div class="tp-row"><div class="tp-key">Course</div>
-            <div class="tp-val">AI and Software Development</div></div>
-            <div class="tp-row"><div class="tp-key">Department</div>
-            <div class="tp-val">School of Software, Yunnan University</div></div>
-            <div class="tp-row"><div class="tp-key">Level</div>
-            <div class="tp-val">2nd-year undergraduate</div></div>
-            <div class="tp-row"><div class="tp-key">Teaching style</div>
-            <div class="tp-val">Project-based, practical Python focus</div></div>
-        </div>
-        """, unsafe_allow_html=True)
-    with col_b:
-        st.markdown("""
-        <div class="tp-card">
-            <div class="tp-card-lbl">School and Location</div>
-            <div class="tp-row"><div class="tp-key">University</div>
-            <div class="tp-val">Yunnan University (云南大学)</div></div>
-            <div class="tp-row"><div class="tp-key">School</div>
-            <div class="tp-val">School of Software (软件学院)</div></div>
-            <div class="tp-row"><div class="tp-key">Campus</div>
-            <div class="tp-val">Chenggong Campus, Kunming, Yunnan</div></div>
-            <div class="tp-row"><div class="tp-key">Profile photo</div>
-            <div class="tp-val">To be added with teacher consent</div></div>
-        </div>
-        """, unsafe_allow_html=True)
 
-    # Quick homework assign — teacher can assign directly from profile page
+    TEACHERS = [
+        {"initials":"ZY","name":"Zhou Yujue","cn":"周玉珏",
+         "role":"Lecturer · AI Department",
+         "course":"Python Programming &amp; AI Tools",
+         "research":"AI, Time Series Analysis, Smart Healthcare",
+         "email":"zhouyujue@ynu.edu.cn"},
+        {"initials":"GS","name":"Gao Song","cn":"高嵩",
+         "role":"Lecturer · Software Engineering",
+         "course":"C++ Programming",
+         "research":"Computer Vision, AI Security, Model Compression",
+         "email":"gaos@ynu.edu.cn"},
+        {"initials":"TL","name":"Tang Li","cn":"唐丽",
+         "role":"Lecturer · Cyberspace Security",
+         "course":"Database",
+         "research":"Data Security, Image Security",
+         "email":"tangli@ynu.edu.cn"},
+        {"initials":"WP","name":"Wei Ping","cn":"韦平",
+         "role":"Lecturer · Cyberspace Security",
+         "course":"Statistics &amp; Probability",
+         "research":"LLM &amp; Multi-agent, Cybersecurity, Multimedia Security",
+         "email":"weip@ynu.edu.cn"},
+    ]
+
+    col1, col2 = st.columns(2)
+    for idx, t in enumerate(TEACHERS):
+        col = col1 if idx % 2 == 0 else col2
+        with col:
+            st.markdown(f"""
+            <div class="tc-card">
+                <div class="tc-avatar">{t['initials']}</div>
+                <div class="tc-name">{t['name']}</div>
+                <div class="tc-cn">{t['cn']}</div>
+                <div class="tc-role">{t['role']}</div>
+                <div class="tc-clearfix"></div>
+                <div class="tc-row"><div class="tc-key">Course</div><div class="tc-val">{t['course']}</div></div>
+                <div class="tc-row"><div class="tc-key">Research</div><div class="tc-val">{t['research']}</div></div>
+                <div class="tc-row"><div class="tc-key">Email</div><div class="tc-val">{t['email']}</div></div>
+                <div class="tc-row"><div class="tc-key">Photo</div><div class="tc-val">To be added with teacher consent</div></div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # Quick homework assign
     st.markdown("""
     <div style="font-size:10px;font-weight:800;color:#f59e0b;letter-spacing:.10em;
-        text-transform:uppercase;margin:28px 0 14px;">
-        Quick Assign Homework
-    </div>
+        text-transform:uppercase;margin:28px 0 14px;">Quick Assign Homework</div>
     """, unsafe_allow_html=True)
     with st.form("tp_quick_assign", border=False):
         qa1, qa2 = st.columns(2)
@@ -2103,16 +2104,13 @@ def teacher_profile_page():
                 due_date=hw_due.strip() or "TBD",
                 difficulty=hw_diff,
                 assigned_to=hw_assign.strip() or "All Students",
-                created_by="Teacher Zhou Yujue",
+                created_by="Teacher",
                 questions=_default_homework_questions(hw_topic.strip()),
             )
             st.success(f"Homework #{hw_id} published to students.")
         else:
             st.warning("Please enter both a title and a topic.")
 
-
-
-# Teacher Studio: algorithm demos and class analytics
 
 def teacher_studio():
     page_intro(
@@ -2157,7 +2155,8 @@ def teacher_studio():
         st.plotly_chart(fig, use_container_width=True)
 
     with tab3:
-        target = st.text_input("Search student name", value="Amir")
+        _default_search = st.session_state.get("student", "") or "Mamunur Rashid"
+        target = st.text_input("Search student name", value=_default_search)
         if st.button("Run Search Comparison", use_container_width=True):
             res = search_student(rows, target)
             col1, col2 = st.columns(2)
