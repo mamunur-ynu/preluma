@@ -17,6 +17,7 @@ from llm import active_provider as _provider, available_providers, llm_available
 from auth import authenticate, register, get_all_students, username_exists, storage_backend
 from homework_core import (
     create_homework,
+    create_notification,
     homework_for_student,
     homework_overview,
     load_homework,
@@ -24,6 +25,7 @@ from homework_core import (
     load_student_mistakes,
     mark_notifications_read,
     notifications_for_student,
+    load_submissions,
     seed_homework_demo,
     submit_homework,
 )
@@ -706,7 +708,7 @@ def sidebar():
     # Collapsible nav sections — role-based
     current_page = st.session_state.get("active_page", "Home")
     learn_pages   = {"Student Mission", "My Homework", "Ask Preluma AI"}
-    teach_pages   = {"Teacher Profile", "Teacher Studio", "Homework Center"}
+    teach_pages   = {"Teacher Profile", "Teacher Studio", "Homework Center", "Class Dashboard"}
     project_pages = {"Evidence Board", "Professor Defense", "Project Team", "Demo Guide", "Future Roadmap"}
 
     hw_badge = f" [{unread_count}]" if unread_count else ""
@@ -726,14 +728,21 @@ def sidebar():
             _nav_button("Teacher Profile", "Teacher Profile", _in_expander=True)
             _nav_button("Teacher Studio", "Teacher Studio", _in_expander=True)
             _nav_button("Homework Center", "Homework Center", _in_expander=True)
+            _nav_button("Class Dashboard", "Class Dashboard", _in_expander=True)
 
-    with st.sidebar.expander("PROJECT", expanded=(current_page in project_pages)):
-        _nav_button("Evidence Board", "Evidence Board", _in_expander=True)
-        _nav_button("Professor Defense", "Professor Defense", _in_expander=True)
-        _nav_button("Project Team", "Project Team", _in_expander=True)
-        if _role == "student":
+    # PROJECT section — teachers see technical pages only, students see full section
+    if _role == "student":
+        with st.sidebar.expander("PROJECT", expanded=(current_page in project_pages)):
+            _nav_button("Evidence Board", "Evidence Board", _in_expander=True)
+            _nav_button("Professor Defense", "Professor Defense", _in_expander=True)
+            _nav_button("Project Team", "Project Team", _in_expander=True)
             _nav_button("Demo Guide", "Demo Guide", _in_expander=True)
             _nav_button("Future Roadmap", "Future Roadmap", _in_expander=True)
+    else:
+        # Teachers: Evidence Board + Project Team
+        with st.sidebar.expander("PROJECT", expanded=(current_page in project_pages)):
+            _nav_button("Evidence Board", "Evidence Board", _in_expander=True)
+            _nav_button("Project Team", "Project Team", _in_expander=True)
 
     # Logout button at bottom
     st.sidebar.markdown("<div style='margin-top:8px;'>", unsafe_allow_html=True)
@@ -3347,6 +3356,342 @@ def login_page():
     st.markdown("</div>", unsafe_allow_html=True)
 
 
+
+# ─── Class Dashboard — teacher-only command centre ────────────────────────────
+
+def class_dashboard_page():
+    """
+    4-tab teacher dashboard:
+      1. Send Announcement
+      2. Student Progress
+      3. Edit Homework
+      4. Student Lookup
+    """
+    page_intro(
+        "teacher",
+        "Teacher · Command Centre",
+        "Class Dashboard",
+        "Announce, track progress, edit assignments, and look up individual students.",
+    )
+
+    # ── CSS shared across all tabs ──
+    st.markdown("""
+    <style>
+    .db-card {
+        background:linear-gradient(145deg,rgba(10,18,36,.97),rgba(6,12,26,.99));
+        border:1px solid rgba(255,255,255,.07); border-radius:18px;
+        padding:18px 22px; margin-bottom:14px;
+    }
+    .db-lbl {
+        font-size:10px; font-weight:800; letter-spacing:.10em;
+        text-transform:uppercase; margin-bottom:8px;
+    }
+    .db-lbl-blue  { color:#38bdf8; }
+    .db-lbl-green { color:#34d399; }
+    .db-lbl-amber { color:#f59e0b; }
+    .db-lbl-purple{ color:#a78bfa; }
+    .db-val { font-size:13px; color:#cbd5e1; }
+    .db-name { font-size:15px; font-weight:700; color:#f1f5f9; margin-bottom:3px; }
+    .db-sub  { font-size:11.5px; color:#64748b; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    _all_students = get_all_students()
+    _student_names = [s.get("Full Name", s.get("Username","")) for s in _all_students]
+
+    tab1, tab2, tab3, tab4 = st.tabs(
+        ["📢  Send Announcement", "📊  Student Progress", "✏️  Edit Homework", "🔍  Student Lookup"]
+    )
+
+    # ══════════════════════════════════════════════════════════════════
+    # TAB 1 — Send Announcement
+    # ══════════════════════════════════════════════════════════════════
+    with tab1:
+        st.markdown("""
+        <div class="db-card">
+          <div class="db-lbl db-lbl-blue">Send an announcement to students</div>
+          <div class="db-val">Write a message below — it will appear in every selected student's
+          notification inbox instantly.</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        with st.form("announcement_form", border=False):
+            ann_title = st.text_input(
+                "Announcement title",
+                placeholder="e.g. Class postponed to Thursday",
+            )
+            ann_msg = st.text_area(
+                "Message",
+                placeholder="Write your announcement here...",
+                height=120,
+            )
+            ann_target = st.radio(
+                "Send to",
+                ["All Students", "Specific Students"],
+                horizontal=True,
+            )
+            ann_specific = []
+            if ann_target == "Specific Students":
+                ann_specific = st.multiselect(
+                    "Select students",
+                    _student_names,
+                    help="Hold Ctrl/Cmd to select multiple.",
+                )
+            ann_submit = st.form_submit_button("📢 Send Announcement", use_container_width=True)
+
+        if ann_submit:
+            if not ann_title.strip() or not ann_msg.strip():
+                st.warning("Please fill in both title and message.")
+            else:
+                targets = _student_names if ann_target == "All Students" else ann_specific
+                if not targets:
+                    st.warning("Select at least one student.")
+                else:
+                    _sender = st.session_state.get("student", "Teacher")
+                    for name in targets:
+                        create_notification(
+                            student=name,
+                            notification_type="Announcement",
+                            title=ann_title.strip(),
+                            message=ann_msg.strip(),
+                            reference_id=0,
+                        )
+                    st.success(
+                        f"✅ Announcement sent to **{len(targets)} student(s)**."
+                    )
+
+    # ══════════════════════════════════════════════════════════════════
+    # TAB 2 — Student Progress
+    # ══════════════════════════════════════════════════════════════════
+    with tab2:
+        all_subs = load_submissions()
+        all_hw   = load_homework()
+
+        if not _student_names:
+            st.info("No students registered yet.")
+        else:
+            # Build per-student summary
+            progress_rows = []
+            for name in _student_names:
+                student_subs = [s for s in all_subs if s.get("Student") == name]
+                scores = []
+                for s in student_subs:
+                    try: scores.append(float(s.get("Percentage", 0)))
+                    except: pass
+                mistakes = load_student_mistakes(name)
+                weak_concepts = list({m.get("Weak Concept","") for m in mistakes if m.get("Weak Concept")})
+                progress_rows.append({
+                    "Student":        name,
+                    "Submissions":    len(student_subs),
+                    "Avg Score":      f"{sum(scores)/len(scores):.0f}%" if scores else "—",
+                    "Best Score":     f"{max(scores):.0f}%" if scores else "—",
+                    "Weak Areas":     ", ".join(weak_concepts[:3]) if weak_concepts else "None",
+                })
+
+            # Summary metrics
+            done_any = [r for r in progress_rows if r["Submissions"] > 0]
+            m1,m2,m3,m4 = st.columns(4)
+            m1.metric("Total Students", len(progress_rows))
+            m2.metric("Active (submitted)", len(done_any))
+            m3.metric("Not started", len(progress_rows) - len(done_any))
+            m4.metric("Total Submissions", len(all_subs))
+
+            st.markdown("---")
+            st.markdown(
+                "<div class='db-lbl db-lbl-green' style='margin-bottom:10px;'>"
+                "Per-student breakdown</div>",
+                unsafe_allow_html=True,
+            )
+            for row in progress_rows:
+                avg_color = "#34d399" if row["Avg Score"] not in ("—","0%") else "#64748b"
+                st.markdown(f"""
+                <div class="db-card" style="display:flex;justify-content:space-between;
+                    align-items:center;flex-wrap:wrap;gap:12px;">
+                  <div>
+                    <div class="db-name">{row['Student']}</div>
+                    <div class="db-sub">Weak areas: {row['Weak Areas']}</div>
+                  </div>
+                  <div style="display:flex;gap:24px;align-items:center;">
+                    <div style="text-align:center;">
+                      <div style="font-size:11px;color:#64748b;">Submissions</div>
+                      <div style="font-size:18px;font-weight:800;color:#f1f5f9;">{row['Submissions']}</div>
+                    </div>
+                    <div style="text-align:center;">
+                      <div style="font-size:11px;color:#64748b;">Avg Score</div>
+                      <div style="font-size:18px;font-weight:800;color:{avg_color};">{row['Avg Score']}</div>
+                    </div>
+                    <div style="text-align:center;">
+                      <div style="font-size:11px;color:#64748b;">Best</div>
+                      <div style="font-size:18px;font-weight:800;color:#38bdf8;">{row['Best Score']}</div>
+                    </div>
+                  </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+    # ══════════════════════════════════════════════════════════════════
+    # TAB 3 — Edit Homework
+    # ══════════════════════════════════════════════════════════════════
+    with tab3:
+        all_hw = load_homework()
+        if not all_hw:
+            st.info("No homework published yet. Create one in Homework Center.")
+        else:
+            hw_labels = {
+                f"#{row['Homework ID']} · {row['Title']} (Due: {row['Due Date']})": row
+                for row in all_hw
+            }
+            selected_hw_label = st.selectbox(
+                "Select homework to edit",
+                list(hw_labels.keys()),
+                key="edit_hw_select",
+            )
+            selected_hw = hw_labels[selected_hw_label]
+
+            st.markdown(f"""
+            <div class="db-card">
+              <div class="db-lbl db-lbl-amber">Currently published</div>
+              <div class="db-name">{selected_hw.get('Title','')}</div>
+              <div class="db-sub">Topic: {selected_hw.get('Topic','')} &nbsp;|&nbsp;
+              Assigned to: {selected_hw.get('Assigned To','')} &nbsp;|&nbsp;
+              By: {selected_hw.get('Created By','')}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            with st.form("edit_hw_form", border=False):
+                e1, e2 = st.columns(2)
+                new_title = e1.text_input("Title", value=selected_hw.get("Title",""))
+                new_topic = e2.text_input("Topic", value=selected_hw.get("Topic",""))
+                new_instructions = st.text_area(
+                    "Instructions",
+                    value=selected_hw.get("Instructions",""),
+                    height=100,
+                )
+                e3, e4 = st.columns(2)
+                new_due = e3.text_input("Due date", value=selected_hw.get("Due Date",""))
+                new_diff = e4.selectbox(
+                    "Difficulty",
+                    ["Beginner","Intermediate","Advanced"],
+                    index=["Beginner","Intermediate","Advanced"].index(
+                        selected_hw.get("Difficulty","Beginner")
+                    ),
+                )
+                save_edit = st.form_submit_button("💾 Save Changes", use_container_width=True)
+
+            if save_edit:
+                # Rewrite the homework CSV with updated row
+                import csv as _csv
+                from pathlib import Path as _Path
+                hw_path = _Path("data/homework.csv")
+                if hw_path.exists():
+                    with hw_path.open("r", newline="", encoding="utf-8") as f_in:
+                        reader = _csv.DictReader(f_in)
+                        fieldnames = reader.fieldnames or []
+                        rows = list(reader)
+                    for r in rows:
+                        if str(r.get("Homework ID")) == str(selected_hw.get("Homework ID")):
+                            r["Title"]        = new_title.strip()
+                            r["Topic"]        = new_topic.strip()
+                            r["Instructions"] = new_instructions.strip()
+                            r["Due Date"]     = new_due.strip()
+                            r["Difficulty"]   = new_diff
+                    with hw_path.open("w", newline="", encoding="utf-8") as f_out:
+                        writer = _csv.DictWriter(f_out, fieldnames=fieldnames)
+                        writer.writeheader()
+                        writer.writerows(rows)
+                    st.success(f"✅ Homework #{selected_hw.get('Homework ID')} updated.")
+                    # Notify students of the change
+                    for name in _student_names:
+                        create_notification(
+                            student=name,
+                            notification_type="Update",
+                            title=f"Homework Updated: {new_title.strip()}",
+                            message=f"Due date is now {new_due.strip()}. Check your homework page.",
+                            reference_id=selected_hw.get("Homework ID", 0),
+                        )
+                else:
+                    st.error("Homework file not found.")
+
+    # ══════════════════════════════════════════════════════════════════
+    # TAB 4 — Student Lookup
+    # ══════════════════════════════════════════════════════════════════
+    with tab4:
+        if not _student_names:
+            st.info("No students registered yet.")
+        else:
+            lookup_name = st.selectbox(
+                "Select student",
+                _student_names,
+                key="lookup_student_select",
+            )
+
+            all_subs_lookup = [s for s in load_submissions() if s.get("Student") == lookup_name]
+            mistakes_lookup = load_student_mistakes(lookup_name)
+            hw_done_ids     = {s.get("Homework ID") for s in all_subs_lookup}
+            hw_pending      = [h for h in load_homework() if str(h.get("Homework ID")) not in hw_done_ids]
+
+            scores = []
+            for s in all_subs_lookup:
+                try: scores.append(float(s.get("Percentage", 0)))
+                except: pass
+
+            # Summary strip
+            s1,s2,s3,s4 = st.columns(4)
+            s1.metric("Assignments Done",    len(all_subs_lookup))
+            s2.metric("Pending",             len(hw_pending))
+            s3.metric("Average Score",       f"{sum(scores)/len(scores):.0f}%" if scores else "—")
+            s4.metric("Weak Concepts Found", len({m.get("Weak Concept") for m in mistakes_lookup if m.get("Weak Concept")}))
+
+            st.markdown("---")
+
+            # Submission history
+            if all_subs_lookup:
+                st.markdown(
+                    "<div class='db-lbl db-lbl-purple' style='margin:10px 0 8px;'>"
+                    "Submission history</div>",
+                    unsafe_allow_html=True,
+                )
+                for sub in reversed(all_subs_lookup[-8:]):
+                    pct  = sub.get("Percentage", "0")
+                    try:   pct_f = float(pct)
+                    except: pct_f = 0
+                    bar_color = "#34d399" if pct_f >= 70 else "#f59e0b" if pct_f >= 40 else "#f87171"
+                    hw_title = next(
+                        (h.get("Title","") for h in load_homework()
+                         if str(h.get("Homework ID")) == str(sub.get("Homework ID"))),
+                        f"Homework #{sub.get('Homework ID','')}"
+                    )
+                    st.markdown(f"""
+                    <div class="db-card" style="display:flex;justify-content:space-between;align-items:center;">
+                      <div>
+                        <div class="db-name">{hw_title}</div>
+                        <div class="db-sub">Submitted: {sub.get('Submitted At','')[:16]}</div>
+                      </div>
+                      <div style="font-size:22px;font-weight:900;color:{bar_color};">{pct}%</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info(f"{lookup_name} has not submitted any homework yet.")
+
+            # Weak concepts
+            if mistakes_lookup:
+                st.markdown(
+                    "<div class='db-lbl db-lbl-amber' style='margin:16px 0 8px;'>"
+                    "Weak concepts (from wrong answers)</div>",
+                    unsafe_allow_html=True,
+                )
+                weak_freq: dict[str, int] = {}
+                for m in mistakes_lookup:
+                    c = m.get("Weak Concept","")
+                    if c: weak_freq[c] = weak_freq.get(c, 0) + 1
+                for concept, count in sorted(weak_freq.items(), key=lambda x: -x[1])[:8]:
+                    st.markdown(
+                        f"<div class='db-card' style='display:flex;justify-content:space-between;'>"
+                        f"<span class='db-val'>{concept}</span>"
+                        f"<span style='color:#f87171;font-weight:700;'>{count}×</span></div>",
+                        unsafe_allow_html=True,
+                    )
+
+
 def main():
     init_state()
 
@@ -3363,8 +3708,8 @@ def main():
 
     # Role guard — redirect teacher to Home if they land on student-only pages
     _role = st.session_state.get("user_role", "student")
-    student_only = {"Student Mission", "My Homework", "Ask Preluma AI"}
-    teacher_only = {"Teacher Profile", "Teacher Studio", "Homework Center"}
+    student_only = {"Student Mission", "My Homework", "Ask Preluma AI", "Professor Defense", "Demo Guide", "Future Roadmap"}
+    teacher_only = {"Teacher Profile", "Teacher Studio", "Homework Center", "Class Dashboard"}
 
     if _role == "teacher" and page in student_only:
         st.session_state.active_page = "Home"
@@ -3380,6 +3725,7 @@ def main():
         "Teacher Profile": teacher_profile_page,
         "Teacher Studio": teacher_studio,
         "Homework Center": homework_center_page,
+        "Class Dashboard": class_dashboard_page,
         "Evidence Board": evidence_board,
         "Professor Defense": professor_defense,
         "Project Team": project_team,
