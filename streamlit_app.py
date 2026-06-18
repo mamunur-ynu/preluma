@@ -198,7 +198,7 @@ def _get_photo_src(photo_key: str) -> str | None:
 
 # ─────────────────────────────────────────────────────────────────────────────
 
-APP_VERSION = "40.3"
+APP_VERSION = "40.4"
 APP_NAME    = "Preluma"
 TAGLINE     = "Light Up Before Class"
 
@@ -978,7 +978,7 @@ def home_page():
     # ── Full-width hero ──────────────────────────────────────────────────────
     st.markdown(f"""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap');
     @keyframes glow-pulse {{
       0%,100% {{ opacity:.50; transform:scale(1); }}
       50%      {{ opacity:.80; transform:scale(1.08); }}
@@ -1011,14 +1011,27 @@ def home_page():
       animation:glow-pulse 5s ease-in-out infinite;
     }}
     .hp-content {{
-      position:relative; z-index:2; padding:48px 52px 52px;
+      position:relative; z-index:2; padding:36px 52px 52px;
       animation:float-up .55s ease both;
-      max-width:680px;
+      max-width:700px;
+    }}
+    .hp-h1 {{
+      font-family:'Syne', ui-sans-serif, system-ui, sans-serif;
+      font-size:clamp(32px,4.2vw,58px); font-weight:900; color:#f0f8ff;
+      margin:0 0 10px; line-height:1.08; letter-spacing:-.04em;
+      text-shadow:0 2px 40px rgba(0,0,0,.55);
+    }}
+    .hp-h1 em {{ font-style:normal; color:#38bdf8; }}
+    .hp-sub {{
+      font-family:'DM Serif Display', Georgia, serif;
+      font-size:17px; color:#c8ddf0; line-height:1.70;
+      max-width:540px; margin-bottom:22px; letter-spacing:.01em;
+      font-style:italic;
     }}
     .hp-badge {{
       display:inline-flex; align-items:center; gap:7px;
       background:rgba(56,189,248,.10); border:1px solid rgba(56,189,248,.28);
-      border-radius:30px; padding:5px 15px; margin-bottom:20px;
+      border-radius:30px; padding:5px 15px; margin-top:4px;
     }}
     .hp-badge-dot {{
       width:6px; height:6px; border-radius:50%; background:#38bdf8;
@@ -1028,35 +1041,23 @@ def home_page():
       color:#7dd3fc; font-size:11px; font-weight:700; letter-spacing:.09em;
       text-transform:uppercase;
     }}
-    .hp-h1 {{
-      font-family:'Syne', ui-sans-serif, system-ui, sans-serif;
-      font-size:clamp(32px,4.2vw,58px); font-weight:900; color:#f0f8ff;
-      margin:0 0 14px; line-height:1.08; letter-spacing:-.04em;
-      text-shadow:0 2px 40px rgba(0,0,0,.55);
-    }}
-    .hp-h1 em {{ font-style:normal; color:#38bdf8; }}
-    .hp-sub {{
-      font-family:'Inter', ui-sans-serif, sans-serif;
-      font-size:16px; color:#8da4c0; line-height:1.70;
-      max-width:520px; margin-bottom:0; letter-spacing:.01em;
-    }}
     </style>
     <div class='hp-hero'>
       <div class='hp-overlay'></div>
       <div class='hp-glow'></div>
       <div class='hp-content'>
-        <div class='hp-badge'>
-          <span class='hp-badge-dot'></span>
-          <span class='hp-badge-txt'>{ai_label} Powered &nbsp;&bull;&nbsp; Yunnan University</span>
-        </div>
         <h1 class='hp-h1'>
           Prepare before class.<br>
           <em>Understand more during class.</em>
         </h1>
         <p class='hp-sub'>
-          AI-powered pre-class learning — Brain Brief, adaptive quiz,
+          AI-powered pre-class learning. Brain Brief, adaptive quiz,
           multi-provider tutor &amp; teacher analytics. All in Python.
         </p>
+        <div class='hp-badge'>
+          <span class='hp-badge-dot'></span>
+          <span class='hp-badge-txt'>{ai_label} Powered &nbsp;&bull;&nbsp; Yunnan University</span>
+        </div>
       </div>
     </div>
     """, unsafe_allow_html=True)
